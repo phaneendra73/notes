@@ -70,8 +70,9 @@ export default function TagManager() {
         </motion.div>
 
         {/* Create form */}
-        <div className="card" style={{ padding: '1.5rem', marginBottom: '2.5rem' }}>
-          <Label htmlFor="new-tag" style={{ marginBottom: 8, display: 'block' }}>New Tags (comma-separated)</Label>
+        <div className="card" style={{ padding: '1.4rem', marginBottom: '2rem', border: '1px solid var(--border)', borderRadius: 20, background: 'linear-gradient(145deg, var(--card), rgba(255,255,255,0.7))', boxShadow: '0 18px 40px rgba(2, 6, 23, 0.05)' }}>
+          <Label htmlFor="new-tag" style={{ marginBottom: 8, display: 'block', fontWeight: 700 }}>Create tags</Label>
+          <p style={{ fontSize: '0.86rem', color: 'var(--fg-muted)', marginBottom: '0.9rem' }}>Add one or more tags at once, separated by commas.</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 8 }}>
             <Input
               id="new-tag"
@@ -79,9 +80,9 @@ export default function TagManager() {
               onChange={e => setNewTagInput(e.target.value)}
               placeholder="e.g. Serverless, Cloudflare, React..."
               onKeyDown={e => e.key === 'Enter' && handleCreate()}
-              style={{ flex: 1, minWidth: 240 }}
+              style={{ flex: 1, minWidth: 260, borderRadius: 10 }}
             />
-            <Button onClick={handleCreate} disabled={adding || !newTagInput.trim()}>
+            <Button onClick={handleCreate} disabled={adding || !newTagInput.trim()} style={{ borderRadius: 10 }}>
               {adding ? <FiLoader size={16} className="spin" /> : <FiPlus size={16} />}
               Add Tags
             </Button>
@@ -108,7 +109,7 @@ export default function TagManager() {
 
         {!loading && !error && (
           <motion.div
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.75rem' }}
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.9rem' }}
             initial="hidden"
             animate="show"
             variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
@@ -124,21 +125,20 @@ export default function TagManager() {
                   className="card"
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '0.75rem 1rem',
+                    padding: '0.85rem 1rem', borderRadius: 14, border: '1px solid var(--border)',
+                    background: 'var(--card)', boxShadow: '0 10px 24px rgba(2, 6, 23, 0.04)',
                   }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--neon)'}
-                  onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--card-border)'}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
                 >
-                  <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--fg)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tag.name}</span>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--fg)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tag.name}</span>
                   <button
                     onClick={() => handleDelete(tag.id)}
                     style={{
-                      marginLeft: 8, flexShrink: 0, padding: '0.25rem', borderRadius: 6, border: 'none', background: 'transparent',
-                      color: 'var(--fg-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      marginLeft: 8, flexShrink: 0, padding: '0.4rem', borderRadius: 8, border: '1px solid rgba(239,68,68,0.15)', background: 'rgba(239,68,68,0.05)',
+                      color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                       transition: 'all 0.15s ease'
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#ef4444'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--fg-muted)'; }}
                     title="Delete tag"
                   >
                     <FiTrash2 size={14} />

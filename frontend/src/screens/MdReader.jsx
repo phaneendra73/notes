@@ -99,14 +99,32 @@ export default function MdReader() {
     toast({ title: 'Link copied!', variant: 'success' });
   };
 
+  const motionTransition = {
+    duration: 0.55,
+    ease: [0.22, 1, 0.36, 1],
+  };
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
       {/* Scroll indicator */}
-      <div id="reading-progress" style={{ width: `${scrollProgress}%` }} />
+      <div
+        id="reading-progress"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          height: 3,
+          width: `${scrollProgress}%`,
+          zIndex: 1000,
+          background: 'linear-gradient(90deg, var(--primary), #22c55e)',
+          boxShadow: '0 0 18px rgba(0, 201, 110, 0.28)',
+          transition: 'width 0.2s ease-out',
+        }}
+      />
 
       <Appbar />
-      <main style={{ flex: 1, maxWidth: 860, margin: '0 auto', width: '100%', padding: '2.5rem 1.5rem' }}>
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} style={{ marginBottom: '2rem', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <main style={{ flex: 1, maxWidth: 980, margin: '0 auto', width: '100%', padding: '2rem 1rem 4rem' }}>
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} style={{ marginBottom: '1.5rem', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           <FiArrowLeft size={14} /> Back to Stories
         </Button>
 
@@ -143,51 +161,79 @@ export default function MdReader() {
         )}
 
         {!loading && !error && blog && (
-          <motion.article initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-            {/* Tags */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: '1.25rem' }}>
-              {blog.tags?.map(tag => <Badge key={tag}>{tag}</Badge>)}
-            </div>
+          <motion.article
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={motionTransition}
+            className="article-shell"
+            style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
+          >
+            <div className="article-header">
+              {/* Tags */}
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ ...motionTransition, delay: 0.05 }} style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {blog.tags?.map(tag => <Badge key={tag}>{tag}</Badge>)}
+              </motion.div>
 
-            {/* Title */}
-            <h1
-              style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 800, color: 'var(--fg)', lineHeight: 1.2, marginBottom: '1.5rem' }}
-            >
-              {blog.title}
-            </h1>
+              {/* Title */}
+              <motion.h1
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ ...motionTransition, delay: 0.08 }}
+                style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(2rem, 4.2vw, 3rem)', fontWeight: 800, color: 'var(--fg)', lineHeight: 1.12, marginBottom: '0.5rem', letterSpacing: '-0.02em' }}
+              >
+                {blog.title}
+              </motion.h1>
 
-            {/* Meta */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', paddingBottom: '1.5rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 20, fontSize: '0.875rem', color: 'var(--fg-muted)' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <FiCalendar size={14} style={{ color: 'var(--neon)' }} />
-                  {new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <FiClock size={14} style={{ color: 'var(--neon)' }} />
-                  4 min read
-                </span>
-              </div>
-              <Button variant="outline" size="sm" onClick={copyLink} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <FiShare2 size={13} /> Copy Link
-              </Button>
+              {/* Meta */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ ...motionTransition, delay: 0.11 }}
+                className="article-meta"
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 20, fontSize: '0.875rem', color: 'var(--fg-muted)', flexWrap: 'wrap' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <FiCalendar size={14} style={{ color: 'var(--primary)' }} />
+                    {new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                  </span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <FiClock size={14} style={{ color: 'var(--primary)' }} />
+                    4 min read
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={copyLink}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, transition: 'transform 0.2s ease, box-shadow 0.2s ease' }}
+                >
+                  <FiShare2 size={13} /> Copy Link
+                </Button>
+              </motion.div>
             </div>
 
             {/* Cover image */}
             {blog.imageUrl && (
-              <div style={{ marginBottom: '2.5rem', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)' }}>
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ ...motionTransition, delay: 0.14 }}
+                style={{ marginBottom: '0.25rem', borderRadius: 22, overflow: 'hidden', border: '1px solid var(--border)', boxShadow: '0 20px 45px rgba(15, 23, 42, 0.08)' }}
+              >
                 <img
                   src={blog.imageUrl}
                   alt={blog.title}
-                  style={{ width: '100%', maxHeight: 440, objectFit: 'cover' }}
+                  style={{ width: '100%', maxHeight: 460, objectFit: 'cover', display: 'block' }}
                 />
-              </div>
+              </motion.div>
             )}
 
             {/* Content card */}
-            <div
-              className="card markdown-body"
-              style={{ padding: '2rem' }}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...motionTransition, delay: 0.17 }}
+              className="article-content markdown-body"
               dangerouslySetInnerHTML={{ __html: renderMarkdown(blog.markdownContent) }}
             />
           </motion.article>

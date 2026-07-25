@@ -38,9 +38,14 @@ export default function BlogPosts() {
         </motion.div>
 
         {/* Controls */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '2.5rem' }}>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '2.5rem', padding: '1rem', border: '1px solid var(--border)', borderRadius: 20, background: 'rgba(255,255,255,0.62)', backdropFilter: 'blur(10px)', boxShadow: '0 16px 40px rgba(2, 6, 23, 0.04)' }}
+        >
           {/* Search bar */}
-          <div style={{ position: 'relative', width: '100%', maxWidth: 320 }}>
+          <div style={{ position: 'relative', width: '100%', maxWidth: 340 }}>
             <FiSearch size={15} style={{
               position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
               color: 'var(--fg-muted)', pointerEvents: 'none',
@@ -68,7 +73,7 @@ export default function BlogPosts() {
               </Button>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Loading */}
         {loading && (
@@ -101,9 +106,15 @@ export default function BlogPosts() {
 
         {/* Empty */}
         {!loading && !error && blogs.length === 0 && (
-          <p style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--fg-muted)', fontSize: '0.875rem' }}>
-            No matching stories found.
-          </p>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
+            style={{ textAlign: 'center', padding: '4rem 1.25rem', border: '1px dashed var(--border)', borderRadius: 24, background: 'rgba(255,255,255,0.45)', color: 'var(--fg-muted)' }}
+          >
+            <p style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--fg)', marginBottom: 8 }}>No stories match this view yet.</p>
+            <p style={{ fontSize: '0.9rem' }}>Try a broader search or browse the full collection.</p>
+          </motion.div>
         )}
 
         {/* Results grid */}

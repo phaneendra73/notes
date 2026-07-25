@@ -1,11 +1,105 @@
-export function renderMarkdown(markdown = '') {
-  if (!markdown) return 'No content available.';
-
-  let html = markdown
-    // Escape HTML entities to prevent raw scripts insertion
+function escapeHtml(text = '') {
+  return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+function renderInlineMarkdown(text = '') {
+  let html = escapeHtml(text);
+
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />');
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-emerald-400 hover:underline">$1</a>');
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
+
+  return html;
+}
+
+function parseTableRow(row = '') {
+  const trimmed = row.trim();
+  if (!trimmed) return [];
+
+  const withoutLeading = trimmed.startsWith('|') ? trimmed.slice(1) : trimmed;
+  const withoutTrailing = withoutLeading.endsWith('|') ? withoutLeading.slice(0, -1) : withoutLeading;
+
+  return withoutTrailing.split('|').map(cell => cell.trim());
+}
+
+function isTableSeparatorRow(row = '') {
+  const cells = parseTableRow(row);
+  if (cells.length < 2) return false;
+  return cells.every(cell => /^:?-{3,}:?$/.test(cell));
+}
+
+function buildTableHtml(rows = []) {
+  const parsedRows = rows.map(parseTableRow).filter(row => row.length > 0);
+  if (parsedRows.length < 2) return '';
+
+  const headers = parsedRows[0].map(cell => `<th>${renderInlineMarkdown(cell)}</th>`).join('');
+  const bodyRows = parsedRows.slice(2).map(row => {
+    const cells = row.map(cell => `<td>${renderInlineMarkdown(cell)}</td>`).join('');
+    return `<tr>${cells}</tr>`;
+  }).join('');
+
+  return `<table><thead><tr>${headers}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+}
+
+function parseTableBlocks(markdown = '') {
+  const lines = markdown.split(/\r?\n/);
+  const output = [];
+  const placeholders = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const currentLine = lines[index].trim();
+    const nextLine = lines[index + 1]?.trim() || '';
+
+    if (currentLine.includes('|') && isTableSeparatorRow(nextLine) && parseTableRow(currentLine).length > 1) {
+      const rows = [currentLine, nextLine];
+      let cursor = index + 1;
+
+      while (cursor + 1 < lines.length) {
+        const nextRow = lines[cursor + 1]?.trim() || '';
+        if (!nextRow || !nextRow.includes('|') || isTableSeparatorRow(nextRow)) break;
+        rows.push(nextRow);
+        cursor += 1;
+      }
+
+      const placeholder = `__KADHA_TABLE_${placeholders.length}__`;
+      placeholders.push(buildTableHtml(rows));
+      output.push(placeholder);
+      index = cursor;
+      continue;
+    }
+
+    output.push(lines[index]);
+  }
+
+  return {
+    html: output.join('\n'),
+    placeholders,
+  };
+}
+
+export function renderMarkdown(markdown = '') {
+  if (!markdown) return 'No content available.';
+
+  const { html: contentWithPlaceholders, placeholders } = parseTableBlocks(markdown);
+  const segments = contentWithPlaceholders.split(/(__KADHA_TABLE_\d+__)/);
+  const escapedSegments = segments.map(segment => {
+    if (!segment) return '';
+    if (/^__KADHA_TABLE_\d+__$/.test(segment)) return segment;
+    return escapeHtml(segment);
+  });
+
+  let html = escapedSegments.join('');
+
+  placeholders.forEach((tableHtml, index) => {
+    html = html.replace(`__KADHA_TABLE_${index}__`, tableHtml);
+  });
 
   // Code blocks: ```language ... ```
   html = html.replace(/```(\w*)\n([\s\S]*?)\n```/gm, (match, lang, code) => {
@@ -33,18 +127,6 @@ export function renderMarkdown(markdown = '') {
 
   // Strikethrough: ~~text~~
   html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
-
-  // Tables
-  html = html.replace(/(^\|?.*\|.*\n)(^\|?[ \t]*[:-]+[-| :]*(\|[ \t]*[:-]+[-| :]*)*\n)((?:^\|?.*\|.*\n?)*)/gm, (match, headerRow, separatorRow, _separatorExtras, bodyRows = '') => {
-    const headerCells = headerRow.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(cell => cell.trim());
-    const headers = headerCells.map(cell => `<th>${cell}</th>`).join('');
-    const rows = bodyRows.trim().split('\n').filter(Boolean).map(row => {
-      const cells = row.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(cell => cell.trim());
-      const rowCells = cells.map(cell => `<td>${cell}</td>`).join('');
-      return `<tr>${rowCells}</tr>`;
-    }).join('');
-    return `<table><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`;
-  });
 
   // Images: ![alt](url)
   html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />');

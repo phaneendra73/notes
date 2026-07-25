@@ -256,7 +256,7 @@ export default function MdEditor() {
           </div>
 
           {/* Configuration Card */}
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm flex flex-col gap-4">
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-[0_20px_50px_rgba(2,6,23,0.06)] flex flex-col gap-4">
             <div className="flex items-center gap-2 pb-2 border-b border-border">
               <FiSettings size={15} className="text-primary" />
               <span className="font-heading font-bold text-xs uppercase tracking-wider text-foreground">Story Settings</span>
@@ -310,14 +310,14 @@ export default function MdEditor() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 px-2 text-[10px] font-bold"
+                  className="h-7 px-2 text-[10px] font-bold rounded-lg"
                   onClick={handleQuickTagCreate}
                 >
                   Add
                 </Button>
               </div>
 
-              <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1">
+              <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1 rounded-xl border border-dashed border-border/80 p-2 bg-background/40">
                 {tags.length === 0 ? (
                   <span className="text-[10px] text-muted-foreground">No tags found. Go to Tag Manager to add some.</span>
                 ) : (
@@ -328,7 +328,7 @@ export default function MdEditor() {
                         key={tag.id}
                         onClick={() => toggleTag(tag.id)}
                         style={{
-                          padding: '0.2rem 0.75rem', borderRadius: 9999, fontSize: '0.7rem', fontWeight: 700,
+                          padding: '0.28rem 0.75rem', borderRadius: 9999, fontSize: '0.72rem', fontWeight: 700,
                           border: '1px solid', cursor: 'pointer', transition: 'all 0.15s ease',
                           background: selected ? 'var(--primary)' : 'transparent',
                           color: selected ? '#000000' : 'var(--muted-foreground)',
@@ -347,7 +347,7 @@ export default function MdEditor() {
             </div>
 
             {/* Actions */}
-            <Button onClick={handleSave} disabled={loading} className="w-full h-9 mt-2">
+            <Button onClick={handleSave} disabled={loading} className="w-full h-9 mt-2 rounded-xl">
               {loading ? <FiLoader size={15} className="spin mr-2" /> : <FiSave size={15} className="mr-2" />}
               Publish Story
             </Button>
@@ -355,7 +355,7 @@ export default function MdEditor() {
         </div>
 
         {/* RIGHT COLUMN: Writing Canvas */}
-        <div className="flex-1 flex flex-col rounded-xl border border-border bg-card overflow-hidden shadow-sm min-h-[500px]">
+        <div className="flex-1 flex flex-col rounded-[24px] border border-border bg-card overflow-hidden shadow-[0_20px_50px_rgba(2,6,23,0.06)] min-h-[500px]">
           
           {/* Canvas Header toolbar */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30 flex-wrap gap-2">
@@ -365,7 +365,7 @@ export default function MdEditor() {
             </div>
             
             {/* View toggles */}
-            <div className="flex gap-1 p-1 rounded-lg border border-border bg-background">
+            <div className="flex gap-1 p-1 rounded-lg border border-border bg-background/80">
               <button style={modeBtnStyle(mode === 'write')} onClick={() => setMode('write')}>
                 <FiEdit size={12} /> Write
               </button>
@@ -564,7 +564,7 @@ export default function MdEditor() {
 
             {/* Live Preview Panel */}
             {(mode === 'preview' || mode === 'split') && (
-              <div className="flex-1 p-6 overflow-y-auto max-h-[600px] min-h-[300px] bg-background/20">
+              <div className="flex-1 p-6 overflow-y-auto max-h-[600px] min-h-[300px] bg-background/25">
                 <div
                   className="markdown-body text-foreground"
                   dangerouslySetInnerHTML={{ __html: renderMarkdown(content || '*No content yet. Start typing to see results.*') }}

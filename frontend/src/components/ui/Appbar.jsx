@@ -93,14 +93,15 @@ export default function Appbar() {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    width: 34,
-    height: 34,
-    borderRadius: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     border: "1px solid var(--border)",
-    background: "transparent",
+    background: "rgba(255,255,255,0.6)",
     color: "var(--fg-muted)",
     cursor: "pointer",
-    transition: "all 0.15s ease",
+    transition: "all 0.2s ease",
+    boxShadow: "0 6px 16px rgba(2, 6, 23, 0.04)",
   };
 
   return (
@@ -139,11 +140,12 @@ export default function Appbar() {
               style={{
                 fontFamily: "Outfit, sans-serif",
                 fontWeight: 800,
-                fontSize: "1.1rem",
+                fontSize: "1.08rem",
                 color: "var(--fg)",
+                letterSpacing: "-0.02em",
               }}
             >
-              Kadha <span style={{ color: "var(--neon)" }}>2.0</span>
+              Kadha <span style={{ color: "var(--primary)" }}>Journal</span>
             </span>
           </button>
 
@@ -208,6 +210,7 @@ export default function Appbar() {
                 <Button
                   variant="neon"
                   size="sm"
+                  className="rounded-xl"
                   onClick={() => navigate("/Editor")}
                 >
                   <FiEdit3 size={14} /> Write
@@ -216,7 +219,8 @@ export default function Appbar() {
                   variant="ghost"
                   size="sm"
                   onClick={handleSignOut}
-                  style={{ color: "#ef4444" }}
+                  className="rounded-xl"
+                  style={{ color: "#ef4444", borderColor: "rgba(239,68,68,0.16)" }}
                 >
                   <FiLogOut size={14} /> Sign Out
                 </Button>
@@ -224,7 +228,7 @@ export default function Appbar() {
             ) : (
               <Button
                 size="sm"
-                className="btn-pill"
+                className="btn-pill rounded-xl"
                 onClick={() => navigate("/Signin")}
               >
                 <FiLogIn size={14} /> Sign In

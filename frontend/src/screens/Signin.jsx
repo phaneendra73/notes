@@ -63,9 +63,9 @@ export default function Signin() {
           transition={{ duration: 0.35 }}
           className="relative z-10 w-full max-w-[420px]"
         >
-          <Card className="border border-border bg-card shadow-lg p-6 rounded-xl">
+          <Card className="border border-border bg-card shadow-[0_24px_70px_rgba(2,6,23,0.08)] p-6 rounded-[24px]">
             <CardHeader className="text-center pb-4 pt-2">
-              <div className="mx-auto mb-4 w-12 h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center font-black text-xl shadow-[0_0_20px_var(--neon-glow)]">
+              <div className="mx-auto mb-4 w-12 h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center font-black text-xl shadow-[0_0_22px_var(--neon-glow)]">
                 K
               </div>
               <CardTitle className="text-2xl font-bold tracking-tight text-foreground">

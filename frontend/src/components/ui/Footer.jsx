@@ -7,17 +7,17 @@ export default function Footer() {
   const navigate = useNavigate();
   const year = new Date().getFullYear();
   return (
-    <footer style={{ borderTop: '1px solid var(--border)', background: 'var(--bg)' }}>
+    <footer style={{ borderTop: '1px solid var(--border)', background: 'linear-gradient(180deg, transparent 0%, rgba(0,201,110,0.03) 100%)' }}>
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2.5rem 1.5rem' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem' }}>
           {/* Brand */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
-              width: 30, height: 30, borderRadius: 8,
-              background: 'var(--neon)', color: '#000',
+              width: 32, height: 32, borderRadius: 10,
+              background: 'linear-gradient(135deg, var(--primary), #00b4d8)', color: '#000',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontWeight: 900, fontSize: 14,
-              boxShadow: '0 0 10px var(--neon-glow)',
+              boxShadow: '0 8px 24px var(--neon-glow)',
             }}>K</div>
             <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '0.875rem', color: 'var(--fg)' }}>
               Kadha 2.0 — Edge Publishing
@@ -28,7 +28,7 @@ export default function Footer() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
             {[
               { label: 'Explore Stories', action: () => navigate('/BlogPosts') },
-              { label: 'Sign In', action: () => navigate('/Signin') },
+              { label: Boolean(localStorage.getItem('jwt')) ? 'Write a Story' : 'Sign In', action: () => navigate(Boolean(localStorage.getItem('jwt')) ? '/Editor' : '/Signin') },
             ].map(l => (
               <button
                 key={l.label}

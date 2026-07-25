@@ -13,12 +13,12 @@ export default function BlogCard({ blog }) {
 
   return (
     <motion.div
-      whileHover={{ y: -5 }}
-      transition={{ duration: 0.2 }}
+      whileHover={{ y: -6, scale: 1.01 }}
+      transition={{ duration: 0.22, ease: 'easeOut' }}
       onClick={() => navigate(`/Read?id=${blog.id}`)}
       className="cursor-pointer h-full flex flex-col group"
     >
-      <Card className="h-full flex flex-col overflow-hidden border border-border bg-card hover:border-primary/50 transition-all duration-300 rounded-xl hover:shadow-[0_12px_40px_var(--neon-glow)]">
+      <Card className="h-full flex flex-col overflow-hidden border border-border/80 bg-card hover:border-primary/50 transition-all duration-300 rounded-[22px] hover:shadow-[0_18px_56px_rgba(2,6,23,0.08)]">
         {/* Image wrapper */}
         <div className="relative h-48 w-full overflow-hidden flex-shrink-0">
           <img
@@ -27,7 +27,7 @@ export default function BlogCard({ blog }) {
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
           />
-          <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-extrabold uppercase tracking-wider text-white/95">
+          <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-extrabold uppercase tracking-wider text-white/95 shadow-sm">
             <FiClock className="text-primary w-3 h-3" />
             4 Min
           </div>
@@ -49,7 +49,7 @@ export default function BlogCard({ blog }) {
           <div className="flex-1" />
 
           {/* Card Footer info */}
-          <div className="flex items-center justify-between pt-4 mt-4 border-t border-border/60 text-xs text-muted-foreground font-medium">
+          <div className="flex items-center justify-between pt-4 mt-4 border-t border-border/70 text-xs text-muted-foreground font-medium">
             <span>{date}</span>
             <span className="flex items-center gap-1 text-primary font-bold group-hover:translate-x-1 transition-transform duration-200">
               Read <FiArrowUpRight className="w-3.5 h-3.5" />

@@ -36,12 +36,12 @@ export default function AdminPage() {
       <Appbar />
       <main style={{ flex: 1, maxWidth: 1024, margin: '0 auto', width: '100%', padding: '3rem 1.5rem' }}>
         {/* Header */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '2.5rem' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '2.2rem', padding: '1.1rem 1.2rem', border: '1px solid var(--border)', borderRadius: 20, background: 'rgba(255,255,255,0.55)', backdropFilter: 'blur(8px)' }}>
           <div>
             <h1 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.875rem', fontWeight: 800, color: 'var(--fg)', marginBottom: 4 }}>Story Manager</h1>
             <p style={{ fontSize: '0.875rem', color: 'var(--fg-muted)' }}>Create, edit, and toggle publication status.</p>
           </div>
-          <Button onClick={() => navigate('/Editor')}>
+          <Button onClick={() => navigate('/Editor')} className="rounded-xl">
             <FiPlus size={16} /> New Story
           </Button>
         </div>
@@ -76,7 +76,7 @@ export default function AdminPage() {
         {!loading && !error && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {blogs.length === 0 ? (
-              <div className="card" style={{ padding: '3rem', textAlign: 'center', color: 'var(--fg-muted)' }}>
+              <div className="card" style={{ padding: '3rem', textAlign: 'center', color: 'var(--fg-muted)', borderRadius: 20 }}>
                 No stories yet.{' '}
                 <button onClick={() => navigate('/Editor')} style={{ color: 'var(--neon)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
                   Write your first one →
@@ -96,6 +96,9 @@ export default function AdminPage() {
                   justifyContent: 'space-between',
                   gap: '1.25rem',
                   padding: '1.25rem',
+                  borderRadius: 18,
+                  border: '1px solid var(--border)',
+                  boxShadow: '0 10px 24px rgba(2, 6, 23, 0.04)',
                 }}
               >
                 {/* ID & Title info */}

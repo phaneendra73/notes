@@ -19,7 +19,7 @@ export default function NotFound() {
           initial={{ opacity: 0, scale: 0.92 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4 }}
-          className="relative z-10 flex flex-col items-center gap-4"
+          className="relative z-10 flex flex-col items-center gap-4 rounded-[28px] border border-border bg-white/70 px-8 py-10 shadow-[0_20px_60px_rgba(2,6,23,0.06)] backdrop-blur-md"
         >
           <span
             className="text-8xl md:text-9xl font-black gradient-text"
