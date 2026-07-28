@@ -1,56 +1,109 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Separator } from './Separator.jsx';
-import { FiBook } from 'react-icons/fi';
+import { FiBookOpen, FiArrowUp } from 'react-icons/fi';
+
+import useTags from '../../hooks/useTags.js';
 
 export default function Footer() {
   const navigate = useNavigate();
   const year = new Date().getFullYear();
+  const { tags: dbTags } = useTags();
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleExploreClick = () => {
+    if (window.location.pathname === '/') {
+      const el = document.getElementById('notes-section');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      navigate('/#notes-section');
+    }
+  };
+
+  const topicTags = (dbTags || [])
+    .map((t) => (typeof t === 'object' ? t.name : t))
+    .filter(Boolean);
+
   return (
-    <footer style={{ borderTop: '1px solid var(--border)', background: 'linear-gradient(180deg, transparent 0%, rgba(0,201,110,0.03) 100%)' }}>
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2.5rem 1.5rem' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem' }}>
-          {/* Brand */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: 10,
-              background: 'linear-gradient(135deg, var(--primary), #00b4d8)', color: '#000',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontWeight: 900, fontSize: 14,
-              boxShadow: '0 8px 24px var(--neon-glow)',
-            }}>K</div>
-            <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '0.875rem', color: 'var(--fg)' }}>
-              Kadha 2.0 — Edge Publishing
-            </span>
+    <footer className="w-full border-t border-border/80 bg-card/60 backdrop-blur-md mt-auto no-print">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 py-10 md:py-12 flex flex-col gap-8">
+        {/* Top Grid Row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 justify-between">
+          {/* Brand Info */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-primary to-cyan-400 p-[1px] shadow-[0_0_12px_var(--neon-glow)]">
+                <div className="w-full h-full bg-card rounded-[11px] flex items-center justify-center p-1.5">
+                  <img src="/assets/kadha.svg" alt="Kadha Logo" className="w-full h-full object-contain" />
+                </div>
+              </div>
+              <span className="font-heading font-extrabold text-base text-foreground">
+                Kadha<span className="text-primary font-black ml-1">Notes</span>
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
+              An edge-powered engineering study platform dedicated to C#, .NET Core, Algorithms, SQL, and System Design notes.
+            </p>
           </div>
 
-          {/* Links */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-            {[
-              { label: 'Explore Stories', action: () => navigate('/BlogPosts') },
-              { label: Boolean(localStorage.getItem('jwt')) ? 'Write a Story' : 'Sign In', action: () => navigate(Boolean(localStorage.getItem('jwt')) ? '/Editor' : '/Signin') },
-            ].map(l => (
+          {/* Topics Navigation */}
+          <div className="flex flex-col gap-2.5 md:items-center">
+            <span className="text-xs font-black uppercase text-primary tracking-wider">
+              Core Topics
+            </span>
+            <div className="flex flex-wrap gap-1.5 md:justify-center">
+              {topicTags.map((tag) => (
+                <button
+                  key={tag}
+                  onClick={handleExploreClick}
+                  className="px-3 py-1 rounded-xl text-xs font-bold bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/60 transition-all cursor-pointer"
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Quick Actions & Scroll To Top */}
+          <div className="flex flex-col gap-3 md:items-end">
+            <span className="text-xs font-black uppercase text-primary tracking-wider">
+              Quick Links
+            </span>
+            <div className="flex items-center gap-3">
               <button
-                key={l.label}
-                onClick={l.action}
-                style={{ background: 'none', border: 'none', fontSize: '0.875rem', color: 'var(--fg-muted)', cursor: 'pointer', transition: 'color 0.15s' }}
-                onMouseEnter={e => e.currentTarget.style.color = 'var(--neon)'}
-                onMouseLeave={e => e.currentTarget.style.color = 'var(--fg-muted)'}
+                onClick={handleExploreClick}
+                className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
-                {l.label}
+                Explore Notes
               </button>
-            ))}
+              <span className="text-border">•</span>
+              <button
+                onClick={() => navigate('/signin')}
+                className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                Author Studio
+              </button>
+              <span className="text-border">•</span>
+              <button
+                onClick={scrollToTop}
+                className="w-8 h-8 rounded-xl border border-border/80 bg-card hover:border-primary/50 text-foreground flex items-center justify-center cursor-pointer transition-all"
+                title="Back to Top"
+              >
+                <FiArrowUp size={14} />
+              </button>
+            </div>
           </div>
         </div>
 
-        <Separator style={{ margin: '1.5rem 0' }} />
-
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', fontSize: '0.75rem', color: 'var(--fg-muted)' }}>
-          <span>&copy; {year} Kadha 2.0. All rights reserved.</span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <FiBook size={13} style={{ color: 'var(--neon)' }} />
-            Write, Read, Inspire.
-          </span>
+        {/* Bottom Line Bar */}
+        <div className="pt-6 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground font-medium">
+          <span>&copy; {year} Kadha Notes. All rights reserved.</span>
+          <div className="flex items-center gap-2">
+            <FiBookOpen size={14} className="text-primary" />
+            <span>Learn • Code • Master</span>
+          </div>
         </div>
       </div>
     </footer>

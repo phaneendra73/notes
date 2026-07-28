@@ -62,7 +62,7 @@ export default function SearchBar() {
               results.map(blog => (
                 <button
                   key={blog.id}
-                  onClick={() => { navigate(`/Read?id=${blog.id}`); setQuery(''); }}
+                  onClick={() => { navigate(`/read?id=${blog.id}`); setQuery(''); }}
                   style={{
                     width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '0.625rem 0.75rem', borderRadius: 10, border: 'none',

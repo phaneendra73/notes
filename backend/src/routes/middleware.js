@@ -23,7 +23,7 @@ export const authenticateUser = async (c, next) => {
 
   const token = authHeader.split(' ')[1];
   try {
-    const secret = c.env.JWT_SECRET || 'kadha2-super-secret-key-2026';
+    const secret = c.env?.JWT_SECRET || 'kadha2_super_secret_jwt_key_2025';
     const user = await verify(token, secret, 'HS256');
     if (user) {
       c.set('UserId', user.id);

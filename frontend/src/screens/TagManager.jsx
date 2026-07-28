@@ -20,7 +20,7 @@ export default function TagManager() {
   const [adding, setAdding] = useState(false);
   const { tags, loading, error } = useTags(refreshTrigger);
 
-  useEffect(() => { if (!localStorage.getItem('jwt')) navigate('/Signin'); }, [navigate]);
+  useEffect(() => { if (!localStorage.getItem('jwt')) navigate('/signin'); }, [navigate]);
 
   const handleCreate = async () => {
     const tagNames = newTagInput.split(',').map(t => t.trim()).filter(Boolean);
@@ -70,7 +70,7 @@ export default function TagManager() {
         </motion.div>
 
         {/* Create form */}
-        <div className="card" style={{ padding: '1.4rem', marginBottom: '2rem', border: '1px solid var(--border)', borderRadius: 20, background: 'linear-gradient(145deg, var(--card), rgba(255,255,255,0.7))', boxShadow: '0 18px 40px rgba(2, 6, 23, 0.05)' }}>
+        <div className="card" style={{ padding: '1.4rem', marginBottom: '2rem', border: '1px solid var(--border)', borderRadius: 20, background: 'var(--card)', boxShadow: '0 18px 40px rgba(2, 6, 23, 0.05)' }}>
           <Label htmlFor="new-tag" style={{ marginBottom: 8, display: 'block', fontWeight: 700 }}>Create tags</Label>
           <p style={{ fontSize: '0.86rem', color: 'var(--fg-muted)', marginBottom: '0.9rem' }}>Add one or more tags at once, separated by commas.</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 8 }}>

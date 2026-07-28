@@ -2,11 +2,16 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getenv } from '../utils/getenv.js';
 
+/**
+ * Unified hook for fetching study lessons.
+ * Queries /lessons/getall REST API endpoint targeting lessons and slides tables.
+ */
 const useBlogs = (
   page = 1,
   selectedTags = [],
   searchQuery = '',
-  enabled = true
+  sort = 'latest',
+  { enabled = true, includeUnpublished = false, refreshTrigger = 0 } = {}
 ) => {
   const [blogs, setBlogs] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -16,34 +21,45 @@ const useBlogs = (
 
   useEffect(() => {
     if (!enabled) return;
-    const fetchBlogs = async () => {
+
+    const fetchLessons = async () => {
       const apiUrl = getenv('APIURL');
       const blogLimit = getenv('BLOGSLIMIT');
 
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get(`${apiUrl}/blog/getall`, {
-          params: {
-            tags: selectedTags.join(','),
-            query: searchQuery,
-            page,
-            limit: blogLimit,
-          },
-        });
-        setBlogs(response.data.blogs || []);
+
+        const params = {
+          tags: selectedTags.join(','),
+          query: searchQuery,
+          sort,
+          page,
+          limit: blogLimit,
+        };
+
+        const headers = {};
+
+        if (includeUnpublished) {
+          params.includeUnpublished = 'true';
+          const token = localStorage.getItem('jwt');
+          if (token) headers.Authorization = `Bearer ${token}`;
+        }
+
+        const response = await axios.get(`${apiUrl}/lessons/getall`, { params, headers });
+        setBlogs(response.data.lessons || response.data.blogs || []);
         setTotalCount(response.data.pagination?.totalCount || 0);
         setTotalPages(response.data.pagination?.totalPages || 1);
       } catch (err) {
-        setError('Error fetching blogs from Cloudflare D1');
+        setError('Error fetching lessons');
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchBlogs();
-  }, [page, selectedTags.join(','), searchQuery, enabled]);
+    fetchLessons();
+  }, [page, selectedTags.join(','), searchQuery, sort, enabled, includeUnpublished, refreshTrigger]);
 
   return { blogs, totalCount, totalPages, loading, error };
 };

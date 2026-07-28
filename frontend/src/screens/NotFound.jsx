@@ -39,7 +39,7 @@ export default function NotFound() {
               <FiHome className="w-4 h-4" />
               Go Home
             </Button>
-            <Button variant="outline" onClick={() => navigate('/BlogPosts')}>
+            <Button variant="outline" onClick={() => navigate('/blog')}>
               <FiBookOpen className="w-4 h-4" />
               Browse Stories
             </Button>

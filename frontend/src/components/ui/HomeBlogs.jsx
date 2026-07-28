@@ -1,106 +1,245 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import BlogCard from './BlogCard.jsx';
 import useBlogs from '../../hooks/useBlogs.js';
 import useTags from '../../hooks/useTags.js';
-import { Button } from './Button.jsx';
 import { Skeleton } from './Skeleton.jsx';
-import { FiLoader, FiAlertCircle } from 'react-icons/fi';
-import { motion } from 'framer-motion';
+import { Input } from './Input.jsx';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  FiBookOpen,
+  FiSearch,
+  FiSliders,
+  FiCheck,
+  FiChevronDown,
+  FiZap,
+  FiTrendingUp,
+  FiClock,
+} from 'react-icons/fi';
+
+const sortOptions = [
+  { id: 'latest', label: 'Latest Created', icon: FiZap, color: 'text-amber-400' },
+  { id: 'views', label: 'Most Viewed', icon: FiTrendingUp, color: 'text-rose-400' },
+  { id: 'oldest', label: 'Oldest Created', icon: FiClock, color: 'text-sky-400' },
+];
+
+function SortDropdown({ sortOption, onSelect }) {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const activeSort = sortOptions.find((o) => o.id === sortOption) || sortOptions[0];
+  const ActiveIcon = activeSort.icon;
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative inline-block text-left" ref={dropdownRef}>
+      {/* Trigger Button */}
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="h-10 px-3.5 rounded-xl border border-border/80 bg-background/90 hover:bg-muted/80 text-foreground text-xs md:text-sm font-extrabold flex items-center gap-2 cursor-pointer transition-all duration-200 shadow-xs hover:border-primary/50"
+      >
+        <FiSliders size={13} className="text-primary" />
+        <ActiveIcon size={14} className={activeSort.color} />
+        <span>{activeSort.label}</span>
+        <FiChevronDown
+          size={14}
+          className={`text-muted-foreground transition-transform duration-200 ${open ? 'rotate-180 text-primary' : ''}`}
+        />
+      </button>
+
+      {/* Floating Menu */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.96 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="absolute right-0 mt-2 w-48 rounded-2xl border border-border/80 bg-card/95 backdrop-blur-xl shadow-xl z-50 p-1.5 flex flex-col gap-1"
+          >
+            {sortOptions.map((opt) => {
+              const Icon = opt.icon;
+              const isSelected = opt.id === sortOption;
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => {
+                    onSelect(opt.id);
+                    setOpen(false);
+                  }}
+                  className={`w-full px-3 py-2 rounded-xl text-xs md:text-sm font-extrabold flex items-center justify-between transition-all duration-150 cursor-pointer ${
+                    isSelected
+                      ? 'bg-primary/15 text-primary border border-primary/30'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/70'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Icon size={14} className={opt.color} />
+                    <span>{opt.label}</span>
+                  </div>
+                  {isSelected && <FiCheck size={14} className="text-primary" />}
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export default function HomeBlogs() {
   const [page, setPage] = useState(1);
   const [selectedTag, setSelectedTag] = useState('');
-  const { blogs, totalPages, loading, error } = useBlogs(page, selectedTag ? [selectedTag] : []);
-  const { tags } = useTags();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState('latest');
+
+  const { tags: dbTags } = useTags();
+
+  const { blogs, totalPages, totalCount, loading, error } = useBlogs(
+    page,
+    selectedTag ? [selectedTag] : [],
+    searchQuery,
+    sortOption
+  );
+
+  // Dynamic tags list from DB ONLY
+  const categories = useMemo(() => {
+    if (!dbTags || !Array.isArray(dbTags)) return ['All'];
+
+    const extracted = dbTags.map((t) => (typeof t === 'object' ? t.name : t)).filter(Boolean);
+    return ['All', ...new Set(extracted)];
+  }, [dbTags]);
 
   return (
-    <section style={{ maxWidth: 1280, margin: '0 auto', padding: '0 1.5rem 6rem' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '2.5rem' }}>
-        <div>
-          <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.875rem', fontWeight: 800, color: 'var(--fg)', marginBottom: 4 }}>
-            Latest Stories
-          </h2>
-          <p style={{ fontSize: '0.875rem', color: 'var(--fg-muted)' }}>
-            Fresh ideas delivered directly to you.
-          </p>
+    <section id="notes-section" className="max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12 scroll-mt-20">
+      {/* ─── Controls Header: Search, Topic Pills & Custom Sort Dropdown ─── */}
+      <div className="flex flex-col gap-5 mb-8">
+        {/* Search & Sort Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-card/80 backdrop-blur-md p-2 md:p-3 rounded-2xl border border-border/80 shadow-xs">
+          {/* Live Search Input */}
+          <div className="relative flex-1 min-w-[200px]">
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Input
+              type="text"
+              placeholder="Search notes by title or content..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(1);
+              }}
+              className="pl-9 h-10 text-xs md:text-sm rounded-xl bg-background border-border/80 focus:border-primary"
+            />
+          </div>
+
+          {/* Custom Animated Sort Dropdown */}
+          <SortDropdown
+            sortOption={sortOption}
+            onSelect={(val) => {
+              setSortOption(val);
+              setPage(1);
+            }}
+          />
         </div>
 
-        {/* Tag filters */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {[{ id: '', name: 'All' }, ...tags].map(tag => (
-            <Button
-              key={tag.id}
-              variant={selectedTag === tag.name || (tag.id === '' && selectedTag === '') ? 'default' : 'outline'}
-              size="sm"
-              className="btn-pill"
-              onClick={() => { setSelectedTag(tag.id === '' ? '' : (selectedTag === tag.name ? '' : tag.name)); setPage(1); }}
-            >
-              {tag.name}
-            </Button>
-          ))}
+        {/* Dynamic Database Topic Pills */}
+        <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-muted/30 border border-border/60 flex-wrap">
+          {categories.map((cat) => {
+            const isActive = (cat === 'All' && !selectedTag) || selectedTag === cat;
+            return (
+              <button
+                key={cat}
+                onClick={() => {
+                  setSelectedTag(cat === 'All' ? '' : cat);
+                  setPage(1);
+                }}
+                className={`px-3.5 py-1.5 rounded-xl text-xs md:text-sm font-extrabold transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+                  isActive
+                    ? 'bg-card text-foreground shadow-xs border border-border/80 font-black'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
+              >
+                {isActive && <FiCheck size={13} className="text-primary" />}
+                <span>{cat}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Loading */}
+      {/* Loading Skeletons */}
       {loading && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
-          {[1, 2, 3].map(i => (
-            <div key={i} className="card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <Skeleton style={{ height: 190, borderRadius: 8 }} />
-              <div style={{ display: 'flex', gap: 6 }}>
-                <Skeleton style={{ width: 50, height: 18, borderRadius: 9999 }} />
-                <Skeleton style={{ width: 60, height: 18, borderRadius: 9999 }} />
+        <div className="flex flex-col gap-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="p-4 rounded-[22px] border border-border bg-card flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4 flex-1">
+                <Skeleton className="w-16 h-16 rounded-2xl" />
+                <div className="flex flex-col gap-2 flex-1">
+                  <Skeleton className="h-5 w-2/3" />
+                  <Skeleton className="h-4 w-1/3" />
+                </div>
               </div>
-              <Skeleton style={{ width: '85%', height: 20 }} />
-              <Skeleton style={{ width: '65%', height: 20 }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
-                <Skeleton style={{ width: 80, height: 14 }} />
-                <Skeleton style={{ width: 40, height: 14 }} />
-              </div>
+              <Skeleton className="h-6 w-20" />
             </div>
           ))}
         </div>
       )}
 
-      {/* Error */}
+      {/* Error State */}
       {!loading && error && (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '4rem 0' }}>
-          <FiAlertCircle size={36} style={{ color: '#ef4444' }} />
-          <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#ef4444' }}>{error}</p>
+        <div className="p-6 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 font-bold text-sm text-center">
+          Failed to load notes. Please check your connection.
         </div>
       )}
 
-      {/* Empty */}
-      {!loading && !error && blogs.length === 0 && (
-        <p style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--fg-muted)', fontSize: '0.875rem' }}>
-          No stories yet for this tag.
-        </p>
+      {/* Notes Stack */}
+      {!loading && !error && (
+        <div className="flex flex-col gap-3.5">
+          {blogs.length === 0 ? (
+            <div className="p-12 text-center rounded-[24px] border border-border bg-card flex flex-col items-center gap-3">
+              <FiBookOpen size={36} className="text-muted-foreground" />
+              <h3 className="font-heading font-extrabold text-lg text-foreground">No notes available</h3>
+              <p className="text-xs text-muted-foreground max-w-sm">
+                Try adjusting your search query or topic filter.
+              </p>
+            </div>
+          ) : (
+            blogs.map((blog) => (
+              <BlogCard key={blog.id} blog={blog} />
+            ))
+          )}
+        </div>
       )}
 
-      {/* Grid */}
-      {!loading && !error && blogs.length > 0 && (
-        <>
-          <motion.div
-            key={`${selectedTag}-${page}`}
-            initial="hidden"
-            animate="show"
-            variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.07 } } }}
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}
+      {/* Pagination */}
+      {!loading && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-10">
+          <button
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="px-4 py-2 rounded-xl border border-border bg-card text-xs font-extrabold text-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:border-primary/50 transition-all cursor-pointer"
           >
-            {blogs.map(blog => <BlogCard key={blog.id} blog={blog} />)}
-          </motion.div>
-
-          {totalPages > 1 && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: '3.5rem' }}>
-              <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>← Previous</Button>
-              <span style={{ fontSize: '0.875rem', color: 'var(--fg-muted)' }}>
-                Page <strong style={{ color: 'var(--fg)' }}>{page}</strong> / <strong style={{ color: 'var(--fg)' }}>{totalPages}</strong>
-              </span>
-              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Next →</Button>
-            </div>
-          )}
-        </>
+            Previous
+          </button>
+          <span className="text-xs font-bold text-muted-foreground px-2">
+            Page {page} of {totalPages} ({totalCount} notes)
+          </span>
+          <button
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+            className="px-4 py-2 rounded-xl border border-border bg-card text-xs font-extrabold text-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:border-primary/50 transition-all cursor-pointer"
+          >
+            Next
+          </button>
+        </div>
       )}
     </section>
   );

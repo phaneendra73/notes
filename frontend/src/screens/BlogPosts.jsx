@@ -1,96 +1,109 @@
 import React, { useState } from 'react';
+import useBlogs from '../hooks/useBlogs.js';
+import useTags from '../hooks/useTags.js';
+import SEO from '../components/SEO.jsx';
 import { Appbar, Footer } from '../components/ui/index.js';
 import BlogCard from '../components/ui/BlogCard.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { Input } from '../components/ui/Input.jsx';
 import { Skeleton } from '../components/ui/Skeleton.jsx';
-import useBlogs from '../hooks/useBlogs.js';
-import useTags from '../hooks/useTags.js';
-import { FiSearch, FiLoader, FiAlertCircle } from 'react-icons/fi';
+import { FiSearch, FiBookOpen } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 
 export default function BlogPosts() {
-  const [page, setPage] = useState(1);
   const [selectedTag, setSelectedTag] = useState('');
+  const [sortOption, setSortOption] = useState('latest');
   const [searchQuery, setSearchQuery] = useState('');
-  const { blogs, totalPages, loading, error } = useBlogs(page, selectedTag ? [selectedTag] : [], searchQuery);
+  const [page, setPage] = useState(1);
+
   const { tags } = useTags();
+  const { blogs, pagination, loading, error } = useBlogs(page, selectedTag ? [selectedTag] : [], searchQuery, sortOption);
+
+  const categories = ['All', 'C# & .NET', 'DSA', 'SQL', 'System Design'];
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <SEO
+        title="Explore Tech Notes — C#, .NET, DSA & SQL"
+        description="Browse, filter, and search study notes on C#, .NET Core, Data Structures & Algorithms, and SQL."
+      />
       <Appbar />
-      <main style={{ flex: 1, maxWidth: 1280, margin: '0 auto', width: '100%', padding: '3rem 1.5rem' }}>
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          style={{ marginBottom: '2.5rem' }}
-        >
-          <h1
-            style={{ fontFamily: 'Outfit, sans-serif', fontSize: '2.5rem', fontWeight: 800, color: 'var(--fg)', marginBottom: 4 }}
-          >
-            All Stories
-          </h1>
-          <p style={{ fontSize: '0.875rem', color: 'var(--fg-muted)' }}>
-            Explore every article published here.
-          </p>
-        </motion.div>
 
-        {/* Controls */}
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 md:px-6 py-8 md:py-12">
+        {/* Controls Bar (Matching Screenshot 1 Header Layout) */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '2.5rem', padding: '1rem', border: '1px solid var(--border)', borderRadius: 20, background: 'rgba(255,255,255,0.62)', backdropFilter: 'blur(10px)', boxShadow: '0 16px 40px rgba(2, 6, 23, 0.04)' }}
+          className="flex flex-wrap items-center justify-between gap-4 mb-8"
         >
-          {/* Search bar */}
-          <div style={{ position: 'relative', width: '100%', maxWidth: 340 }}>
-            <FiSearch size={15} style={{
-              position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
-              color: 'var(--fg-muted)', pointerEvents: 'none',
-            }} />
-            <Input
-              type="text"
-              placeholder="Search by title..."
-              style={{ paddingLeft: 36 }}
-              value={searchQuery}
-              onChange={e => { setSearchQuery(e.target.value); setPage(1); }}
-            />
+          {/* Left Side: Topic Category Pills */}
+          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-muted/40 border border-border/80 flex-wrap">
+            {categories.map((cat) => {
+              const isActive = (cat === 'All' && !selectedTag) || selectedTag === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => {
+                    setSelectedTag(cat === 'All' ? '' : cat);
+                    setPage(1);
+                  }}
+                  className={`px-4 py-2 rounded-xl text-xs md:text-sm font-extrabold transition-all duration-200 cursor-pointer ${
+                    isActive
+                      ? 'bg-card text-foreground shadow-sm border border-border/80'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {cat}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Tags */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {[{ id: '', name: 'All' }, ...tags].map(tag => (
-              <Button
-                key={tag.id}
-                variant={selectedTag === tag.name || (tag.id === '' && selectedTag === '') ? 'default' : 'outline'}
-                size="sm"
-                className="btn-pill"
-                onClick={() => { setSelectedTag(tag.id === '' ? '' : (selectedTag === tag.name ? '' : tag.name)); setPage(1); }}
-              >
-                {tag.name}
-              </Button>
-            ))}
+          {/* Right Side: Search & Sort Dropdown */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="relative w-48 md:w-56">
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                type="text"
+                placeholder="Search notes..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
+                }}
+                className="pl-9 h-9 text-xs rounded-xl bg-card border-border"
+              />
+            </div>
+
+            <select
+              value={sortOption}
+              onChange={(e) => {
+                setSortOption(e.target.value);
+                setPage(1);
+              }}
+              className="h-9 px-3 text-xs font-bold rounded-xl bg-card border border-border text-foreground cursor-pointer outline-none focus:border-primary"
+            >
+              <option value="latest">Sort by: Latest</option>
+              <option value="views">Sort by: Most Viewed</option>
+              <option value="oldest">Sort by: Oldest</option>
+            </select>
           </div>
         </motion.div>
 
-        {/* Loading */}
+        {/* Loading Skeletons */}
         {loading && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
-            {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <Skeleton style={{ height: 190, borderRadius: 8 }} />
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <Skeleton style={{ width: 55, height: 18, borderRadius: 9999 }} />
-                  <Skeleton style={{ width: 45, height: 18, borderRadius: 9999 }} />
+          <div className="flex flex-col gap-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="p-4 rounded-[22px] border border-border bg-card flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 flex-1">
+                  <Skeleton className="w-16 h-16 rounded-2xl" />
+                  <div className="flex flex-col gap-2 flex-1">
+                    <Skeleton className="h-5 w-2/3" />
+                    <Skeleton className="h-4 w-1/3" />
+                  </div>
                 </div>
-                <Skeleton style={{ width: '80%', height: 20 }} />
-                <Skeleton style={{ width: '60%', height: 20 }} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
-                  <Skeleton style={{ width: 75, height: 14 }} />
-                  <Skeleton style={{ width: 40, height: 14 }} />
-                </div>
+                <Skeleton className="h-6 w-20" />
               </div>
             ))}
           </div>
@@ -98,54 +111,61 @@ export default function BlogPosts() {
 
         {/* Error */}
         {!loading && error && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '4rem 0' }}>
-            <FiAlertCircle size={36} style={{ color: '#ef4444' }} />
-            <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#ef4444' }}>{error}</p>
+          <div className="p-6 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 font-bold text-sm text-center">
+            Failed to load notes. Please check connection and try again.
           </div>
         )}
 
-        {/* Empty */}
-        {!loading && !error && blogs.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25 }}
-            style={{ textAlign: 'center', padding: '4rem 1.25rem', border: '1px dashed var(--border)', borderRadius: 24, background: 'rgba(255,255,255,0.45)', color: 'var(--fg-muted)' }}
-          >
-            <p style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--fg)', marginBottom: 8 }}>No stories match this view yet.</p>
-            <p style={{ fontSize: '0.9rem' }}>Try a broader search or browse the full collection.</p>
-          </motion.div>
+        {/* Course Cards List Stack (Direct click opens note slide reader) */}
+        {!loading && !error && (
+          <div className="flex flex-col gap-3.5">
+            {blogs.length === 0 ? (
+              <div className="p-12 text-center rounded-[24px] border border-border bg-card flex flex-col items-center gap-3">
+                <FiBookOpen size={36} className="text-muted-foreground" />
+                <h3 className="font-heading font-extrabold text-lg text-foreground">No notes found</h3>
+                <p className="text-xs text-muted-foreground max-w-sm">
+                  Try adjusting your search query or topic filter.
+                </p>
+              </div>
+            ) : (
+              blogs.map((blog) => (
+                <BlogCard
+                  key={blog.id}
+                  blog={blog}
+                />
+              ))
+            )}
+          </div>
         )}
 
-        {/* Results grid */}
-        {!loading && !error && blogs.length > 0 && (
-          <>
-            <motion.div
-              key={`${selectedTag}-${page}-${searchQuery}`}
-              initial="hidden"
-              animate="show"
-              variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.07 } } }}
-              style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}
+        {/* Pagination */}
+        {!loading && pagination && pagination.totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 mt-10">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+              className="rounded-xl font-extrabold text-xs"
             >
-              {blogs.map(blog => <BlogCard key={blog.id} blog={blog} />)}
-            </motion.div>
-
-            {totalPages > 1 && (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: '3rem' }}>
-                <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
-                  ← Previous
-                </Button>
-                <span style={{ fontSize: '0.875rem', color: 'var(--fg-muted)' }}>
-                  Page <strong style={{ color: 'var(--fg)' }}>{page}</strong> of <strong style={{ color: 'var(--fg)' }}>{totalPages}</strong>
-                </span>
-                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
-                  Next →
-                </Button>
-              </div>
-            )}
-          </>
+              Previous
+            </Button>
+            <span className="text-xs font-bold text-muted-foreground px-2">
+              Page {pagination.currentPage} of {pagination.totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= pagination.totalPages}
+              onClick={() => setPage((p) => p + 1)}
+              className="rounded-xl font-extrabold text-xs"
+            >
+              Next
+            </Button>
+          </div>
         )}
       </main>
+
       <Footer />
     </div>
   );

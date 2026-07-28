@@ -9,51 +9,13 @@ import {
   FiSettings,
   FiTag,
   FiLogIn,
-  FiBook,
+  FiBookOpen,
   FiSun,
   FiMoon,
   FiMenu,
   FiX,
+  FiUser,
 } from "react-icons/fi";
-import { cn } from "../../lib/utils.js";
-
-function NavLink({ to, label, icon: Icon, active }) {
-  const navigate = useNavigate();
-  return (
-    <button
-      onClick={() => navigate(to)}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "0.375rem",
-        padding: "0.375rem 0.75rem",
-        borderRadius: 8,
-        border: "none",
-        background: active ? "var(--neon-subtle)" : "transparent",
-        color: active ? "var(--neon)" : "var(--fg-muted)",
-        fontWeight: active ? 600 : 500,
-        fontSize: "0.875rem",
-        cursor: "pointer",
-        transition: "all 0.15s ease",
-      }}
-      onMouseEnter={(e) => {
-        if (!active) {
-          e.currentTarget.style.background = "var(--neon-subtle)";
-          e.currentTarget.style.color = "var(--fg)";
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!active) {
-          e.currentTarget.style.background = "transparent";
-          e.currentTarget.style.color = "var(--fg-muted)";
-        }
-      }}
-    >
-      {Icon && <Icon style={{ width: 14, height: 14 }} />}
-      {label}
-    </button>
-  );
-}
 
 export default function Appbar() {
   const navigate = useNavigate();
@@ -70,285 +32,207 @@ export default function Appbar() {
   };
 
   const navLinks = [
-    { to: "/BlogPosts", icon: FiBook, label: "Explore" },
+    { to: "/", icon: FiBookOpen, label: "Explore" },
     ...(isAuthenticated
       ? [
-          { to: "/Admin", icon: FiSettings, label: "Manage" },
-          { to: "/Tag", icon: FiTag, label: "Tags" },
+          { to: "/profile", icon: FiUser, label: "Profile" },
+          { to: "/admin", icon: FiSettings, label: "Studio" },
+          { to: "/tags", icon: FiTag, label: "Tags" },
         ]
       : []),
   ];
 
-  const headerStyle = {
-    position: "sticky",
-    top: 0,
-    zIndex: 50,
-    background: isDark ? "rgba(3,7,18,0.9)" : "rgba(255,255,255,0.9)",
-    backdropFilter: "blur(20px)",
-    borderBottom: "1px solid var(--border)",
-    width: "100%",
-  };
-
-  const iconBtnStyle = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    border: "1px solid var(--border)",
-    background: "rgba(255,255,255,0.6)",
-    color: "var(--fg-muted)",
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-    boxShadow: "0 6px 16px rgba(2, 6, 23, 0.04)",
+  const handleNavClick = (to) => {
+    if (to === "/") {
+      if (location.pathname === "/") {
+        const el = document.getElementById("notes-section");
+        if (el) el.scrollIntoView({ behavior: "smooth" });
+      } else {
+        navigate("/#notes-section");
+      }
+    } else {
+      navigate(to);
+    }
   };
 
   return (
     <motion.header
-      initial={{ y: -16, opacity: 0 }}
+      initial={{ y: -12, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-      style={headerStyle}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="sticky top-0 z-50 w-full bg-background/85 backdrop-blur-xl border-b border-border/60 shadow-xs"
     >
-      <div
-        style={{
-          maxWidth: 1280,
-          margin: "0 auto",
-          padding: "0 1.5rem",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          height: 56,
-        }}
-      >
-        {/* Group Logo + Desktop Nav on the Left */}
-        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-          {/* Logo */}
+      <div className="max-w-6xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between gap-4">
+        {/* Left: Logo + Desktop Nav */}
+        <div className="flex items-center gap-6">
+          {/* Logo Mark */}
           <button
             onClick={() => navigate("/")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-            }}
+            className="flex items-center gap-2.5 bg-transparent border-none cursor-pointer group"
           >
-            <span
-              style={{
-                fontFamily: "Outfit, sans-serif",
-                fontWeight: 800,
-                fontSize: "1.08rem",
-                color: "var(--fg)",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              Kadha <span style={{ color: "var(--primary)" }}>Journal</span>
-            </span>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary via-emerald-400 to-cyan-400 p-[1px] shadow-[0_0_15px_var(--neon-glow)] transition-transform duration-200 group-hover:scale-105">
+              <div className="w-full h-full bg-card rounded-[11px] flex items-center justify-center p-1.5">
+                <img src="/assets/kadha.svg" alt="Kadha Logo" className="w-full h-full object-contain" />
+              </div>
+            </div>
+            <div className="flex flex-col text-left">
+              <span className="font-heading font-extrabold text-base md:text-lg text-foreground tracking-tight leading-none group-hover:text-primary transition-colors">
+                Kadha<span className="text-primary font-black ml-1">Notes</span>
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-0.5">
+                Tech & Engineering
+              </span>
+            </div>
           </button>
 
-          {/* Desktop nav */}
-          <nav
-            style={{ display: "flex", alignItems: "center", gap: 4 }}
-            className="hidden-on-mobile"
-          >
-            {navLinks.map((n) => (
-              <NavLink
-                key={n.to}
-                to={n.to}
-                icon={n.icon}
-                label={n.label}
-                active={location.pathname === n.to}
-              />
-            ))}
+          {/* Desktop Navigation Links */}
+          <nav className="hidden md:flex items-center gap-1.5 ml-2">
+            {navLinks.map((n) => {
+              const active = location.pathname === n.to;
+              const Icon = n.icon;
+
+              return (
+                <button
+                  key={n.to}
+                  onClick={() => handleNavClick(n.to)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs md:text-sm font-bold flex items-center gap-2 transition-all duration-200 cursor-pointer ${
+                    active
+                      ? "bg-primary/15 text-primary border border-primary/30 shadow-[0_0_12px_var(--neon-glow)]"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                  }`}
+                >
+                  <Icon size={15} />
+                  <span>{n.label}</span>
+                </button>
+              );
+            })}
           </nav>
         </div>
 
-        {/* Right side */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {/* Theme toggle */}
+        {/* Right: Actions & Theme Toggle */}
+        <div className="flex items-center gap-2.5">
+          {/* Theme Toggle Button */}
           <button
-            style={iconBtnStyle}
             onClick={() => setTheme(isDark ? "light" : "dark")}
-            title="Toggle theme"
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "var(--neon)";
-              e.currentTarget.style.color = "var(--neon)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "var(--border)";
-              e.currentTarget.style.color = "var(--fg-muted)";
-            }}
+            className="w-9 h-9 rounded-xl border border-border/80 bg-card/80 text-foreground flex items-center justify-center cursor-pointer hover:border-primary/50 hover:bg-muted/80 transition-all duration-200"
+            title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
           >
-            {isDark ? <FiSun size={16} /> : <FiMoon size={16} />}
+            {isDark ? (
+              <FiSun size={17} className="text-amber-400 transition-transform duration-300 hover:rotate-45" />
+            ) : (
+              <FiMoon size={17} className="text-indigo-400 transition-transform duration-300 hover:-rotate-12" />
+            )}
           </button>
 
-          {/* Desktop auth buttons */}
-          <div
-            className="hidden-on-mobile"
-            style={{ alignItems: "center", gap: 8 }}
-          >
-            {isAuthenticated ? (
-              <>
-                <img
-                  src="/assets/kadha.svg"
-                  alt="Profile"
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: "50%",
-                    border: "2px solid var(--primary)",
-                    objectFit: "cover",
-                    cursor: "pointer",
-                    marginRight: 6,
-                  }}
-                  onClick={() => navigate("/Admin")}
-                  title="Admin Dashboard"
-                />
-                <Button
-                  variant="neon"
-                  size="sm"
-                  className="rounded-xl"
-                  onClick={() => navigate("/Editor")}
-                >
-                  <FiEdit3 size={14} /> Write
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="rounded-xl"
-                  style={{ color: "#ef4444", borderColor: "rgba(239,68,68,0.16)" }}
-                >
-                  <FiLogOut size={14} /> Sign Out
-                </Button>
-              </>
-            ) : (
+          {/* Authenticated Desktop Actions */}
+          {isAuthenticated ? (
+            <div className="hidden md:flex items-center gap-2">
               <Button
+                variant="neon"
                 size="sm"
-                className="btn-pill rounded-xl"
-                onClick={() => navigate("/Signin")}
+                className="rounded-xl font-extrabold text-xs shadow-sm gap-1.5"
+                onClick={() => navigate("/editor")}
               >
-                <FiLogIn size={14} /> Sign In
+                <FiEdit3 size={14} /> New Note
               </Button>
-            )}
-          </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSignOut}
+                className="rounded-xl text-xs font-bold text-red-500 hover:text-red-600 hover:bg-red-500/10 gap-1.5"
+              >
+                <FiLogOut size={14} /> Sign Out
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/signin")}
+              className="hidden md:flex rounded-xl text-xs font-extrabold border-border hover:border-primary/50 gap-1.5"
+            >
+              <FiLogIn size={14} className="text-primary" /> Author Sign In
+            </Button>
+          )}
 
-          {/* Mobile hamburger */}
+          {/* Mobile Hamburger Button */}
           <button
-            className="visible-on-mobile"
-            style={iconBtnStyle}
             onClick={() => setMobileOpen((o) => !o)}
+            className="md:hidden w-9 h-9 rounded-xl border border-border/80 bg-card/80 text-foreground flex items-center justify-center cursor-pointer hover:border-primary/50 transition-all"
+            title="Toggle Menu"
           >
-            {mobileOpen ? <FiX size={16} /> : <FiMenu size={16} />}
+            {mobileOpen ? <FiX size={18} /> : <FiMenu size={18} />}
           </button>
         </div>
       </div>
 
-      {/* Mobile drawer */}
+      {/* Mobile Drawer Menu */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
-            key="mobile-menu"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            style={{
-              overflow: "hidden",
-              borderTop: "1px solid var(--border)",
-              background: "var(--bg)",
-            }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="md:hidden overflow-hidden border-t border-border/80 bg-card/95 backdrop-blur-xl"
           >
-            <div
-              style={{
-                padding: "1rem",
-                display: "flex",
-                flexDirection: "column",
-                gap: 8,
-              }}
-            >
-              {navLinks.map((n) => (
-                <NavLink
-                  key={n.to}
-                  to={n.to}
-                  icon={n.icon}
-                  label={n.label}
-                  active={location.pathname === n.to}
-                />
-              ))}
-              <div
-                style={{
-                  paddingTop: 8,
-                  marginTop: 4,
-                  borderTop: "1px solid var(--border)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                }}
-              >
+            <div className="p-4 flex flex-col gap-2">
+              {navLinks.map((n) => {
+                const active = location.pathname === n.to;
+                const Icon = n.icon;
+                return (
+                  <button
+                    key={n.to}
+                    onClick={() => {
+                      handleNavClick(n.to);
+                      setMobileOpen(false);
+                    }}
+                    className={`p-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all text-left cursor-pointer ${
+                      active
+                        ? "bg-primary/15 text-primary font-extrabold border border-primary/30"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    <Icon size={16} />
+                    <span>{n.label}</span>
+                  </button>
+                );
+              })}
+
+              <div className="pt-3 mt-1 border-t border-border/80 flex flex-col gap-2">
                 {isAuthenticated ? (
                   <>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        padding: "0.25rem 0.5rem",
-                        marginBottom: 4,
-                      }}
-                    >
-                      <img
-                        src="/assets/kadha.svg"
-                        alt="Profile"
-                        style={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: "50%",
-                          border: "2px solid var(--primary)",
-                          objectFit: "cover",
-                        }}
-                      />
-                      <span
-                        style={{
-                          fontSize: "0.875rem",
-                          fontWeight: 600,
-                          color: "var(--fg)",
-                        }}
-                      >
-                        Dashboard
-                      </span>
-                    </div>
                     <Button
                       variant="neon"
                       size="sm"
+                      className="rounded-xl font-extrabold text-xs justify-center gap-2"
                       onClick={() => {
-                        navigate("/Editor");
+                        navigate("/editor");
                         setMobileOpen(false);
                       }}
                     >
-                      <FiEdit3 size={14} /> Write a Story
+                      <FiEdit3 size={15} /> New Note
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={handleSignOut}
-                      style={{ color: "#ef4444" }}
+                      className="rounded-xl text-xs font-bold text-red-500 justify-center gap-2"
                     >
-                      <FiLogOut size={14} /> Sign Out
+                      <FiLogOut size={15} /> Sign Out
                     </Button>
                   </>
                 ) : (
                   <Button
+                    variant="outline"
                     size="sm"
+                    className="rounded-xl text-xs font-extrabold justify-center gap-2"
                     onClick={() => {
-                      navigate("/Signin");
+                      navigate("/signin");
                       setMobileOpen(false);
                     }}
                   >
-                    <FiLogIn size={14} /> Sign In
+                    <FiLogIn size={15} className="text-primary" /> Author Sign In
                   </Button>
                 )}
               </div>

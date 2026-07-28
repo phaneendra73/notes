@@ -1,62 +1,113 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Card, CardContent } from './Card.jsx';
-import { Badge } from './Badge.jsx';
-import { FiClock, FiArrowUpRight } from 'react-icons/fi';
+import { FiEye, FiClock, FiLayers } from 'react-icons/fi';
 
 export default function BlogCard({ blog }) {
   const navigate = useNavigate();
-  const date = new Date(blog.createdAt).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric',
-  });
+
+  // Calculate relative time
+  const getRelativeTime = (dateStr) => {
+    if (!dateStr) return 'Recently';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+
+    if (diffInDays === 0) return 'Today';
+    if (diffInDays === 1) return 'Yesterday';
+    if (diffInDays < 30) return `${diffInDays} days ago`;
+    if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} mo ago`;
+    return `${Math.floor(diffInDays / 365)} yr ago`;
+  };
+
+  // Get real slide/chapter count from DB field slidesCount
+  const countSlides = (b) => {
+    if (typeof b.slidesCount === 'number' && b.slidesCount > 0) return b.slidesCount;
+    if (typeof b.chaptersCount === 'number' && b.chaptersCount > 0) return b.chaptersCount;
+    if (Array.isArray(b.slides) && b.slides.length > 0) return b.slides.length;
+    const raw = b.content || b.markdownContent || '';
+    if (!raw) return 1;
+    let parts = [];
+    if (raw.includes('\n---\n') || raw.includes('\n***\n')) {
+      parts = raw.split(/\n(?:---|[*]{3})\n/g);
+    } else if (raw.split(/(?=\n#{1,2}\s+)/g).length > 1) {
+      parts = raw.split(/(?=\n#{1,2}\s+)/g);
+    } else {
+      parts = [raw];
+    }
+    return Math.max(1, parts.filter((p) => p.trim().length > 0).length);
+  };
+
+  const slidesCount = countSlides(blog);
+  const viewsCount = blog.viewsCount || 0;
+  const readingTime = blog.readingTime ? `${blog.readingTime} min` : '3 min';
+
+  const handleCardClick = () => {
+    navigate(`/read?id=${blog.id}`);
+  };
 
   return (
     <motion.div
-      whileHover={{ y: -6, scale: 1.01 }}
-      transition={{ duration: 0.22, ease: 'easeOut' }}
-      onClick={() => navigate(`/Read?id=${blog.id}`)}
-      className="cursor-pointer h-full flex flex-col group"
+      whileHover={{ scale: 1.008, y: -2 }}
+      transition={{ duration: 0.18, ease: 'easeOut' }}
+      onClick={handleCardClick}
+      className="cursor-pointer w-full group"
     >
-      <Card className="h-full flex flex-col overflow-hidden border border-border/80 bg-card hover:border-primary/50 transition-all duration-300 rounded-[22px] hover:shadow-[0_18px_56px_rgba(2,6,23,0.08)]">
-        {/* Image wrapper */}
-        <div className="relative h-48 w-full overflow-hidden flex-shrink-0">
+      <div className="p-4 md:p-5 rounded-[22px] border border-border/80 bg-muted/30 hover:bg-card hover:border-primary/50 transition-all duration-200 shadow-sm flex items-center justify-between gap-4">
+        {/* Far Left: Thumbnail */}
+        <div className="flex items-center gap-4 min-w-0 flex-1">
           <img
-            src={blog.imageUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800'}
+            src={blog.imageUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=300'}
             alt={blog.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="w-14 h-14 md:w-16 md:h-16 rounded-2xl object-cover border border-border/60 shrink-0 group-hover:scale-105 transition-transform duration-300 shadow-xs"
             loading="lazy"
           />
-          <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-extrabold uppercase tracking-wider text-white/95 shadow-sm">
-            <FiClock className="text-primary w-3 h-3" />
-            4 Min
+
+          {/* Middle: Title & Tags */}
+          <div className="flex flex-col gap-1 min-w-0 flex-1">
+            <h3 className="font-heading font-extrabold text-base md:text-lg text-foreground leading-snug tracking-tight truncate group-hover:text-primary transition-colors">
+              {blog.title}
+            </h3>
+
+            {blog.tags && Array.isArray(blog.tags) && blog.tags.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                {blog.tags.slice(0, 4).map((tag, idx) => (
+                  <span
+                    key={idx}
+                    className="px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-black uppercase tracking-wider"
+                  >
+                    {typeof tag === 'object' ? tag.name : tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        <CardContent className="flex-1 flex flex-col p-5">
-          {/* Tags */}
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {(blog.tags?.length ? blog.tags : ['Stories']).slice(0, 3).map(tag => (
-              <Badge key={tag} variant="outline" className="border-primary/20 bg-primary/5 text-primary text-[9px] px-2 py-0.5">{tag}</Badge>
-            ))}
-          </div>
-
-          {/* Title */}
-          <h3 className="font-heading font-extrabold text-base text-foreground leading-snug mb-3 tracking-tight line-clamp-2 group-hover:text-primary transition-colors duration-200">
-            {blog.title}
-          </h3>
-
-          <div className="flex-1" />
-
-          {/* Card Footer info */}
-          <div className="flex items-center justify-between pt-4 mt-4 border-t border-border/70 text-xs text-muted-foreground font-medium">
-            <span>{date}</span>
-            <span className="flex items-center gap-1 text-primary font-bold group-hover:translate-x-1 transition-transform duration-200">
-              Read <FiArrowUpRight className="w-3.5 h-3.5" />
+        {/* Far Right: Real DB Stats (Slides Count, Views Count, Reading Time, Date) */}
+        <div className="flex flex-col items-end shrink-0 text-right gap-1">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 text-xs md:text-sm font-black text-foreground bg-primary/15 px-2.5 py-0.5 rounded-xl border border-primary/30">
+              <FiLayers size={13} className="text-primary" />
+              {slidesCount} {slidesCount === 1 ? 'Slide' : 'Slides'}
             </span>
           </div>
-        </CardContent>
-      </Card>
+
+          <div className="flex items-center gap-3 text-[11px] font-bold text-muted-foreground mt-0.5">
+            <span className="inline-flex items-center gap-1" title="Views">
+              <FiEye size={12} className="text-sky-400" />
+              {viewsCount}
+            </span>
+            <span>•</span>
+            <span className="inline-flex items-center gap-1" title="Reading Time">
+              <FiClock size={12} className="text-amber-400" />
+              {readingTime}
+            </span>
+            <span>•</span>
+            <span>{getRelativeTime(blog.createdAt)}</span>
+          </div>
+        </div>
+      </div>
     </motion.div>
   );
 }

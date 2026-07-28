@@ -78,6 +78,12 @@
   --neon-glow: rgba(0, 201, 110, 0.15);
   --neon-subtle: rgba(0, 201, 110, 0.05);
 
+  /* ── Shorthand aliases for reader/editor components ── */
+  --bg: var(--background);
+  --fg: var(--foreground);
+  --fg-muted: var(--muted-foreground);
+  --neon: var(--primary);
+
   color-scheme: light;
 }
 
@@ -114,6 +120,12 @@
   --radius: 0.5rem;
   --neon-glow: rgba(0, 229, 122, 0.25);
   --neon-subtle: rgba(0, 229, 122, 0.07);
+
+  /* ── Shorthand aliases for reader/editor components ── */
+  --bg: var(--background);
+  --fg: var(--foreground);
+  --fg-muted: var(--muted-foreground);
+  --neon: var(--primary);
 
   color-scheme: dark;
 }

@@ -9,7 +9,8 @@
     "db:init": "wrangler d1 execute kadha2-db --local --file=schema.sql",
     "db:seed": "wrangler d1 execute kadha2-db --local --file=seed.sql",
     "db:remote-init": "wrangler d1 execute kadha2-db --remote --file=schema.sql",
-    "db:remote-seed": "wrangler d1 execute kadha2-db --remote --file=seed.sql"
+    "db:remote-seed": "wrangler d1 execute kadha2-db --remote --file=seed.sql",
+    "db:migrate": "wrangler d1 execute kadha2-db --remote --file=migrate.sql"
   },
   "dependencies": {
     "hono": "^4.6.14"
