@@ -4,6 +4,8 @@ import { FiBookOpen, FiArrowUp } from 'react-icons/fi';
 
 import useTags from '../../hooks/useTags.js';
 
+import kadhaLogo from '../../assets/kadha.svg';
+
 export default function Footer() {
   const navigate = useNavigate();
   const year = new Date().getFullYear();
@@ -36,7 +38,7 @@ export default function Footer() {
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-primary to-cyan-400 p-[1px] shadow-[0_0_12px_var(--neon-glow)]">
                 <div className="w-full h-full bg-card rounded-[11px] flex items-center justify-center p-1.5">
-                  <img src="/assets/kadha.svg" alt="Kadha Logo" className="w-full h-full object-contain" />
+                  <img src={kadhaLogo} alt="Kadha Logo" className="w-full h-full object-contain" />
                 </div>
               </div>
               <span className="font-heading font-extrabold text-base text-foreground">

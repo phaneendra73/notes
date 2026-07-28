@@ -72,7 +72,7 @@ export default function Appbar() {
           >
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary via-emerald-400 to-cyan-400 p-[1px] shadow-[0_0_15px_var(--neon-glow)] transition-transform duration-200 group-hover:scale-105">
               <div className="w-full h-full bg-card rounded-[11px] flex items-center justify-center p-1.5">
-                <img src="/assets/kadha.svg" alt="Kadha Logo" className="w-full h-full object-contain" />
+                <img src={kadhaLogo} alt="Kadha Logo" className="w-full h-full object-contain" />
               </div>
             </div>
             <div className="flex flex-col text-left">
