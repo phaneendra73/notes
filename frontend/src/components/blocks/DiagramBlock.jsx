@@ -1,30 +1,35 @@
 import React, { useEffect, useRef } from 'react';
-import mermaid from 'mermaid';
-
-mermaid.initialize({
-  startOnLoad: false,
-  theme: 'dark',
-  securityLevel: 'loose',
-});
 
 export default function DiagramBlock({ content = '' }) {
   const containerRef = useRef(null);
 
   useEffect(() => {
     if (!containerRef.current || !content) return;
-    const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
+    const id = `mermaid-${Math.random().toString(36).substring(2, 11)}`;
+    let isMounted = true;
 
-    try {
-      mermaid.render(id, content.trim()).then(({ svg }) => {
-        if (containerRef.current) {
+    import('mermaid')
+      .then((module) => {
+        const mermaid = module.default;
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: 'dark',
+          securityLevel: 'loose',
+        });
+        return mermaid.render(id, content.trim());
+      })
+      .then(({ svg }) => {
+        if (isMounted && containerRef.current) {
           containerRef.current.innerHTML = svg;
         }
-      }).catch((err) => {
+      })
+      .catch((err) => {
         console.error('Mermaid render error:', err);
       });
-    } catch {
-      /* ignore render errors */
-    }
+
+    return () => {
+      isMounted = false;
+    };
   }, [content]);
 
   return (
