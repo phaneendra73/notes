@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "./Button.jsx";
+import kadhaLogo from '../../assets/kadha.svg';
 import {
   FiEdit3,
   FiLogOut,

@@ -1,23 +1,48 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { getenv } from '../utils/getenv.js';
-import { Appbar, Footer } from '../components/ui/index.js';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card.jsx';
-import { Input } from '../components/ui/Input.jsx';
-import { Label } from '../components/ui/Label.jsx';
-import { Button } from '../components/ui/Button.jsx';
-import { useToast } from '../components/Toaster.jsx';
-import { FiMail, FiLock, FiShield, FiLoader } from 'react-icons/fi';
-import { motion } from 'framer-motion';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { getenv } from "../utils/getenv.js";
+import { Appbar, Footer } from "../components/ui/index.js";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "../components/ui/Card.jsx";
+import { Input } from "../components/ui/Input.jsx";
+import { Label } from "../components/ui/Label.jsx";
+import { Button } from "../components/ui/Button.jsx";
+import { useToast } from "../components/Toaster.jsx";
+import {
+  FiMail,
+  FiLock,
+  FiShield,
+  FiLoader,
+  FiEye,
+  FiEyeOff,
+} from "react-icons/fi";
+import { motion } from "framer-motion";
 
-function FormField({ id, label, icon: Icon, ...props }) {
+function FormField({ id, label, icon: Icon, rightElement, ...props }) {
   return (
     <div className="flex flex-col gap-1.5 w-full">
       <Label htmlFor={id}>{label}</Label>
       <div className="relative">
-        <Icon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-        <Input id={id} className="pl-9 h-10 w-full" {...props} />
+        <Icon
+          size={14}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+        />
+        <Input
+          id={id}
+          className={`pl-9 ${rightElement ? "pr-10" : ""} h-10 w-full`}
+          {...props}
+        />
+        {rightElement && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+            {rightElement}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -26,21 +51,38 @@ function FormField({ id, label, icon: Icon, ...props }) {
 export default function Signin() {
   const navigate = useNavigate();
   const toast = useToast();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) return toast({ title: 'Missing fields', description: 'Enter author email and password.', variant: 'destructive' });
+    if (!email || !password)
+      return toast({
+        title: "Missing fields",
+        description: "Enter author email and password.",
+        variant: "destructive",
+      });
     setLoading(true);
     try {
-      const res = await axios.post(`${getenv('APIURL')}/user/signin`, { email, password });
-      localStorage.setItem('jwt', res.data.jwt);
-      toast({ title: 'Author Authenticated!', description: 'Welcome back, Phaneendra.', variant: 'success' });
-      navigate('/profile');
+      const res = await axios.post(`${getenv("APIURL")}/user/signin`, {
+        email,
+        password,
+      });
+      localStorage.setItem("jwt", res.data.jwt);
+      toast({
+        title: "Author Authenticated!",
+        description: "Welcome back, Phaneendra.",
+        variant: "success",
+      });
+      navigate("/profile");
     } catch (err) {
-      toast({ title: 'Authentication Failed', description: err.response?.data?.error || 'Invalid credentials.', variant: 'destructive' });
+      toast({
+        title: "Authentication Failed",
+        description: err.response?.data?.error || "Invalid credentials.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -70,14 +112,52 @@ export default function Signin() {
                 Author Portal
               </CardTitle>
               <CardDescription className="text-sm text-muted-foreground mt-1">
-                Sign in to manage stories, write essays, and configure platform tags.
+                Sign in to manage stories, write essays, and configure platform
+                tags.
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-2">
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                <FormField id="email" label="Author Email" icon={FiMail} type="email" placeholder="phaneendra@kadha.io" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                <FormField id="password" label="Author Password" icon={FiLock} type="password" placeholder="••••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                <Button type="submit" disabled={loading} size="lg" className="mt-4 w-full h-10">
+                <FormField
+                  id="email"
+                  label="Author Email"
+                  icon={FiMail}
+                  type="email"
+                  placeholder="author@kadhanotes.io"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+                <FormField
+                  id="password"
+                  label="Author Password"
+                  icon={FiLock}
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  rightElement={
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="text-muted-foreground hover:text-foreground focus:outline-none bg-transparent border-none p-0 cursor-pointer flex items-center justify-center"
+                      title={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? (
+                        <FiEyeOff size={16} />
+                      ) : (
+                        <FiEye size={16} />
+                      )}
+                    </button>
+                  }
+                />
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  size="lg"
+                  className="mt-4 w-full h-10"
+                >
                   {loading && <FiLoader size={16} className="spin mr-2" />}
                   Sign In to Studio
                 </Button>

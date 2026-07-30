@@ -4,13 +4,13 @@ import { Helmet } from "react-helmet-async";
 export default function SEO({
   title = "Kadha Notes — Personal Engineering Study Platform",
   description = "A personal engineering study hub to review concepts in C#, .NET Core, Data Structures & Algorithms, SQL, and System Design.",
-  image = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1200",
+  image = "https://avatars.githubusercontent.com/u/118047850?s=96&v=4",
   article = false,
   author = "Phaneendra",
   publishedTime,
   tags = [],
 }) {
-  const siteName = "Kadha 2.0";
+  const siteName = "Kadha Notes";
   const fullTitle = title.includes(siteName) ? title : `${title} | ${siteName}`;
 
   // JSON-LD structured data for articles

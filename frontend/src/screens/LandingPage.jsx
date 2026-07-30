@@ -18,8 +18,8 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen flex flex-col bg-[rgb(var(--background))]">
       <SEO
-        title="Kadha 2.0 — Edge-Powered Publishing Platform"
-        description="Kadha 2.0 brings lightning-fast edge database execution, interactive reader claps, markdown split authoring, and glassmorphic aesthetics."
+        title="Kadha Notes — Note & Concept Sharing Platform"
+        description="Kadha Notes is an interactive note sharing platform for exploring engineering concepts, technical articles, and study notes."
       />
       <Appbar />
       <main className="flex-grow">

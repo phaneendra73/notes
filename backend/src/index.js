@@ -3,8 +3,15 @@ import { cors } from 'hono/cors';
 import { userprofilesRoutes } from './routes/user.js';
 import { lessonRoutes } from './routes/lessons.js';
 import { mediaRoutes } from './routes/media.js';
+import { createRateLimiter } from './routes/rateLimiter.js';
 
 const app = new Hono();
+
+// Rate limiting: Strict limit for auth endpoints (10 req/min per IP)
+const authLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 10, keyPrefix: 'auth' });
+
+// Rate limiting: General limit for public API (100 req/min per IP)
+const globalLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 100, keyPrefix: 'global' });
 
 // Restrict CORS to allowed origins
 app.use('/*', cors({
@@ -21,6 +28,10 @@ app.use('/*', cors({
   allowHeaders: ['Content-Type', 'Authorization'],
   maxAge: 86400,
 }));
+
+// Apply Rate Limiters
+app.use('/user/*', authLimiter);
+app.use('/*', globalLimiter);
 
 // Route mounts on lessons table architecture
 app.route('/user', userprofilesRoutes);
