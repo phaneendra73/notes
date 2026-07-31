@@ -68,6 +68,8 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage }) {
   const [copiedId, setCopiedId] = useState(null);
   const [activeTab, setActiveTab] = useState('gallery'); // 'gallery' | 'upload'
   const [dragOver, setDragOver] = useState(false);
+  const [selectedSize, setSelectedSize] = useState('300px');
+  const [selectedAlign, setSelectedAlign] = useState('center');
 
   // Fetch images from Media Library API
   const fetchMedia = async () => {
@@ -230,18 +232,46 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage }) {
               </Button>
             </div>
 
-            {/* Search filter */}
-            {activeTab === 'gallery' && (
-              <div className="relative w-full sm:w-64">
-                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5" />
-                <Input
-                  placeholder="Search media..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-8 text-xs rounded-xl"
-                />
-              </div>
-            )}
+            {/* Search filter & Image formatting options */}
+            <div className="flex items-center gap-3 flex-wrap">
+              {onSelectImage && (
+                <div className="flex items-center gap-2 text-xs bg-background/80 px-2.5 py-1 rounded-xl border border-border">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase">Size:</span>
+                  <select
+                    value={selectedSize}
+                    onChange={(e) => setSelectedSize(e.target.value)}
+                    className="bg-transparent text-xs font-extrabold text-primary focus:outline-none cursor-pointer"
+                  >
+                    <option value="300px">Small (300px)</option>
+                    <option value="500px">Medium (500px)</option>
+                    <option value="full">Full Width</option>
+                  </select>
+
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase ml-1">Align:</span>
+                  <select
+                    value={selectedAlign}
+                    onChange={(e) => setSelectedAlign(e.target.value)}
+                    className="bg-transparent text-xs font-extrabold text-primary focus:outline-none cursor-pointer"
+                  >
+                    <option value="center">Center</option>
+                    <option value="left">Left</option>
+                    <option value="right">Right</option>
+                  </select>
+                </div>
+              )}
+
+              {activeTab === 'gallery' && (
+                <div className="relative w-full sm:w-56">
+                  <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5" />
+                  <Input
+                    placeholder="Search media..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 h-8 text-xs rounded-xl"
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Modal Body */}
@@ -328,7 +358,7 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage }) {
                                 size="xs"
                                 variant="default"
                                 onClick={() => {
-                                  onSelectImage(img.url, img.filename);
+                                  onSelectImage(img.url, img.filename, selectedSize, selectedAlign);
                                   onClose();
                                 }}
                                 className="w-full font-extrabold rounded-lg text-xs"

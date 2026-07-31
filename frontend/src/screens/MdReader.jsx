@@ -8,7 +8,7 @@ import TrackHeader from "../components/reader/TrackHeader.jsx";
 import TrackCanvas from "../components/reader/TrackCanvas.jsx";
 import TrackBottomDock from "../components/reader/TrackBottomDock.jsx";
 import SEO from "../components/SEO.jsx";
-import { renderMarkdown } from "../utils/markdown.js";
+import { renderMarkdown, renderMermaidDiagrams } from "../utils/markdown.js";
 
 const BATCH_SIZE = 5; // Load 5 slides at a time
 
@@ -241,10 +241,13 @@ const fetchSlideBatch = useCallback(
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleNext, handlePrev, handleSelectSlide, slides.length]);
 
-  // Auto-scroll to top on slide change
+// Auto-scroll to top on slide change & render diagrams
   useEffect(() => {
     if (!loading && blog) {
       window.scrollTo({ top: 0, behavior: "smooth" });
+      renderMermaidDiagrams();
+      const timer = setTimeout(() => renderMermaidDiagrams(), 150);
+      return () => clearTimeout(timer);
     }
   }, [currentSlideIndex, loading, blog]);
 

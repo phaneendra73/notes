@@ -9,6 +9,8 @@ import {
   FiTrash2,
   FiChevronUp,
   FiChevronDown,
+  FiChevronLeft,
+  FiChevronRight,
   FiImage,
   FiCode,
   FiHelpCircle,
@@ -23,16 +25,14 @@ import {
   FiCopy,
   FiBold,
   FiItalic,
-  FiList,
   FiCheckSquare,
   FiZap,
   FiX,
-  FiCheck,
-  FiCornerDownLeft,
   FiType,
-  FiSliders,
+  FiSidebar,
+  FiRotateCcw,
 } from 'react-icons/fi';
-import { renderMarkdown, calculateSlideReadingTime } from '../../utils/markdown.js';
+import { renderMarkdown, calculateSlideReadingTime, renderMermaidDiagrams } from '../../utils/markdown.js';
 
 export default function VisualSlideEditor({
   slides = [],
@@ -45,66 +45,45 @@ export default function VisualSlideEditor({
   saving = false,
 }) {
   const [activeSlideIdx, setActiveSlideIdx] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mediaModalOpen, setMediaModalOpen] = useState(false);
   const [coverMediaModalOpen, setCoverMediaModalOpen] = useState(false);
   const [fullScreen, setFullScreen] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
   const [slashMenuOpen, setSlashMenuOpen] = useState(false);
   const [slashQuery, setSlashQuery] = useState('');
-  const [lastAutoSaved, setLastAutoSaved] = useState(null);
-  const [hasRestorableDraft, setHasRestorableDraft] = useState(false);
   const textareaRef = useRef(null);
 
-  // Check for restorable draft on initial load
+  // Clear any legacy local draft storage on mount
   useEffect(() => {
     try {
-      const savedDraft = localStorage.getItem('kadha_active_editor_draft');
-      if (savedDraft) {
-        const parsed = JSON.parse(savedDraft);
-        if (parsed.slides?.length > 0 && (parsed.title || parsed.slides.length > 1)) {
-          setHasRestorableDraft(true);
-        }
-      }
+      localStorage.removeItem('kadha_active_editor_draft');
     } catch {}
   }, []);
 
-  // Auto-save timer every 5 seconds
+  // Render mermaid diagrams in preview mode
   useEffect(() => {
-    if (!slides || slides.length === 0) return;
-    const timer = setTimeout(() => {
-      try {
-        localStorage.setItem(
-          'kadha_active_editor_draft',
-          JSON.stringify({ title, imageUrl, slides, updatedAt: new Date().toISOString() })
-        );
-        const now = new Date();
-        setLastAutoSaved(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-      } catch {}
-    }, 5000);
+    if (previewMode) {
+      const render = () => renderMermaidDiagrams();
+      render();
+      const timer = setTimeout(render, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [previewMode, activeSlideIdx, slides]);
 
-    return () => clearTimeout(timer);
-  }, [slides, title, imageUrl]);
-
-  // Restore draft handler
-  const handleRestoreDraft = () => {
-    try {
-      const savedDraft = localStorage.getItem('kadha_active_editor_draft');
-      if (savedDraft) {
-        const parsed = JSON.parse(savedDraft);
-        if (parsed.title && onChangeTitle) onChangeTitle(parsed.title);
-        if (parsed.imageUrl && onChangeImageUrl) onChangeImageUrl(parsed.imageUrl);
-        if (parsed.slides && onChangeSlides) onChangeSlides(parsed.slides);
-        setHasRestorableDraft(false);
+  // Ctrl+S / Cmd+S Keyboard Shortcut to Save
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (onSave && !saving) {
+          onSave();
+        }
       }
-    } catch {}
-  };
-
-  const handleDismissDraft = () => {
-    try {
-      localStorage.removeItem('kadha_active_editor_draft');
-      setHasRestorableDraft(false);
-    } catch {}
-  };
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onSave, saving]);
 
   const activeSlide = slides[activeSlideIdx] || slides[0] || { title: 'Concept 1', content: '' };
 
@@ -128,7 +107,7 @@ export default function VisualSlideEditor({
 
   // Duplicate slide
   const handleDuplicateSlide = (idx, e) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     const source = slides[idx];
     const duplicated = {
       ...source,
@@ -143,7 +122,7 @@ export default function VisualSlideEditor({
 
   // Remove slide
   const handleRemoveSlide = (idxToRemove, e) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     if (slides.length <= 1) return;
     const updated = slides.filter((_, i) => i !== idxToRemove);
     onChangeSlides(updated);
@@ -154,7 +133,7 @@ export default function VisualSlideEditor({
 
   // Reorder slides
   const handleMoveSlide = (idx, direction, e) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     const targetIdx = idx + direction;
     if (targetIdx < 0 || targetIdx >= slides.length) return;
     const copy = [...slides];
@@ -167,7 +146,6 @@ export default function VisualSlideEditor({
 
   /**
    * Smart block insertion at cursor position.
-   * If cursor is preceded by '/', it strips the '/' and inserts the block inline!
    */
   const insertBlockAtCursor = (snippet) => {
     if (!textareaRef.current) {
@@ -184,7 +162,6 @@ export default function VisualSlideEditor({
     let before = text.substring(0, start);
     let after = text.substring(end);
 
-    // Strip trailing '/' if present
     if (before.endsWith('/')) {
       before = before.slice(0, -1);
     }
@@ -203,6 +180,8 @@ export default function VisualSlideEditor({
       }
     }, 50);
   };
+
+
 
   // Apply inline formatting (**bold**, *italic*, `code`)
   const applyInlineFormatting = (prefix, suffix = prefix) => {
@@ -234,226 +213,252 @@ export default function VisualSlideEditor({
     (cmd) => cmd.label.toLowerCase().includes(slashQuery.toLowerCase()) || cmd.desc.toLowerCase().includes(slashQuery.toLowerCase())
   );
 
-  // Insert image selected from Media Library into slide content
-  const handleInsertImageFromLibrary = (imgUrl, altName) => {
-    insertBlockAtCursor(`![${altName || 'Course Diagram'}](${imgUrl})`);
+  const handleInsertImageFromLibrary = (imgUrl, altName, size = '300px', align = 'center') => {
+    const cleanAlt = (altName || 'Course Diagram').split('|')[0].trim();
+    insertBlockAtCursor(`![${cleanAlt} | ${size} | ${align}](${imgUrl})`);
   };
 
   return (
-    <div className={`w-full flex flex-col gap-6 ${fullScreen ? 'fixed inset-0 z-50 bg-background p-6 overflow-y-auto' : ''}`}>
-      {/* ── Studio Top Header Bar ── */}
-      <div className="p-5 rounded-[24px] border border-border/80 bg-gradient-to-r from-card via-card to-primary/5 shadow-[0_12px_40px_rgba(2,6,23,0.06)] backdrop-blur-md flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5 flex-1 min-w-[300px]">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary via-emerald-400 to-teal-500 text-black flex items-center justify-center font-black shadow-[0_0_22px_var(--neon-glow)] shrink-0">
-            <FiLayers size={22} />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/30 px-2.5 py-0.5 rounded-full shadow-sm">
-                Interactive Lesson Studio
-              </span>
+    <div className={`w-full flex flex-col gap-5 pb-6 ${fullScreen ? 'fixed inset-0 z-50 bg-background p-6 overflow-y-auto' : ''}`}>
+
+      {/* ── Studio Top Header Bar (Clean 2-Row Responsive Layout) ── */}
+      <div className="p-4 md:p-5 rounded-[24px] border border-border/80 bg-gradient-to-r from-card via-card to-primary/5 shadow-md backdrop-blur-md flex flex-col gap-3">
+        {/* Top Header Row 1: Title Input & Quick Actions */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 flex-1 min-w-[280px]">
+            {/* Sidebar Toggle Button */}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className={`p-2.5 rounded-xl border text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
+                sidebarOpen
+                  ? 'bg-primary/10 border-primary/30 text-primary hover:bg-primary/20'
+                  : 'bg-muted/40 border-border text-muted-foreground hover:text-foreground hover:bg-muted'
+              }`}
+              title={sidebarOpen ? 'Collapse Slides Sidebar for Full Width View' : 'Expand Slides Sidebar'}
+            >
+              <FiSidebar size={16} />
+              <span className="hidden sm:inline">{sidebarOpen ? 'Hide Slides' : 'Show Slides'}</span>
+            </button>
+
+            {/* Studio Badge */}
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary via-emerald-400 to-teal-500 text-black flex items-center justify-center font-black shadow-sm shrink-0">
+              <FiLayers size={18} />
             </div>
+
+            {/* Course Title Input */}
             <Input
               value={title}
               onChange={(e) => onChangeTitle(e.target.value)}
-              placeholder="e.g. Building High-Performance WebSockets in Node.js"
-              className="h-11 text-lg font-extrabold tracking-tight border-transparent hover:border-border focus:border-primary bg-background/60 rounded-xl"
+              placeholder="Enter Lesson Title (e.g. Tree Traversals & Complexity)..."
+              className="h-10 text-base md:text-lg font-extrabold tracking-tight border-border/70 hover:border-primary/50 focus:border-primary bg-background/80 rounded-xl flex-1"
             />
+          </div>
+
+          {/* Right Header Controls */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Mode Switcher Pill */}
+            <div className="flex items-center p-1 rounded-2xl bg-muted/40 border border-border/80">
+              <button
+                onClick={() => setPreviewMode(false)}
+                className={`px-3 py-1 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  !previewMode ? 'bg-primary text-black shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <FiEdit3 size={13} /> Visual Editor
+              </button>
+              <button
+                onClick={() => setPreviewMode(true)}
+                className={`px-3 py-1 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  previewMode ? 'bg-primary text-black shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <FiEye size={13} /> Preview
+              </button>
+            </div>
+
+            {/* Fullscreen Button */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setFullScreen((v) => !v)}
+              className="rounded-xl p-2.5 border-border"
+              title={fullScreen ? 'Exit Fullscreen' : 'Fullscreen Focus Mode'}
+            >
+              {fullScreen ? <FiMinimize2 size={15} /> : <FiMaximize2 size={15} />}
+            </Button>
+
+            {/* Save Button in Top Header */}
+            <Button
+              size="sm"
+              variant="default"
+              disabled={saving}
+              onClick={onSave}
+              className="rounded-xl gap-1.5 font-extrabold text-xs shadow-md"
+            >
+              <FiSave size={14} /> {saving ? 'Saving...' : 'Save & Publish'}
+            </Button>
+          </div>
+        </div>
+
+        {/* Top Header Row 2: Compact Asset Bar (Cover & Media Buttons) */}
+        <div className="flex items-center justify-between pt-2 border-t border-border/40 text-xs flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => setCoverMediaModalOpen(true)}
+              className="rounded-xl gap-1.5 font-extrabold text-xs border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
+            >
+              <FiImage size={13} /> {imageUrl ? 'Change Cover Image' : 'Add Course Cover Image'}
+            </Button>
+
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => setMediaModalOpen(true)}
+              className="rounded-xl gap-1.5 font-extrabold text-xs border-primary/30 text-primary hover:bg-primary/10"
+            >
+              <FiImage size={13} /> Media Library
+            </Button>
+
             {imageUrl && (
-              <div className="mt-2 flex items-center gap-3 p-2 rounded-xl bg-background/80 border border-primary/30 max-w-md">
-                <img src={imageUrl} alt="Course Cover" className="w-12 h-12 rounded-lg object-cover border border-border" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-foreground truncate">{imageUrl}</p>
-                  <p className="text-[10px] text-primary font-semibold">Course Cover Image Attached</p>
-                </div>
+              <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-purple-500/10 border border-purple-500/30 text-[11px] font-bold text-purple-300">
+                <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                <span className="truncate max-w-[200px]">Cover attached</span>
                 <button
                   onClick={() => onChangeImageUrl && onChangeImageUrl('')}
-                  className="p-1 text-red-400 hover:text-red-500 text-xs font-bold"
-                  title="Remove cover image"
+                  className="ml-1 text-red-400 hover:text-red-300 font-black text-xs"
+                  title="Remove course cover image"
                 >
-                  Remove
+                  ×
                 </button>
               </div>
             )}
           </div>
-        </div>
 
-        {/* Header Action Controls */}
-        <div className="flex items-center gap-2.5">
-          {/* Auto-Saved Badge */}
-          {lastAutoSaved && (
-            <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-xl flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Saved {lastAutoSaved}
-            </span>
-          )}
-
-          {/* Mode Switcher */}
-          <div className="flex items-center p-1 rounded-2xl bg-muted/30 border border-border/80">
-            <button
-              onClick={() => setPreviewMode(false)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
-                !previewMode ? 'bg-primary text-black shadow-[0_0_14px_var(--neon-glow)]' : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <FiEdit3 size={13} /> Visual Editor
-            </button>
-            <button
-              onClick={() => setPreviewMode(true)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
-                previewMode ? 'bg-primary text-black shadow-[0_0_14px_var(--neon-glow)]' : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <FiEye size={13} /> Live Reader Preview
-            </button>
-          </div>
-
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setCoverMediaModalOpen(true)}
-            className="rounded-xl gap-1.5 font-extrabold text-xs border-purple-500/30 text-purple-400 hover:bg-purple-500/10 shadow-sm"
-          >
-            <FiImage size={14} /> Course Cover Image
-          </Button>
-
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setMediaModalOpen(true)}
-            className="rounded-xl gap-1.5 font-extrabold text-xs border-primary/30 text-primary hover:bg-primary/10 shadow-sm"
-          >
-            <FiImage size={14} /> Media Library
-          </Button>
-
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setFullScreen((v) => !v)}
-            className="rounded-xl p-2.5"
-            title={fullScreen ? 'Exit Fullscreen Focus' : 'Fullscreen Focus Mode'}
-          >
-            {fullScreen ? <FiMinimize2 size={16} /> : <FiMaximize2 size={16} />}
-          </Button>
-
-          <Button
-            size="sm"
-            variant="default"
-            disabled={saving}
-            onClick={onSave}
-            className="rounded-xl gap-1.5 font-extrabold text-xs shadow-[0_0_20px_var(--neon-glow)]"
-          >
-            <FiSave size={14} /> {saving ? 'Publishing...' : 'Save & Publish'}
-          </Button>
+          <span className="text-[11px] text-muted-foreground font-medium">
+            Tip: Press <kbd className="px-1.5 py-0.5 rounded bg-muted text-primary border border-border font-mono font-bold">Ctrl + S</kbd> to save anytime
+          </span>
         </div>
       </div>
 
       {/* ── Main Studio Split Grid ── */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-        {/* ── Left Sidebar: Slide Organizer Cards ── */}
-        <div className="md:col-span-4 rounded-[24px] border border-border bg-card p-4 flex flex-col gap-3.5 shadow-sm sticky top-6">
-          <div className="flex items-center justify-between pb-3 border-b border-border">
-            <div className="flex items-center gap-2 font-heading font-extrabold text-sm text-foreground">
-              <FiGrid size={16} className="text-primary" /> Slide Sequence ({slides.length})
-            </div>
-            <Button
-              size="xs"
-              variant="default"
-              onClick={handleAddSlide}
-              className="rounded-xl gap-1 font-extrabold text-[11px] shadow-[0_0_12px_rgba(0,201,110,0.25)]"
+        {/* ── Left Sidebar: Collapsible Slide Organizer ── */}
+        <AnimatePresence initial={false}>
+          {sidebarOpen && (
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: '100%', opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:col-span-4 rounded-[24px] border border-border bg-card p-4 flex flex-col gap-3.5 shadow-sm sticky top-6 max-h-[80vh]"
             >
-              <FiPlus size={13} /> Add Slide
-            </Button>
-          </div>
-
-          {/* Slide Cards List */}
-          <div className="flex flex-col gap-2.5 max-h-[64vh] overflow-y-auto pr-1">
-            {slides.map((s, idx) => {
-              const isActive = idx === activeSlideIdx;
-              const hasQuiz = (s.content || '').includes('```quiz');
-              const readTime = calculateSlideReadingTime(s.content);
-
-              return (
-                <motion.div
-                  key={idx}
-                  onClick={() => setActiveSlideIdx(idx)}
-                  whileHover={{ scale: 1.01 }}
-                  className={`flex flex-col gap-2 p-3.5 rounded-2xl border cursor-pointer transition-all duration-200 ${
-                    isActive
-                      ? 'border-primary bg-gradient-to-r from-primary/15 via-primary/5 to-transparent text-foreground shadow-[0_4px_24px_rgba(0,201,110,0.14)]'
-                      : 'border-border/70 hover:border-primary/40 hover:bg-muted/30 text-muted-foreground'
-                  }`}
+              <div className="flex items-center justify-between pb-3 border-b border-border">
+                <div className="flex items-center gap-2 font-heading font-extrabold text-sm text-foreground">
+                  <FiGrid size={16} className="text-primary" /> Slide Sequence ({slides.length})
+                </div>
+                <Button
+                  size="xs"
+                  variant="default"
+                  onClick={handleAddSlide}
+                  className="rounded-xl gap-1 font-extrabold text-[11px] shadow-sm"
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <span
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
-                          isActive ? 'bg-primary text-black' : 'bg-muted text-muted-foreground'
-                        }`}
-                      >
-                        {idx + 1}
-                      </span>
-                      <span className={`truncate text-xs ${isActive ? 'font-extrabold text-foreground' : 'font-semibold'}`}>
-                        {s.title || `Concept ${idx + 1}`}
-                      </span>
-                    </div>
+                  <FiPlus size={13} /> Add Slide
+                </Button>
+              </div>
 
-                    {/* Controls */}
-                    <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 shrink-0">
-                      <button
-                        disabled={idx === 0}
-                        onClick={(e) => handleMoveSlide(idx, -1, e)}
-                        className="p-1 hover:text-primary disabled:opacity-20 cursor-pointer"
-                        title="Move Up"
-                      >
-                        <FiChevronUp size={13} />
-                      </button>
-                      <button
-                        disabled={idx === slides.length - 1}
-                        onClick={(e) => handleMoveSlide(idx, 1, e)}
-                        className="p-1 hover:text-primary disabled:opacity-20 cursor-pointer"
-                        title="Move Down"
-                      >
-                        <FiChevronDown size={13} />
-                      </button>
-                      <button
-                        onClick={(e) => handleDuplicateSlide(idx, e)}
-                        className="p-1 hover:text-primary cursor-pointer"
-                        title="Duplicate Slide"
-                      >
-                        <FiCopy size={12} />
-                      </button>
-                      {slides.length > 1 && (
-                        <button
-                          onClick={(e) => handleRemoveSlide(idx, e)}
-                          className="p-1 text-red-400 hover:text-red-500 cursor-pointer"
-                          title="Delete Slide"
-                        >
-                          <FiTrash2 size={13} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
+              {/* Slide Cards List */}
+              <div className="flex flex-col gap-2.5 max-h-[64vh] overflow-y-auto pr-1">
+                {slides.map((s, idx) => {
+                  const isActive = idx === activeSlideIdx;
+                  const hasQuiz = (s.content || '').includes('```quiz');
+                  const readTime = calculateSlideReadingTime(s.content);
 
-                  {/* Card Meta */}
-                  <div className="flex items-center gap-2 text-[10px] font-medium text-muted-foreground pl-8">
-                    <span className="flex items-center gap-1">
-                      <FiClock size={10} className="text-primary" /> {readTime}
-                    </span>
-                    {hasQuiz && (
-                      <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 font-extrabold border border-amber-500/20">
-                        Quiz Card
-                      </span>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
+                  return (
+                    <motion.div
+                      key={idx}
+                      onClick={() => setActiveSlideIdx(idx)}
+                      whileHover={{ scale: 1.01 }}
+                      className={`flex flex-col gap-2 p-3.5 rounded-2xl border cursor-pointer transition-all duration-200 ${
+                        isActive
+                          ? 'border-primary bg-gradient-to-r from-primary/15 via-primary/5 to-transparent text-foreground shadow-sm'
+                          : 'border-border/70 hover:border-primary/40 hover:bg-muted/30 text-muted-foreground'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <span
+                            className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
+                              isActive ? 'bg-primary text-black' : 'bg-muted text-muted-foreground'
+                            }`}
+                          >
+                            {idx + 1}
+                          </span>
+                          <span className={`truncate text-xs ${isActive ? 'font-extrabold text-foreground' : 'font-semibold'}`}>
+                            {s.title || `Concept ${idx + 1}`}
+                          </span>
+                        </div>
 
-        {/* ── Right Work Area: Slide Visual Editor ── */}
-        <div className="md:col-span-8 rounded-[24px] border border-border bg-card p-6 flex flex-col gap-5 shadow-sm">
+                        {/* Slide Quick Controls */}
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          <button
+                            disabled={idx === 0}
+                            onClick={(e) => handleMoveSlide(idx, -1, e)}
+                            className="p-1 hover:text-primary disabled:opacity-20 cursor-pointer"
+                            title="Move Up"
+                          >
+                            <FiChevronUp size={13} />
+                          </button>
+                          <button
+                            disabled={idx === slides.length - 1}
+                            onClick={(e) => handleMoveSlide(idx, 1, e)}
+                            className="p-1 hover:text-primary disabled:opacity-20 cursor-pointer"
+                            title="Move Down"
+                          >
+                            <FiChevronDown size={13} />
+                          </button>
+                          <button
+                            onClick={(e) => handleDuplicateSlide(idx, e)}
+                            className="p-1 hover:text-primary cursor-pointer"
+                            title="Duplicate Slide"
+                          >
+                            <FiCopy size={12} />
+                          </button>
+                          {slides.length > 1 && (
+                            <button
+                              onClick={(e) => handleRemoveSlide(idx, e)}
+                              className="p-1 text-red-400 hover:text-red-500 cursor-pointer"
+                              title="Delete Slide"
+                            >
+                              <FiTrash2 size={13} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Card Meta */}
+                      <div className="flex items-center gap-2 text-[10px] font-medium text-muted-foreground pl-8">
+                        <span className="flex items-center gap-1">
+                          <FiClock size={10} className="text-primary" /> {readTime}
+                        </span>
+                        {hasQuiz && (
+                          <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 font-extrabold border border-amber-500/20">
+                            Quiz Card
+                          </span>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Right Work Area: Slide Visual Editor / Preview (Expands to 12 cols when sidebar collapsed) ── */}
+        <div className={`${sidebarOpen ? 'md:col-span-8' : 'md:col-span-12'} transition-all duration-300 rounded-[24px] border border-border bg-card p-6 flex flex-col gap-5 shadow-sm`}>
+          
           {/* Active Slide Title Header */}
           <div className="flex flex-col gap-2 p-4 rounded-2xl bg-muted/20 border border-border/80">
             <div className="flex items-center justify-between">
@@ -467,12 +472,12 @@ export default function VisualSlideEditor({
             <Input
               value={activeSlide.title}
               onChange={(e) => updateActiveSlide('title', e.target.value)}
-              placeholder="e.g. Concept 1: Why HTTP Isn't Enough for Realtime Apps"
+              placeholder="e.g. Concept 1: Why Binary Trees Are Essential for Fast Lookups"
               className="h-11 text-base font-extrabold tracking-tight rounded-xl bg-background border-border focus:border-primary"
             />
           </div>
 
-          {/* Sleek Quick Blocks Insertion Toolbar */}
+          {/* Quick Blocks Insertion Toolbar */}
           <div className="p-3 rounded-2xl bg-gradient-to-r from-card via-muted/30 to-card border border-border flex flex-col gap-2">
             <div className="flex items-center justify-between px-1">
               <span className="text-[10px] font-black uppercase tracking-wider text-primary flex items-center gap-1">
@@ -486,42 +491,42 @@ export default function VisualSlideEditor({
             <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => insertBlockAtCursor('## Section Heading')}
-                className="px-3 py-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                className="px-3 py-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
               >
                 <FiType size={13} /> Heading
               </button>
 
               <button
                 onClick={() => insertBlockAtCursor('> 💡 **Key Takeaway**: Summarize core lesson here.')}
-                className="px-3 py-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                className="px-3 py-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
               >
                 <span>💡</span> Callout
               </button>
 
               <button
                 onClick={() => insertBlockAtCursor('```javascript\n// Code example\nconst socket = new WebSocket("wss://api.example.com");\n```')}
-                className="px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                className="px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
               >
                 <FiCode size={13} /> Code Block
               </button>
 
               <button
                 onClick={() => setMediaModalOpen(true)}
-                className="px-3 py-1.5 rounded-xl border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                className="px-3 py-1.5 rounded-xl border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
               >
                 <FiImage size={13} /> Media Library
               </button>
 
               <button
-                onClick={() => insertBlockAtCursor('```mermaid\nsequenceDiagram\nClient->>Server: Handshake Request\nServer-->>Client: 101 Switching Protocols\n```')}
-                className="px-3 py-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                onClick={() => insertBlockAtCursor('```mermaid\ngraph TD\n    A((10)) --> B((5))\n    A --> C((15))\n    B --> D((2))\n    B --> E((7))\n    C --> F((12))\n```')}
+                className="px-3 py-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
               >
                 <span>📊</span> Diagram
               </button>
 
               <button
                 onClick={() => insertBlockAtCursor('```quiz\nquestion: What is the main advantage of WebSockets?\noptions:\n  - Full-duplex real-time communication\n  - Better SEO indexing\n  - Database caching\nanswer: 0\nexplanation: WebSockets provide bi-directional real-time communication.\n```')}
-                className="px-3 py-1.5 rounded-xl border border-pink-500/30 bg-pink-500/10 hover:bg-pink-500/20 text-pink-400 font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                className="px-3 py-1.5 rounded-xl border border-pink-500/30 bg-pink-500/10 hover:bg-pink-500/20 text-pink-400 font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
               >
                 <FiHelpCircle size={13} /> Quiz Card
               </button>
@@ -593,8 +598,8 @@ export default function VisualSlideEditor({
                     setSlashMenuOpen(false);
                   }
                 }}
-                rows={15}
-                className="w-full p-5 rounded-2xl bg-background border border-border text-foreground font-mono text-sm leading-relaxed focus:outline-none focus:border-primary resize-y min-h-[350px] shadow-inner"
+                rows={16}
+                className="w-full p-5 rounded-2xl bg-background border border-border text-foreground font-mono text-sm leading-relaxed focus:outline-none focus:border-primary resize-y min-h-[380px] shadow-inner"
                 placeholder="Write slide educational content here... Tip: Click 'Insert Image in Slide' above or type '/' to drop images, diagrams, code blocks between paragraphs."
               />
 
@@ -608,22 +613,36 @@ export default function VisualSlideEditor({
                       <FiImage size={12} /> Embedded Slide Images ({imgMatches.length}):
                     </span>
                     <div className="flex flex-wrap gap-2">
-                      {imgMatches.map((m, i) => (
-                        <div key={i} className="flex items-center gap-2 p-1.5 rounded-xl bg-card border border-border/80 text-xs">
-                          <img src={m[2]} alt={m[1] || 'Slide image'} className="w-9 h-9 rounded-lg object-cover border border-border shrink-0" />
-                          <span className="truncate max-w-[120px] font-semibold text-[11px] text-foreground">{m[1] || 'Image'}</span>
-                          <button
-                            onClick={() => {
-                              const newText = activeSlide.content.replace(m[0], '');
-                              updateActiveSlide('content', newText);
-                            }}
-                            className="p-1 text-red-400 hover:text-red-500 font-bold text-[10px]"
-                            title="Remove image from slide"
-                          >
-                            <FiX size={12} />
-                          </button>
-                        </div>
-                      ))}
+                      {imgMatches.map((m, i) => {
+                        const altText = (m[1] || 'Image').split('|')[0].trim();
+                        const imgSrc = m[2];
+                        return (
+                          <div key={i} className="flex items-center gap-2 p-1.5 rounded-xl bg-card border border-border/80 text-xs shadow-xs">
+                            <img
+                              src={imgSrc}
+                              alt={altText}
+                              className="w-9 h-9 rounded-lg object-cover border border-border shrink-0 bg-muted"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&q=80&w=200';
+                              }}
+                            />
+                            <span className="truncate max-w-[120px] font-semibold text-[11px] text-foreground" title={altText}>
+                              {altText}
+                            </span>
+                            <button
+                              onClick={() => {
+                                const newText = activeSlide.content.replace(m[0], '');
+                                updateActiveSlide('content', newText);
+                              }}
+                              className="p-1 text-red-400 hover:text-red-500 font-bold text-[10px] cursor-pointer"
+                              title="Remove image from slide"
+                            >
+                              <FiX size={12} />
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -657,7 +676,7 @@ export default function VisualSlideEditor({
                         }}
                         className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs text-foreground hover:bg-primary/15 hover:text-primary transition-colors text-left cursor-pointer font-medium border border-transparent hover:border-primary/30"
                       >
-                        <span className="w-7 h-7 rounded-xl bg-muted flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+                        <span className="w-7 h-7 rounded-xl bg-muted flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
                           {cmd.icon}
                         </span>
                         <div className="flex flex-col min-w-0">
@@ -672,7 +691,7 @@ export default function VisualSlideEditor({
             </div>
           ) : (
             /* Live Reader Preview Canvas */
-            <div className="p-6 md:p-8 rounded-2xl border border-primary/40 bg-card shadow-[0_16px_50px_rgba(0,201,110,0.06)] min-h-[350px]">
+            <div className="p-6 md:p-8 rounded-2xl border border-primary/40 bg-card shadow-lg min-h-[380px]">
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/60">
                 <span className="px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary text-xs font-extrabold tracking-wide uppercase">
                   Slide {activeSlideIdx + 1} Preview
@@ -694,7 +713,6 @@ export default function VisualSlideEditor({
           )}
         </div>
       </div>
-
       {/* Media Library Integration Modal for Slide Content */}
       <MediaLibraryModal
         isOpen={mediaModalOpen}

@@ -13,6 +13,10 @@ export default defineConfig(({ mode }) => ({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      '/media': {
+        target: 'http://localhost:8787',
+        changeOrigin: true,
+      },
     },
   },
   build: {
