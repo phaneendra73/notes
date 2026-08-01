@@ -14,3 +14,5 @@ export { Label } from './Label.jsx';
 export { Separator } from './Separator.jsx';
 export { Switch } from './Switch.jsx';
 export { Skeleton } from './Skeleton.jsx';
+export { Pagination } from './Pagination.jsx';
+

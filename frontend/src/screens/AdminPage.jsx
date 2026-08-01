@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { getenv } from '../utils/getenv.js';
-import { Appbar, Footer } from '../components/ui/index.js';
-import { Button } from '../components/ui/Button.jsx';
-import { Badge } from '../components/ui/Badge.jsx';
-import { Skeleton } from '../components/ui/Skeleton.jsx';
-import useBlogs from '../hooks/useBlogs.js';
-import { useToast } from '../components/Toaster.jsx';
-import { FiPlus, FiEdit2, FiAlertCircle } from 'react-icons/fi';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { getenv } from "../utils/getenv.js";
+import { Appbar, Footer, Pagination } from "../components/ui/index.js";
+import { Button } from "../components/ui/Button.jsx";
+import { Badge } from "../components/ui/Badge.jsx";
+import { Skeleton } from "../components/ui/Skeleton.jsx";
+import useBlogs from "../hooks/useBlogs.js";
+import { useToast } from "../components/Toaster.jsx";
+import { FiPlus, FiEdit2, FiAlertCircle, FiEye } from "react-icons/fi";
+import { motion } from "framer-motion";
 
 /**
  * ============================================================================
  * ADMIN STUDIO DASHBOARD (Kadha v3.0)
  * ============================================================================
- * 
+ *
  * Overview:
  * - Single-author dashboard for managing educational tech notes.
  * - Allows author to create new notes, edit existing slides, and toggle publication status.
@@ -23,18 +23,25 @@ import { motion } from 'framer-motion';
 export default function AdminPage() {
   const navigate = useNavigate();
   const toast = useToast();
+  const [page, setPage] = useState(1);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Fetch all notes (including drafts) for the author studio
-  const { blogs: notes, loading, error } = useBlogs(1, [], '', 'latest', {
+  const {
+    blogs: notes,
+    totalPages,
+    totalCount,
+    loading,
+    error,
+  } = useBlogs(page, [], "", "latest", {
     includeUnpublished: true,
     refreshTrigger,
   });
 
   // Guard: Protect route for authenticated admin author
   useEffect(() => {
-    if (!localStorage.getItem('jwt')) {
-      navigate('/signin');
+    if (!localStorage.getItem("jwt")) {
+      navigate("/signin");
     }
   }, [navigate]);
 
@@ -44,20 +51,20 @@ export default function AdminPage() {
   const handleTogglePublish = async (note) => {
     try {
       await axios.put(
-        `${getenv('APIURL')}/lessons/edit/${note.id}`,
+        `${getenv("APIURL")}/lessons/edit/${note.id}`,
         { isPublished: !note.published },
-        { headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` } }
+        { headers: { Authorization: `Bearer ${localStorage.getItem("jwt")}` } },
       );
       setRefreshTrigger((p) => p + 1);
       toast({
-        title: note.published ? 'Note Unpublished' : 'Note Published',
-        variant: 'success',
+        title: note.published ? "Note Unpublished" : "Note Published",
+        variant: "success",
       });
     } catch (err) {
       toast({
-        title: 'Error',
-        description: 'Failed to update note status.',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to update note status.",
+        variant: "destructive",
       });
     }
   };
@@ -68,16 +75,21 @@ export default function AdminPage() {
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 md:px-6 py-8 md:py-12">
         {/* Top Header Card */}
-        <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-[22px] border border-border bg-card backdrop-blur-md mb-8 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-5 rounded-[22px] border border-border bg-card backdrop-blur-md mb-8 shadow-sm">
           <div>
-            <h1 className="font-heading font-extrabold text-2xl md:text-3xl text-foreground mb-1">
+            <h1 className="font-heading font-extrabold text-xl md:text-3xl text-foreground mb-1">
               Author Studio & Notes Manager
             </h1>
             <p className="text-xs md:text-sm text-muted-foreground">
-              Create, edit, reorder slides, and manage your C#, .NET, DSA, and SQL study notes.
+              Create, edit, reorder slides, and manage your C#, .NET, DSA, and
+              SQL study notes.
             </p>
           </div>
-          <Button onClick={() => navigate('/editor')} className="rounded-xl font-extrabold gap-1.5">
+          <Button
+            onClick={() => navigate("/editor")}
+            className="w-full sm:w-auto rounded-xl font-extrabold gap-1.5 shrink-0"
+            variant="neon"
+          >
             <FiPlus size={16} /> New Tech Note
           </Button>
         </div>
@@ -86,7 +98,10 @@ export default function AdminPage() {
         {loading && (
           <div className="flex flex-col gap-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="p-4 rounded-[20px] border border-border bg-card flex flex-wrap gap-4 items-center">
+              <div
+                key={i}
+                className="p-4 rounded-[20px] border border-border bg-card flex flex-wrap gap-4 items-center"
+              >
                 <Skeleton className="w-11 h-11 rounded-xl" />
                 <div className="flex-1 min-w-[200px] flex flex-col gap-2">
                   <Skeleton className="h-5 w-2/3" />
@@ -113,9 +128,9 @@ export default function AdminPage() {
           <div className="flex flex-col gap-3">
             {notes.length === 0 ? (
               <div className="p-12 text-center rounded-[24px] border border-border bg-card text-muted-foreground">
-                No tech notes created yet.{' '}
+                No tech notes created yet.{" "}
                 <button
-                  onClick={() => navigate('/editor')}
+                  onClick={() => navigate("/editor")}
                   className="text-primary font-bold hover:underline cursor-pointer bg-transparent border-0"
                 >
                   Create your first note →
@@ -128,20 +143,20 @@ export default function AdminPage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.03 }}
-                  className="p-4 md:p-5 rounded-[22px] border border-border/80 bg-card hover:border-primary/40 transition-all duration-200 shadow-sm flex flex-wrap items-center justify-between gap-4"
+                  className="p-3.5 sm:p-5 rounded-[22px] border border-border/80 bg-card hover:border-primary/40 transition-all duration-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4"
                 >
                   {/* Note Details */}
-                  <div className="flex items-center gap-3.5 flex-1 min-w-[280px]">
-                    <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center font-extrabold text-sm text-primary shrink-0">
+                  <div className="flex items-center gap-3 sm:gap-3.5 w-full sm:w-auto flex-1 min-w-0">
+                    <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center font-extrabold text-xs sm:text-sm text-primary shrink-0">
                       #{note.id}
                     </div>
                     <div className="flex flex-col gap-1 min-w-0 flex-1">
-                      <span className="font-heading font-extrabold text-base text-foreground truncate">
+                      <span className="font-heading font-extrabold text-sm sm:text-base text-foreground truncate">
                         {note.title}
                       </span>
                       <div className="flex flex-wrap gap-1.5 items-center">
-                        <Badge variant={note.published ? 'default' : 'draft'}>
-                          {note.published ? 'Published' : 'Draft'}
+                        <Badge variant={note.published ? "default" : "draft"}>
+                          {note.published ? "Published" : "Draft"}
                         </Badge>
                         {note.tags?.map((t) => (
                           <Badge key={t} className="opacity-80">
@@ -153,25 +168,44 @@ export default function AdminPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Button size="sm" variant="outline" onClick={() => navigate(`/read?id=${note.id}`)}>
-                      View
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => navigate(`/editor/${note.id}`)}>
-                      <FiEdit2 size={13} className="text-primary" /> Edit Slides
+                  <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end pt-2 sm:pt-0 border-t border-border/40 sm:border-0 shrink-0">
+                    <Button
+                      size="xs"
+                      variant="secondary"
+                      onClick={() => navigate(`/read?id=${note.id}`)}
+                    >
+                      <FiEye size={12} /> View
                     </Button>
                     <Button
-                      variant={note.published ? 'ghost' : 'neon'}
-                      size="sm"
+                      size="xs"
+                      variant="info"
+                      onClick={() => navigate(`/editor/${note.id}`)}
+                    >
+                      <FiEdit2 size={12} /> Edit
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant={note.published ? "destructive" : "neon"}
                       onClick={() => handleTogglePublish(note)}
                     >
-                      {note.published ? 'Unpublish' : 'Publish'}
+                      {note.published ? "Unpublish" : "Publish"}
                     </Button>
                   </div>
                 </motion.div>
               ))
             )}
           </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && totalPages > 0 && (
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            onPageChange={setPage}
+            className="mt-8"
+          />
         )}
       </main>
 

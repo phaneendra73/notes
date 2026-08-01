@@ -82,29 +82,27 @@ export default function TrackBottomDock({
 
   return (
     <div
-      className="no-print"
-      style={{
-        position: 'fixed',
-        bottom: 24,
-        left: 24,
-        zIndex: 100,
-        background: 'var(--card)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid var(--border)',
-        borderRadius: 20,
-        padding: '6px 10px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.3)',
-        whiteSpace: 'nowrap',
-        transform: visible ? 'translateY(0)' : 'translateY(80px)',
-        opacity: visible ? 1 : 0,
-        transition: 'transform 0.25s ease, opacity 0.25s ease',
-        pointerEvents: visible ? 'auto' : 'none',
-      }}
+      className="no-print fixed bottom-6 left-0 right-0 md:right-auto md:left-6 z-[100] flex justify-center pointer-events-none"
     >
-      {/* Back to Home Catalog */}
+      <div
+        style={{
+          pointerEvents: visible ? 'auto' : 'none',
+          background: 'var(--card)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid var(--border)',
+          borderRadius: 20,
+          padding: '6px 10px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.3)',
+          whiteSpace: 'nowrap',
+          transform: visible ? 'translateY(0)' : 'translateY(80px)',
+          opacity: visible ? 1 : 0,
+          transition: 'transform 0.25s ease, opacity 0.25s ease',
+        }}
+      >
+        {/* Back to Home Catalog */}
       <button
         onClick={() => navigate('/')}
         style={dockBtnSecondary}
@@ -223,6 +221,7 @@ export default function TrackBottomDock({
         <span className="hidden sm:inline">Next</span>
         <FiChevronRight size={18} />
       </button>
+      </div>
     </div>
   );
 }

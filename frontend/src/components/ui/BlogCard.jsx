@@ -53,28 +53,28 @@ export default function BlogCard({ blog }) {
       onClick={handleCardClick}
       className="cursor-pointer w-full group"
     >
-      <div className="p-4 md:p-5 rounded-[22px] border border-border/80 bg-muted/30 hover:bg-card hover:border-primary/50 transition-all duration-200 shadow-sm flex items-center justify-between gap-4">
-        {/* Far Left: Thumbnail */}
-        <div className="flex items-center gap-4 min-w-0 flex-1">
+      <div className="p-3.5 sm:p-5 rounded-[22px] border border-border/80 bg-muted/30 hover:bg-card hover:border-primary/50 transition-all duration-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+        {/* Left: Thumbnail & Title Info */}
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0 w-full sm:w-auto sm:flex-1">
           <img
             src={blog.imageUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=300'}
             alt={blog.title}
-            className="w-14 h-14 md:w-16 md:h-16 rounded-2xl object-cover border border-border/60 shrink-0 group-hover:scale-105 transition-transform duration-300 shadow-xs"
+            className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl object-cover border border-border/60 shrink-0 group-hover:scale-105 transition-transform duration-300 shadow-xs"
             loading="lazy"
           />
 
-          {/* Middle: Title & Tags */}
+          {/* Title & Tags */}
           <div className="flex flex-col gap-1 min-w-0 flex-1">
-            <h3 className="font-heading font-extrabold text-base md:text-lg text-foreground leading-snug tracking-tight truncate group-hover:text-primary transition-colors">
+            <h3 className="font-heading font-extrabold text-sm sm:text-lg text-foreground leading-snug tracking-tight truncate group-hover:text-primary transition-colors">
               {blog.title}
             </h3>
 
             {blog.tags && Array.isArray(blog.tags) && blog.tags.length > 0 && (
-              <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                {blog.tags.slice(0, 4).map((tag, idx) => (
+              <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap mt-0.5">
+                {blog.tags.slice(0, 3).map((tag, idx) => (
                   <span
                     key={idx}
-                    className="px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-black uppercase tracking-wider"
+                    className="px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-[9px] sm:text-[10px] font-black uppercase tracking-wider"
                   >
                     {typeof tag === 'object' ? tag.name : tag}
                   </span>
@@ -84,27 +84,27 @@ export default function BlogCard({ blog }) {
           </div>
         </div>
 
-        {/* Far Right: Real DB Stats (Slides Count, Views Count, Reading Time, Date) */}
-        <div className="flex flex-col items-end shrink-0 text-right gap-1">
+        {/* Right / Bottom Stats */}
+        <div className="flex items-center sm:flex-col justify-between sm:justify-center w-full sm:w-auto shrink-0 pt-2 sm:pt-0 border-t border-border/40 sm:border-0 text-right gap-1">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 text-xs md:text-sm font-black text-foreground bg-primary/15 px-2.5 py-0.5 rounded-xl border border-primary/30">
-              <FiLayers size={13} className="text-primary" />
+            <span className="inline-flex items-center gap-1 text-[11px] sm:text-sm font-black text-foreground bg-primary/15 px-2 sm:px-2.5 py-0.5 rounded-xl border border-primary/30">
+              <FiLayers size={12} className="text-primary" />
               {slidesCount} {slidesCount === 1 ? 'Slide' : 'Slides'}
             </span>
           </div>
 
-          <div className="flex items-center gap-3 text-[11px] font-bold text-muted-foreground mt-0.5">
+          <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-[11px] font-bold text-muted-foreground">
             <span className="inline-flex items-center gap-1" title="Views">
-              <FiEye size={12} className="text-sky-400" />
+              <FiEye size={11} className="text-sky-400" />
               {viewsCount}
             </span>
             <span>•</span>
             <span className="inline-flex items-center gap-1" title="Reading Time">
-              <FiClock size={12} className="text-amber-400" />
+              <FiClock size={11} className="text-amber-400" />
               {readingTime}
             </span>
-            <span>•</span>
-            <span>{getRelativeTime(blog.createdAt)}</span>
+            <span className="hidden sm:inline">•</span>
+            <span className="hidden sm:inline">{getRelativeTime(blog.createdAt)}</span>
           </div>
         </div>
       </div>

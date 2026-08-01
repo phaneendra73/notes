@@ -40,15 +40,20 @@ export default function TrackCanvas({
 
   // Handle Mobile Swipe
   const handleTouchStart = (e) => {
+    // Ignore swipe if we are interacting with a code block or horizontally scrollable element
+    if (e.target.closest('pre') || e.target.closest('code') || e.target.closest('.overflow-x-auto')) {
+      return;
+    }
     touchStartX.current = e.targetTouches[0].clientX;
   };
 
   const handleTouchMove = (e) => {
+    if (touchStartX.current === null) return;
     touchEndX.current = e.targetTouches[0].clientX;
   };
 
   const handleTouchEnd = () => {
-    if (!touchStartX.current || !touchEndX.current) return;
+    if (touchStartX.current === null || touchEndX.current === null) return;
     const distance = touchStartX.current - touchEndX.current;
     const isSwipe = Math.abs(distance) > 50;
 

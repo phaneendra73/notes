@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import BlogCard from './BlogCard.jsx';
+import { Pagination } from './Pagination.jsx';
 import useBlogs from '../../hooks/useBlogs.js';
 import useTags from '../../hooks/useTags.js';
 import { Skeleton } from './Skeleton.jsx';
@@ -220,26 +221,14 @@ export default function HomeBlogs() {
       )}
 
       {/* Pagination */}
-      {!loading && totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3 mt-10">
-          <button
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="px-4 py-2 rounded-xl border border-border bg-card text-xs font-extrabold text-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:border-primary/50 transition-all cursor-pointer"
-          >
-            Previous
-          </button>
-          <span className="text-xs font-bold text-muted-foreground px-2">
-            Page {page} of {totalPages} ({totalCount} notes)
-          </span>
-          <button
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            className="px-4 py-2 rounded-xl border border-border bg-card text-xs font-extrabold text-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:border-primary/50 transition-all cursor-pointer"
-          >
-            Next
-          </button>
-        </div>
+      {!loading && totalPages > 0 && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          onPageChange={setPage}
+          className="mt-10"
+        />
       )}
     </section>
   );

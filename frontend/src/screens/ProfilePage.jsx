@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { getenv } from '../utils/getenv.js';
-import { Appbar, Footer } from '../components/ui/index.js';
+import { Appbar, Footer, Pagination } from '../components/ui/index.js';
 import { Button } from '../components/ui/Button.jsx';
 import { Badge } from '../components/ui/Badge.jsx';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card.jsx';
@@ -56,16 +56,18 @@ export default function ProfilePage() {
   const [newAuthorRole, setNewAuthorRole] = useState('author');
   const [creatingAuthor, setCreatingAuthor] = useState(false);
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
+  // Fetch user profile on mount
   useEffect(() => {
     if (!token) {
       toast({ title: 'Please sign in to view your profile', variant: 'destructive' });
       navigate('/signin');
       return;
     }
-
     const headers = { Authorization: `Bearer ${token}` };
-
-    // Fetch user profile
     axios
       .get(`${getenv('APIURL')}/user/profile`, { headers })
       .then((res) => {
@@ -84,13 +86,23 @@ export default function ProfilePage() {
         navigate('/signin');
       })
       .finally(() => setLoading(false));
-
-    // Fetch user's published notes
-    axios
-      .get(`${getenv('APIURL')}/blog/getall`, { headers, params: { includeUnpublished: 'true' } })
-      .then((res) => setMyBlogs(res.data.blogs || []))
-      .catch(() => {});
   }, [token, navigate, toast]);
+
+  // Fetch paginated user notes
+  useEffect(() => {
+    if (!token) return;
+    const headers = { Authorization: `Bearer ${token}` };
+    axios
+      .get(`${getenv('APIURL')}/blog/getall`, { headers, params: { includeUnpublished: 'true', page, limit: 20 } })
+      .then((res) => {
+        setMyBlogs(res.data.blogs || res.data.lessons || []);
+        if (res.data.pagination) {
+          setTotalPages(res.data.pagination.totalPages);
+          setTotalCount(res.data.pagination.totalCount);
+        }
+      })
+      .catch(() => {});
+  }, [token, page]);
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
@@ -235,11 +247,11 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Button variant="primary" size="sm" onClick={() => navigate('/editor')} className="rounded-xl gap-2 font-extrabold text-xs">
+                <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                  <Button variant="primary" size="sm" onClick={() => navigate('/editor')} className="rounded-xl gap-2 font-extrabold text-xs flex-1 sm:flex-initial justify-center">
                     <FiPlus size={14} /> New Tech Note
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => setActiveTab('edit')} className="rounded-xl gap-2 font-extrabold text-xs">
+                  <Button variant="outline" size="sm" onClick={() => setActiveTab('edit')} className="rounded-xl gap-2 font-extrabold text-xs flex-1 sm:flex-initial justify-center">
                     <FiEdit3 size={14} /> Edit Profile
                   </Button>
                 </div>
@@ -247,20 +259,20 @@ export default function ProfilePage() {
             </Card>
 
             {/* ─── Navigation Tabs ─── */}
-            <div className="flex flex-wrap gap-2 mb-6 border-b border-border/80 pb-3">
+            <div className="flex items-center gap-2 mb-6 border-b border-border/80 pb-3 overflow-x-auto no-scrollbar max-w-full">
               <Button
                 variant={activeTab === 'stories' ? 'primary' : 'ghost'}
                 size="sm"
                 onClick={() => setActiveTab('stories')}
-                className="rounded-xl gap-2 font-extrabold text-xs"
+                className="rounded-xl gap-2 font-extrabold text-xs shrink-0"
               >
-                <FiFileText size={14} /> My Notes ({myBlogs.length})
+                <FiFileText size={14} /> My Notes ({totalCount || myBlogs.length})
               </Button>
               <Button
                 variant={activeTab === 'edit' ? 'primary' : 'ghost'}
                 size="sm"
                 onClick={() => setActiveTab('edit')}
-                className="rounded-xl gap-2 font-extrabold text-xs"
+                className="rounded-xl gap-2 font-extrabold text-xs shrink-0"
               >
                 <FiEdit3 size={14} /> Profile Settings
               </Button>
@@ -268,7 +280,7 @@ export default function ProfilePage() {
                 variant={activeTab === 'password' ? 'primary' : 'ghost'}
                 size="sm"
                 onClick={() => setActiveTab('password')}
-                className="rounded-xl gap-2 font-extrabold text-xs"
+                className="rounded-xl gap-2 font-extrabold text-xs shrink-0"
               >
                 <FiKey size={14} /> Reset Password
               </Button>
@@ -276,73 +288,96 @@ export default function ProfilePage() {
                 variant={activeTab === 'addAuthor' ? 'primary' : 'ghost'}
                 size="sm"
                 onClick={() => setActiveTab('addAuthor')}
-                className="rounded-xl gap-2 font-extrabold text-xs"
+                className="rounded-xl gap-2 font-extrabold text-xs shrink-0"
               >
                 <FiUserPlus size={14} /> Add New Author
               </Button>
             </div>
 
-            {/* ─── Tab Content: My Notes ─── */}
+            {/* ─── Tab Content: Stories / Notes ─── */}
             {activeTab === 'stories' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {myBlogs.length === 0 ? (
-                  <div className="col-span-full text-center py-16 text-muted-foreground flex flex-col items-center gap-3">
-                    <p className="font-bold">You haven't created any tech notes yet.</p>
-                    <Button onClick={() => navigate('/editor')}>Create Your First Note</Button>
-                  </div>
-                ) : (
-                  myBlogs.map((b) => (
-                    <Card key={b.id} className="rounded-2xl border border-border/80 bg-card overflow-hidden flex flex-col justify-between hover:border-primary/50 transition-colors shadow-xs">
-                      <div className="p-4 flex gap-4 items-center">
-                        <img src={b.imageUrl || 'https://images.unsplash.com/photo-1550745165-9bc0b252726f'} alt={b.title} className="w-16 h-16 rounded-xl object-cover border border-border shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <Badge variant={b.published ? 'default' : 'secondary'} className="mb-1 text-[10px]">
-                            {b.published ? 'Published' : 'Draft'}
-                          </Badge>
-                          <h3 className="font-heading font-extrabold text-base text-foreground truncate leading-snug">{b.title}</h3>
-                          <span className="text-[11px] text-muted-foreground mt-0.5 block">{new Date(b.createdAt).toLocaleDateString()}</span>
+              <div className="flex flex-col gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {loading ? (
+                    [1, 2, 3, 4].map((i) => (
+                      <Card key={i} className="rounded-[24px] border border-border bg-card p-4 flex gap-4">
+                        <Skeleton className="w-16 h-16 rounded-xl" />
+                        <div className="flex flex-col gap-2 flex-1 justify-center">
+                          <Skeleton className="h-4 w-1/3" />
+                          <Skeleton className="h-5 w-3/4" />
+                          <Skeleton className="h-3 w-1/4 mt-1" />
                         </div>
+                      </Card>
+                    ))
+                  ) : (
+                    myBlogs.length === 0 ? (
+                      <div className="col-span-full text-center py-16 text-muted-foreground flex flex-col items-center gap-3">
+                        <p className="font-bold">You haven't created any tech notes yet.</p>
+                        <Button onClick={() => navigate('/editor')}>Create Your First Note</Button>
                       </div>
+                    ) : (
+                      myBlogs.map((b) => (
+                        <Card key={b.id} className="rounded-2xl border border-border/80 bg-card overflow-hidden flex flex-col justify-between hover:border-primary/50 transition-colors shadow-xs">
+                          <div className="p-4 flex gap-4 items-center">
+                            <img src={b.imageUrl || 'https://images.unsplash.com/photo-1550745165-9bc0b252726f'} alt={b.title} className="w-16 h-16 rounded-xl object-cover border border-border shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <Badge variant={b.published ? 'default' : 'secondary'} className="mb-1 text-[10px]">
+                                {b.published ? 'Published' : 'Draft'}
+                              </Badge>
+                              <h3 className="font-heading font-extrabold text-base text-foreground truncate leading-snug">{b.title}</h3>
+                              <span className="text-[11px] text-muted-foreground mt-0.5 block">{new Date(b.createdAt).toLocaleDateString()}</span>
+                            </div>
+                          </div>
 
-                      {/* Card Buttons: View, Edit, Delete */}
-                      <div className="p-3 bg-muted/20 border-t border-border/60 flex items-center justify-end gap-2">
-                        <Button
-                          size="xs"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/read?id=${b.id}`);
-                          }}
-                          className="rounded-lg gap-1 text-xs"
-                        >
-                          <FiEye size={12} /> View
-                        </Button>
-                        <Button
-                          size="xs"
-                          variant="primary"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/editor/${b.id}`);
-                          }}
-                          className="rounded-lg gap-1 text-xs"
-                        >
-                          <FiEdit3 size={12} /> Edit Note
-                        </Button>
-                        <Button
-                          size="xs"
-                          variant="destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteBlog(b.id);
-                          }}
-                          className="rounded-lg p-1.5"
-                          title="Delete Note"
-                        >
-                          <FiTrash2 size={13} />
-                        </Button>
-                      </div>
-                    </Card>
-                  ))
+                          {/* Card Buttons: View, Edit, Delete */}
+                          <div className="p-2.5 bg-muted/20 border-t border-border/60 flex items-center justify-end gap-2">
+                            <Button
+                              size="xs"
+                              variant="secondary"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/read?id=${b.id}`);
+                              }}
+                            >
+                              <FiEye size={12} /> View
+                            </Button>
+                            <Button
+                              size="xs"
+                              variant="info"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/editor/${b.id}`);
+                              }}
+                            >
+                              <FiEdit3 size={12} /> Edit Note
+                            </Button>
+                            <Button
+                              size="xs"
+                              variant="destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteBlog(b.id);
+                              }}
+                              title="Delete Note"
+                            >
+                              <FiTrash2 size={12} />
+                            </Button>
+                          </div>
+                        </Card>
+                      ))
+                    )
+                  )}
+                </div>
+
+                {/* Pagination */}
+                {!loading && totalPages > 0 && (
+                  <Pagination
+                    page={page}
+                    totalPages={totalPages}
+                    totalCount={totalCount}
+                    onPageChange={setPage}
+                    className="mt-4"
+                  />
                 )}
               </div>
             )}

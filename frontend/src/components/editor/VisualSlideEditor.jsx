@@ -31,6 +31,9 @@ import {
   FiType,
   FiSidebar,
   FiRotateCcw,
+  FiRotateCw,
+  FiList,
+  FiLink,
 } from 'react-icons/fi';
 import { renderMarkdown, calculateSlideReadingTime, renderMermaidDiagrams } from '../../utils/markdown.js';
 
@@ -54,6 +57,10 @@ export default function VisualSlideEditor({
   const [slashQuery, setSlashQuery] = useState('');
   const textareaRef = useRef(null);
 
+  // Undo / Redo History Stack
+  const [history, setHistory] = useState([]);
+  const [redoStack, setRedoStack] = useState([]);
+
   // Clear any legacy local draft storage on mount
   useEffect(() => {
     try {
@@ -71,26 +78,56 @@ export default function VisualSlideEditor({
     }
   }, [previewMode, activeSlideIdx, slides]);
 
-  // Ctrl+S / Cmd+S Keyboard Shortcut to Save
+  // Undo / Redo Handlers
+  const handleUndo = () => {
+    if (history.length === 0) return;
+    const previousState = history[history.length - 1];
+    setHistory((prev) => prev.slice(0, -1));
+    setRedoStack((prev) => [...prev, slides]);
+    onChangeSlides(previousState);
+  };
+
+  const handleRedo = () => {
+    if (redoStack.length === 0) return;
+    const nextState = redoStack[redoStack.length - 1];
+    setRedoStack((prev) => prev.slice(0, -1));
+    setHistory((prev) => [...prev, slides]);
+    onChangeSlides(nextState);
+  };
+
+  const updateSlidesWithHistory = (newSlides) => {
+    setHistory((prev) => [...prev.slice(-30), slides]);
+    setRedoStack([]);
+    onChangeSlides(newSlides);
+  };
+
+  // Keyboard Shortcuts: Ctrl+S (Save), Ctrl+Z (Undo), Ctrl+Y / Ctrl+Shift+Z (Redo)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      const isCmdOrCtrl = e.ctrlKey || e.metaKey;
+      if (isCmdOrCtrl && e.key.toLowerCase() === 's') {
         e.preventDefault();
         if (onSave && !saving) {
           onSave();
         }
+      } else if (isCmdOrCtrl && !e.shiftKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        handleUndo();
+      } else if (isCmdOrCtrl && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z'))) {
+        e.preventDefault();
+        handleRedo();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onSave, saving]);
+  }, [onSave, saving, history, redoStack, slides]);
 
   const activeSlide = slides[activeSlideIdx] || slides[0] || { title: 'Concept 1', content: '' };
 
   // Handle slide updates
   const updateActiveSlide = (key, value) => {
     const updated = slides.map((s, i) => (i === activeSlideIdx ? { ...s, [key]: value } : s));
-    onChangeSlides(updated);
+    updateSlidesWithHistory(updated);
   };
 
   // Add new slide
@@ -101,7 +138,7 @@ export default function VisualSlideEditor({
       title: `Concept ${nextNum}: Core Learning Point`,
       content: `## Concept ${nextNum}\n\nWrite your educational explanation here...\n\n> 💡 **Key Takeaway**: Highlight essential lessons for learners.`,
     };
-    onChangeSlides([...slides, newSlide]);
+    updateSlidesWithHistory([...slides, newSlide]);
     setActiveSlideIdx(slides.length);
   };
 
@@ -224,12 +261,13 @@ export default function VisualSlideEditor({
       {/* ── Studio Top Header Bar (Clean 2-Row Responsive Layout) ── */}
       <div className="p-4 md:p-5 rounded-[24px] border border-border/80 bg-gradient-to-r from-card via-card to-primary/5 shadow-md backdrop-blur-md flex flex-col gap-3">
         {/* Top Header Row 1: Title Input & Quick Actions */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3 flex-1 min-w-[280px]">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          {/* Left Title & Sidebar Toggle */}
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
             {/* Sidebar Toggle Button */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className={`p-2.5 rounded-xl border text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`p-2.5 rounded-xl border text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
                 sidebarOpen
                   ? 'bg-primary/10 border-primary/30 text-primary hover:bg-primary/20'
                   : 'bg-muted/40 border-border text-muted-foreground hover:text-foreground hover:bg-muted'
@@ -240,8 +278,8 @@ export default function VisualSlideEditor({
               <span className="hidden sm:inline">{sidebarOpen ? 'Hide Slides' : 'Show Slides'}</span>
             </button>
 
-            {/* Studio Badge */}
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary via-emerald-400 to-teal-500 text-black flex items-center justify-center font-black shadow-sm shrink-0">
+            {/* Studio Badge (Hidden on mobile to maximize title space) */}
+            <div className="hidden sm:flex w-9 h-9 rounded-xl bg-gradient-to-br from-primary via-emerald-400 to-teal-500 text-black items-center justify-center font-black shadow-sm shrink-0">
               <FiLayers size={18} />
             </div>
 
@@ -249,26 +287,26 @@ export default function VisualSlideEditor({
             <Input
               value={title}
               onChange={(e) => onChangeTitle(e.target.value)}
-              placeholder="Enter Lesson Title (e.g. Tree Traversals & Complexity)..."
-              className="h-10 text-base md:text-lg font-extrabold tracking-tight border-border/70 hover:border-primary/50 focus:border-primary bg-background/80 rounded-xl flex-1"
+              placeholder="Enter Lesson Title..."
+              className="h-10 text-sm sm:text-lg font-extrabold tracking-tight border-border/70 hover:border-primary/50 focus:border-primary bg-background/80 rounded-xl min-w-0 flex-1"
             />
           </div>
 
           {/* Right Header Controls */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t border-border/40 sm:border-0 shrink-0">
             {/* Mode Switcher Pill */}
             <div className="flex items-center p-1 rounded-2xl bg-muted/40 border border-border/80">
               <button
                 onClick={() => setPreviewMode(false)}
-                className={`px-3 py-1 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-2.5 sm:px-3 py-1 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
                   !previewMode ? 'bg-primary text-black shadow-sm' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                <FiEdit3 size={13} /> Visual Editor
+                <FiEdit3 size={13} /> <span className="hidden xs:inline sm:inline">Visual</span> Editor
               </button>
               <button
                 onClick={() => setPreviewMode(true)}
-                className={`px-3 py-1 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-2.5 sm:px-3 py-1 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
                   previewMode ? 'bg-primary text-black shadow-sm' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -281,7 +319,7 @@ export default function VisualSlideEditor({
               size="sm"
               variant="outline"
               onClick={() => setFullScreen((v) => !v)}
-              className="rounded-xl p-2.5 border-border"
+              className="rounded-xl p-2 sm:p-2.5 border-border"
               title={fullScreen ? 'Exit Fullscreen' : 'Fullscreen Focus Mode'}
             >
               {fullScreen ? <FiMinimize2 size={15} /> : <FiMaximize2 size={15} />}
@@ -301,33 +339,31 @@ export default function VisualSlideEditor({
         </div>
 
         {/* Top Header Row 2: Compact Asset Bar (Cover & Media Buttons) */}
-        <div className="flex items-center justify-between pt-2 border-t border-border/40 text-xs flex-wrap gap-2">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-2 border-t border-border/40 text-xs gap-2">
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
             <Button
               size="xs"
-              variant="outline"
+              variant="purple"
               onClick={() => setCoverMediaModalOpen(true)}
-              className="rounded-xl gap-1.5 font-extrabold text-xs border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
             >
-              <FiImage size={13} /> {imageUrl ? 'Change Cover Image' : 'Add Course Cover Image'}
+              <FiImage size={13} /> {imageUrl ? 'Change Cover' : 'Cover Image'}
             </Button>
 
             <Button
               size="xs"
-              variant="outline"
+              variant="neon"
               onClick={() => setMediaModalOpen(true)}
-              className="rounded-xl gap-1.5 font-extrabold text-xs border-primary/30 text-primary hover:bg-primary/10"
             >
               <FiImage size={13} /> Media Library
             </Button>
 
             {imageUrl && (
-              <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-purple-500/10 border border-purple-500/30 text-[11px] font-bold text-purple-300">
-                <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-                <span className="truncate max-w-[200px]">Cover attached</span>
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-purple-500/10 border border-purple-500/30 text-[10px] font-bold text-purple-300">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                <span className="truncate max-w-[120px]">Cover attached</span>
                 <button
                   onClick={() => onChangeImageUrl && onChangeImageUrl('')}
-                  className="ml-1 text-red-400 hover:text-red-300 font-black text-xs"
+                  className="ml-0.5 text-red-400 hover:text-red-300 font-black text-xs cursor-pointer"
                   title="Remove course cover image"
                 >
                   ×
@@ -336,7 +372,7 @@ export default function VisualSlideEditor({
             )}
           </div>
 
-          <span className="text-[11px] text-muted-foreground font-medium">
+          <span className="hidden md:inline-block text-[11px] text-muted-foreground font-medium">
             Tip: Press <kbd className="px-1.5 py-0.5 rounded bg-muted text-primary border border-border font-mono font-bold">Ctrl + S</kbd> to save anytime
           </span>
         </div>
@@ -352,7 +388,7 @@ export default function VisualSlideEditor({
               animate={{ width: '100%', opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="md:col-span-4 rounded-[24px] border border-border bg-card p-4 flex flex-col gap-3.5 shadow-sm sticky top-6 max-h-[80vh]"
+              className="md:col-span-4 rounded-[24px] border border-border bg-card p-4 flex flex-col gap-3.5 shadow-sm md:sticky md:top-6 max-h-[80vh]"
             >
               <div className="flex items-center justify-between pb-3 border-b border-border">
                 <div className="flex items-center gap-2 font-heading font-extrabold text-sm text-foreground">
@@ -488,7 +524,7 @@ export default function VisualSlideEditor({
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar max-w-full pb-1 sm:pb-0 sm:flex-wrap shrink-0">
               <button
                 onClick={() => insertBlockAtCursor('## Section Heading')}
                 className="px-3 py-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
@@ -538,44 +574,103 @@ export default function VisualSlideEditor({
             <div className="relative flex flex-col gap-3">
               {/* Text Formatting Toolbar */}
               <div className="flex items-center justify-between p-2 rounded-xl bg-background border border-border text-xs flex-wrap gap-2">
-                <div className="flex items-center gap-1.5 flex-wrap">
+                <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
+                  {/* Undo Button */}
+                  <button
+                    disabled={history.length === 0}
+                    onClick={handleUndo}
+                    className="px-2 py-1 rounded-lg hover:bg-muted font-bold text-foreground disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1 transition-all"
+                    title="Undo (Ctrl + Z)"
+                  >
+                    <FiRotateCcw size={13} /> <span className="hidden sm:inline">Undo</span>
+                  </button>
+
+                  {/* Redo Button */}
+                  <button
+                    disabled={redoStack.length === 0}
+                    onClick={handleRedo}
+                    className="px-2 py-1 rounded-lg hover:bg-muted font-bold text-foreground disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1 transition-all"
+                    title="Redo (Ctrl + Y)"
+                  >
+                    <FiRotateCw size={13} /> <span className="hidden sm:inline">Redo</span>
+                  </button>
+
+                  <div className="w-[1px] h-4 bg-border/80 mx-0.5" />
+
+                  {/* Bold */}
                   <button
                     onClick={() => applyInlineFormatting('**')}
-                    className="px-2 py-1 rounded hover:bg-muted font-bold text-foreground cursor-pointer flex items-center gap-1"
+                    className="px-2 py-1 rounded-lg hover:bg-muted font-black text-foreground cursor-pointer flex items-center gap-1"
                     title="Bold (**text**)"
                   >
                     <FiBold size={13} /> Bold
                   </button>
+
+                  {/* Italic */}
                   <button
                     onClick={() => applyInlineFormatting('*')}
-                    className="px-2 py-1 rounded hover:bg-muted text-foreground cursor-pointer flex items-center gap-1"
+                    className="px-2 py-1 rounded-lg hover:bg-muted italic text-foreground cursor-pointer flex items-center gap-1"
                     title="Italic (*text*)"
                   >
                     <FiItalic size={13} /> Italic
                   </button>
+
+                  {/* Strikethrough */}
+                  <button
+                    onClick={() => applyInlineFormatting('~~')}
+                    className="px-2 py-1 rounded-lg hover:bg-muted line-through text-foreground cursor-pointer flex items-center gap-1"
+                    title="Strikethrough (~~text~~)"
+                  >
+                    Strikethrough
+                  </button>
+
+                  {/* Inline Code */}
                   <button
                     onClick={() => applyInlineFormatting('`')}
-                    className="px-2 py-1 rounded hover:bg-muted font-mono text-primary cursor-pointer flex items-center gap-1"
+                    className="px-2 py-1 rounded-lg hover:bg-muted font-mono text-primary cursor-pointer flex items-center gap-1"
                     title="Inline Code (`code`)"
                   >
                     <FiCode size={13} /> Code
                   </button>
+
+                  {/* Link */}
+                  <button
+                    onClick={() => applyInlineFormatting('[', '](https://example.com)')}
+                    className="px-2 py-1 rounded-lg hover:bg-muted text-sky-400 cursor-pointer flex items-center gap-1 font-bold"
+                    title="Insert Link ([text](url))"
+                  >
+                    <FiLink size={13} /> Link
+                  </button>
+
+                  {/* Bullet List */}
+                  <button
+                    onClick={() => insertBlockAtCursor('- Item 1\n- Item 2')}
+                    className="px-2 py-1 rounded-lg hover:bg-muted text-foreground cursor-pointer flex items-center gap-1"
+                    title="Bullet List"
+                  >
+                    <FiList size={13} /> List
+                  </button>
+
+                  {/* Checklist */}
+                  <button
+                    onClick={() => insertBlockAtCursor('- [ ] Task step')}
+                    className="px-2 py-1 rounded-lg hover:bg-muted text-foreground cursor-pointer flex items-center gap-1"
+                    title="Checklist"
+                  >
+                    <FiCheckSquare size={13} /> Checklist
+                  </button>
+
+                  {/* Insert Image */}
                   <button
                     onClick={() => setMediaModalOpen(true)}
                     className="px-2.5 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 font-extrabold cursor-pointer flex items-center gap-1.5 transition-colors"
                     title="Insert image from Media Library into slide"
                   >
-                    <FiImage size={13} /> Insert Image in Slide
-                  </button>
-                  <button
-                    onClick={() => insertBlockAtCursor('- [ ] Task step')}
-                    className="px-2 py-1 rounded hover:bg-muted text-foreground cursor-pointer flex items-center gap-1"
-                    title="Checklist"
-                  >
-                    <FiCheckSquare size={13} /> Checklist
+                    <FiImage size={13} /> Image
                   </button>
                 </div>
-                <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+
+                <span className="hidden sm:flex text-[11px] text-muted-foreground items-center gap-1">
                   Type <kbd className="px-1.5 py-0.5 rounded bg-muted text-primary border border-border font-mono font-black">/</kbd> for menu
                 </span>
               </div>
