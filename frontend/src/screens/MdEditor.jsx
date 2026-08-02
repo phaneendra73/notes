@@ -8,7 +8,8 @@ import { Input } from '../components/ui/Input.jsx';
 import useTags from '../hooks/useTags.js';
 import { useToast } from '../components/Toaster.jsx';
 import VisualSlideEditor from '../components/editor/VisualSlideEditor.jsx';
-import { FiArrowLeft, FiPlus, FiTag, FiCheck } from 'react-icons/fi';
+import { parseRawMarkdownToSlides } from '../utils/markdown.js';
+import { FiArrowLeft, FiPlus, FiTag, FiCheck, FiAlignLeft } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 
 export default function MdEditor() {
@@ -27,7 +28,9 @@ export default function MdEditor() {
 
   const [title, setTitle] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [excerpt, setExcerpt] = useState('');
   const [selectedTagIds, setSelectedTagIds] = useState([]);
+  const [noteTagNames, setNoteTagNames] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [newTagInput, setNewTagInput] = useState('');
@@ -52,39 +55,34 @@ export default function MdEditor() {
     if (id) {
       setLoading(true);
       api
-        .get(`/blog/get/${id}`)
+        .get(`/lessons/get/${id}`)
         .then((res) => {
           setTitle(res.data.title || '');
           setImageUrl(res.data.imageUrl || '');
+          setExcerpt(res.data.excerpt || '');
 
           const raw = res.data.content || res.data.markdownContent || '';
-
-          // Parse saved track steps by divider --- or headings
-          let parsedSlides = [];
-          if (raw.includes('\n---\n') || raw.includes('\n***\n')) {
-            const parts = raw.split(/\n(?:---|[*]{3})\n/g);
-            parsedSlides = parts.map((part, idx) => {
-              const titleMatch = part.match(/^(#{1,3})\s+(.+)$/m);
-              const titleStr = titleMatch ? titleMatch[2].trim() : `Concept ${idx + 1}`;
-              return { step: idx + 1, title: titleStr, content: part.trim() };
-            });
-          } else if (raw.split(/(?=\n#{1,2}\s+)/g).length > 1) {
-            const parts = raw.split(/(?=\n#{1,2}\s+)/g);
-            parsedSlides = parts.map((part, idx) => {
-              const titleMatch = part.match(/^(#{1,2})\s+(.+)$/m);
-              const titleStr = titleMatch ? titleMatch[2].trim() : `Concept ${idx + 1}`;
-              return { step: idx + 1, title: titleStr, content: part.trim() };
-            });
+          let loadedSlides = [];
+          if (Array.isArray(res.data.slides) && res.data.slides.length > 0) {
+            loadedSlides = res.data.slides.map((s, idx) => ({
+              id: s.id,
+              step: s.step || s.orderNumber || idx + 1,
+              title: s.title || `Concept ${idx + 1}`,
+              content: s.content || (Array.isArray(s.blocks) ? s.blocks.map((b) => b.content || '').join('\n\n') : ''),
+              blocks: s.blocks || [],
+            }));
           } else {
-            parsedSlides = [{ step: 1, title: res.data.title || 'Concept 1', content: raw }];
+            loadedSlides = parseRawMarkdownToSlides(raw);
           }
 
-          setSlides(parsedSlides);
+          setSlides(loadedSlides.length > 0 ? loadedSlides : [{ step: 1, title: res.data.title || 'Concept 1', content: raw }]);
 
-          // Restore tags
-          if (res.data.tags && tags.length > 0) {
-            const matchedTagIds = tags.filter((t) => res.data.tags.includes(t.name)).map((t) => t.id);
-            setSelectedTagIds(matchedTagIds);
+          // Restore tags immediately if tagObjects returned by backend
+          if (res.data.tagObjects && Array.isArray(res.data.tagObjects) && res.data.tagObjects.length > 0) {
+            setSelectedTagIds(res.data.tagObjects.map((t) => t.id));
+          }
+          if (res.data.tags && Array.isArray(res.data.tags)) {
+            setNoteTagNames(res.data.tags);
           }
         })
         .catch(() => toast({ title: 'Unable to load course data', variant: 'destructive' }))
@@ -93,7 +91,9 @@ export default function MdEditor() {
       // Load saved local draft if creating new
       const savedTitle = localStorage.getItem('kadha_draft_title');
       const savedSlides = localStorage.getItem('kadha_draft_slides');
+      const savedExcerpt = localStorage.getItem('kadha_draft_excerpt');
       if (savedTitle) setTitle(savedTitle);
+      if (savedExcerpt) setExcerpt(savedExcerpt);
       if (savedSlides) {
         try {
           const parsed = JSON.parse(savedSlides);
@@ -105,6 +105,18 @@ export default function MdEditor() {
     }
   }, [id, navigate, toast]);
 
+  // Match loaded note tag names with tags array when tags finish loading asynchronously
+  useEffect(() => {
+    if (noteTagNames.length > 0 && tags.length > 0) {
+      const matchedTagIds = tags
+        .filter((t) => noteTagNames.includes(t.name))
+        .map((t) => t.id);
+      if (matchedTagIds.length > 0) {
+        setSelectedTagIds((prev) => Array.from(new Set([...prev, ...matchedTagIds])));
+      }
+    }
+  }, [noteTagNames, tags]);
+
   // Auto-save draft to localStorage every 4 seconds
   useEffect(() => {
     if (id) return; // Don't overwrite existing course draft
@@ -112,11 +124,12 @@ export default function MdEditor() {
       if (title.trim() || slides.length > 0) {
         localStorage.setItem('kadha_draft_title', title);
         localStorage.setItem('kadha_draft_slides', JSON.stringify(slides));
+        localStorage.setItem('kadha_draft_excerpt', excerpt);
       }
     }, 4000);
 
     return () => clearInterval(timer);
-  }, [id, title, slides]);
+  }, [id, title, slides, excerpt]);
 
   // Toggle tag selection
   const toggleTag = (tagId) => {
@@ -131,7 +144,7 @@ export default function MdEditor() {
     if (!tagName) return;
 
     try {
-      const res = await api.post('/blog/tags/create', { tags: [tagName] });
+      const res = await api.post('/lessons/tags/create', { tags: [tagName] });
       setNewTagInput('');
       setTagRefreshTrigger((p) => p + 1);
       toast({ title: `Tag '${tagName}' created`, variant: 'success' });
@@ -160,6 +173,7 @@ export default function MdEditor() {
         await api.put(`/lessons/edit/${id}`, {
           title,
           imageUrl,
+          excerpt,
           content: fullMarkdownContent,
           slides,
           tagIds: selectedTagIds,
@@ -169,12 +183,14 @@ export default function MdEditor() {
         await api.post('/lessons/add', {
           title,
           imageUrl,
+          excerpt,
           content: fullMarkdownContent,
           slides,
           tagIds: selectedTagIds,
         });
         localStorage.removeItem('kadha_draft_title');
         localStorage.removeItem('kadha_draft_slides');
+        localStorage.removeItem('kadha_draft_excerpt');
         toast({ title: 'New Tech Note published successfully!', variant: 'success' });
       }
       navigate('/admin');
@@ -187,25 +203,33 @@ export default function MdEditor() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Appbar />
 
-      <main style={{ flex: 1, maxWidth: 1360, margin: '0 auto', width: '100%', padding: '2rem 1.5rem 6rem' }}>
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 md:px-6 py-8 pb-24">
         {/* Top Header */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '2rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Button size="sm" variant="outline" onClick={() => navigate('/admin')} style={{ borderRadius: 12 }}>
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3">
+            <Button size="sm" variant="outline" onClick={() => navigate('/admin')} className="rounded-xl font-bold">
               <FiArrowLeft size={16} /> Back to Studio
             </Button>
             <div>
-              <h1 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.5rem', fontWeight: 800, color: 'var(--fg)' }}>
-                {id ? 'Edit Learning Course' : 'Create New Course'}
+              <h1 className="font-heading text-xl md:text-2xl font-extrabold text-foreground">
+                {id ? 'Edit Tech Note' : 'Create New Tech Note'}
               </h1>
-              <p style={{ fontSize: '0.825rem', color: 'var(--fg-muted)' }}>
+              <p className="text-xs text-muted-foreground">
                 Design interactive slide-based learning tracks with visual block tools and media management.
               </p>
             </div>
           </div>
+
+          {/* Auto-Save Draft Indicator */}
+          {!id && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Auto-saved to local draft</span>
+            </div>
+          )}
         </div>
 
         {/* Tag & Topic Selector Section */}
@@ -249,6 +273,28 @@ export default function MdEditor() {
             >
               <FiPlus size={13} /> Add Topic
             </Button>
+          </div>
+        </div>
+
+        {/* Excerpt / Short Description */}
+        <div className="p-4 rounded-[24px] border border-border/80 bg-card/80 mb-6 shadow-[0_10px_30px_rgba(2,6,23,0.04)] backdrop-blur-md">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[11px] font-black text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 bg-muted/50 border border-border/60 px-3 py-1.5 rounded-full">
+              <FiAlignLeft size={13} /> Note Description:
+            </span>
+          </div>
+          <textarea
+            value={excerpt}
+            onChange={(e) => setExcerpt(e.target.value)}
+            placeholder="Write a short description or excerpt for this note... (shown on cards and search results)"
+            maxLength={300}
+            rows={2}
+            className="w-full px-4 py-2.5 text-sm rounded-xl bg-background border border-border/80 text-foreground resize-none outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/60"
+          />
+          <div className="text-right mt-1">
+            <span className={`text-[10px] font-bold ${excerpt.length > 250 ? 'text-amber-400' : 'text-muted-foreground/50'}`}>
+              {excerpt.length}/300
+            </span>
           </div>
         </div>
 

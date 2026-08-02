@@ -3,6 +3,7 @@ import BlogCard from './BlogCard.jsx';
 import { Pagination } from './Pagination.jsx';
 import useBlogs from '../../hooks/useBlogs.js';
 import useTags from '../../hooks/useTags.js';
+import api from '../../utils/api.js';
 import { Skeleton } from './Skeleton.jsx';
 import { Input } from './Input.jsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,7 +16,9 @@ import {
   FiZap,
   FiTrendingUp,
   FiClock,
+  FiBookmark,
 } from 'react-icons/fi';
+import useBookmarks from '../../hooks/useBookmarks.js';
 
 const sortOptions = [
   { id: 'latest', label: 'Latest Created', icon: FiZap, color: 'text-amber-400' },
@@ -102,14 +105,19 @@ export default function HomeBlogs() {
   const [selectedTag, setSelectedTag] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('latest');
+  const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
+  const [bookmarkedBlogs, setBookmarkedBlogs] = useState([]);
+  const [loadingBookmarks, setLoadingBookmarks] = useState(false);
 
   const { tags: dbTags } = useTags();
+  const { bookmarks, isBookmarked } = useBookmarks();
 
   const { blogs, totalPages, totalCount, loading, error } = useBlogs(
     page,
     selectedTag ? [selectedTag] : [],
     searchQuery,
-    sortOption
+    sortOption,
+    { enabled: !showBookmarksOnly }
   );
 
   // Dynamic tags list from DB ONLY
@@ -119,6 +127,51 @@ export default function HomeBlogs() {
     const extracted = dbTags.map((t) => (typeof t === 'object' ? t.name : t)).filter(Boolean);
     return ['All', ...new Set(extracted)];
   }, [dbTags]);
+
+  // Fetch bookmarked notes directly from backend using stored IDs
+  useEffect(() => {
+    if (!showBookmarksOnly) return;
+    if (!bookmarks || bookmarks.length === 0) {
+      setBookmarkedBlogs([]);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchBookmarkedLessons = async () => {
+      try {
+        setLoadingBookmarks(true);
+        const promises = bookmarks.map((id) =>
+          api.get(`/lessons/get/${id}`).catch(() => null)
+        );
+        const responses = await Promise.all(promises);
+        if (!isMounted) return;
+
+        const validBlogs = responses
+          .filter((r) => r && r.data && (r.data.id || r.data.lesson || r.data.blog))
+          .map((r) => r.data.lesson || r.data.blog || r.data);
+
+        setBookmarkedBlogs(validBlogs);
+      } catch (err) {
+        console.error('Error fetching bookmarked notes:', err);
+      } finally {
+        if (isMounted) setLoadingBookmarks(false);
+      }
+    };
+
+    fetchBookmarkedLessons();
+    return () => {
+      isMounted = false;
+    };
+  }, [showBookmarksOnly, JSON.stringify(bookmarks)]);
+
+  const displayedBlogs = useMemo(() => {
+    if (showBookmarksOnly) {
+      return bookmarkedBlogs.filter((b) => isBookmarked(b.id));
+    }
+    return blogs;
+  }, [blogs, bookmarkedBlogs, showBookmarksOnly, isBookmarked]);
+
+  const isLoading = showBookmarksOnly ? loadingBookmarks : loading;
 
   return (
     <section id="notes-section" className="max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12 scroll-mt-20">
@@ -173,11 +226,31 @@ export default function HomeBlogs() {
               </button>
             );
           })}
+
+          {/* Bookmarks Filter Pill */}
+          <button
+            onClick={() => {
+              setShowBookmarksOnly((prev) => !prev);
+              setPage(1);
+            }}
+            className={`px-3.5 py-1.5 rounded-xl text-xs md:text-sm font-extrabold transition-all duration-200 cursor-pointer flex items-center gap-1.5 ml-1 border ${
+              showBookmarksOnly
+                ? 'bg-primary/15 text-primary border-primary/40 shadow-[0_0_10px_var(--neon-glow)] font-black'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50 border-transparent'
+            }`}
+          >
+            <FiBookmark
+              size={13}
+              className={showBookmarksOnly ? 'text-primary' : ''}
+              fill={showBookmarksOnly ? 'currentColor' : 'none'}
+            />
+            <span>Bookmarks{bookmarks.length > 0 ? ` (${bookmarks.length})` : ''}</span>
+          </button>
         </div>
       </div>
 
       {/* Loading Skeletons */}
-      {loading && (
+      {isLoading && (
         <div className="flex flex-col gap-3">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="p-4 rounded-[22px] border border-border bg-card flex items-center justify-between gap-4">
@@ -195,25 +268,29 @@ export default function HomeBlogs() {
       )}
 
       {/* Error State */}
-      {!loading && error && (
+      {!isLoading && error && !showBookmarksOnly && (
         <div className="p-6 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 font-bold text-sm text-center">
           Failed to load notes. Please check your connection.
         </div>
       )}
 
       {/* Notes Stack */}
-      {!loading && !error && (
+      {!isLoading && (
         <div className="flex flex-col gap-3.5">
-          {blogs.length === 0 ? (
+          {displayedBlogs.length === 0 ? (
             <div className="p-12 text-center rounded-[24px] border border-border bg-card flex flex-col items-center gap-3">
               <FiBookOpen size={36} className="text-muted-foreground" />
-              <h3 className="font-heading font-extrabold text-lg text-foreground">No notes available</h3>
+              <h3 className="font-heading font-extrabold text-lg text-foreground">
+                {showBookmarksOnly ? 'No bookmarked notes yet' : 'No notes available'}
+              </h3>
               <p className="text-xs text-muted-foreground max-w-sm">
-                Try adjusting your search query or topic filter.
+                {showBookmarksOnly
+                  ? 'Click the bookmark icon on any note card to save it here.'
+                  : 'Try adjusting your search query or topic filter.'}
               </p>
             </div>
           ) : (
-            blogs.map((blog) => (
+            displayedBlogs.map((blog) => (
               <BlogCard key={blog.id} blog={blog} />
             ))
           )}
@@ -221,7 +298,7 @@ export default function HomeBlogs() {
       )}
 
       {/* Pagination */}
-      {!loading && totalPages > 0 && (
+      {!loading && !showBookmarksOnly && totalPages > 0 && (
         <Pagination
           page={page}
           totalPages={totalPages}

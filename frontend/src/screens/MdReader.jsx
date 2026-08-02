@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useLocation } from "react-router-dom";
-import axios from "axios";
-import { getenv } from "../utils/getenv.js";
+import api from "../utils/api.js";
 import { Skeleton } from "../components/ui/Skeleton.jsx";
 import { FiAlertCircle } from "react-icons/fi";
 import TrackHeader from "../components/reader/TrackHeader.jsx";
@@ -89,9 +88,7 @@ const fetchSlideBatch = useCallback(
 
     try {
       setFetchingBatch(true);
-      const res = await axios.get(
-        `${getenv("APIURL")}/lessons/get/${blogId}?offset=${offset}&limit=${limit}`
-      );
+      const res = await api.get(`/lessons/get/${blogId}?offset=${offset}&limit=${limit}`);
       const fetchedSlides = res.data.slides || [];
       mergeSlidesBatch(fetchedSlides, offset);
       if (res.data.totalSlides || res.data.slidesCount) {
@@ -121,8 +118,8 @@ const fetchSlideBatch = useCallback(
     setError(null);
     setLoadedSlidesMap({});
 
-    axios
-      .get(`${getenv("APIURL")}/lessons/get/${blogId}?offset=0&limit=${BATCH_SIZE}`)
+    api
+      .get(`/lessons/get/${blogId}?offset=0&limit=${BATCH_SIZE}`)
       .then((res) => {
         setBlog(res.data);
         const initialBatch = res.data.slides || [];
@@ -259,7 +256,7 @@ const fetchSlideBatch = useCallback(
     if (Object.keys(loadedSlidesMap).length < totalSlidesCount) {
       setFetchingBatch(true);
       try {
-        const res = await axios.get(`${getenv("APIURL")}/lessons/get/${blogId}?offset=0&limit=0`);
+        const res = await api.get(`/lessons/get/${blogId}?offset=0&limit=0`);
         const allSlides = res.data.slides || [];
         mergeSlidesBatch(allSlides, 0);
       } catch (err) {
@@ -395,6 +392,7 @@ const fetchSlideBatch = useCallback(
         {/* Bottom Navigation Dock */}
         {!loading && !error && blog && (
           <TrackBottomDock
+            blogId={blog.id || blogId}
             slides={slides}
             currentSlideIndex={currentSlideIndex}
             slidesCount={slides.length}

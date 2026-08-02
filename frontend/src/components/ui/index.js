@@ -11,8 +11,6 @@ export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 export { Badge, badgeVariants } from './Badge.jsx';
 export { Input } from './Input.jsx';
 export { Label } from './Label.jsx';
-export { Separator } from './Separator.jsx';
-export { Switch } from './Switch.jsx';
 export { Skeleton } from './Skeleton.jsx';
 export { Pagination } from './Pagination.jsx';
 

@@ -26,6 +26,47 @@ marked.setOptions({
 });
 
 /**
+ * Splits raw markdown text into structured slides/concepts array.
+ * Supports splitting by `---` horizontal rules, headings, or returns single slide.
+ */
+export function parseRawMarkdownToSlides(raw = "") {
+  if (!raw || typeof raw !== "string") return [];
+
+  let parts = [];
+  if (raw.includes("\n---\n") || raw.includes("\n***\n")) {
+    parts = raw.split(/\n(?:---|[*]{3})\n/g);
+  } else if (raw.split(/(?=\n#{1,2}\s+)/g).length > 1) {
+    parts = raw.split(/(?=\n#{1,2}\s+)/g);
+  } else {
+    parts = [raw];
+  }
+
+  const validParts = parts.filter((p) => p.trim().length > 0);
+  return validParts.map((part, idx) => {
+    const lines = part.trim().split("\n").map((l) => l.trim()).filter(Boolean);
+    const firstLine = lines[0] || "";
+    const headingMatch = firstLine.match(/^(#{1,6})\s+(.+)$/);
+
+    let titleStr = `Concept ${idx + 1}`;
+    if (headingMatch && headingMatch[2]) {
+      titleStr = headingMatch[2].trim();
+    } else if (firstLine) {
+      const cleanSnippet = firstLine.replace(/[*_~`#]/g, "").trim();
+      if (cleanSnippet) {
+        titleStr = cleanSnippet.length > 45 ? cleanSnippet.slice(0, 42) + "..." : cleanSnippet;
+      }
+    }
+
+    return {
+      step: idx + 1,
+      orderNumber: idx + 1,
+      title: titleStr,
+      content: part.trim(),
+    };
+  });
+}
+
+/**
  * Automatically detects unfenced raw Mermaid diagram blocks (e.g., graph TD, sequenceDiagram)
  * and wraps them in ```mermaid ... ``` code fences cleanly without swallowing normal text.
  */

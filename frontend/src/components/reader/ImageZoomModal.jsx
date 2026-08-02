@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiZoomIn, FiZoomOut, FiMaximize2 } from 'react-icons/fi';
 
-export default function ImageZoomModal({ src, alt, onClose }) {
+export default function ImageZoomModal({ src, imageUrl, alt, onClose }) {
   const [scale, setScale] = useState(1);
+  const imageSrc = src || imageUrl;
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -13,7 +14,7 @@ export default function ImageZoomModal({ src, alt, onClose }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-  if (!src) return null;
+  if (!imageSrc) return null;
 
   return (
     <AnimatePresence>
@@ -22,65 +23,42 @@ export default function ImageZoomModal({ src, alt, onClose }) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 9999,
-          background: 'rgba(2, 6, 23, 0.88)',
-          backdropFilter: 'blur(16px)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '2rem',
-        }}
+        className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-4 md:p-8"
       >
         {/* Top Controls Bar */}
         <div
           onClick={(e) => e.stopPropagation()}
-          style={{
-            position: 'absolute',
-            top: 20,
-            right: 20,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            background: 'var(--card)',
-            border: '1px solid var(--border)',
-            padding: '6px 14px',
-            borderRadius: 999,
-            boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-          }}
+          className="absolute top-5 right-5 flex items-center gap-2 bg-card/90 border border-border/80 px-3.5 py-1.5 rounded-full shadow-2xl backdrop-blur-md"
         >
           <button
-            onClick={() => setScale((s) => Math.min(s + 0.3, 3))}
-            style={{ background: 'none', border: 'none', color: 'var(--fg)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4 }}
+            onClick={() => setScale((s) => Math.min(s + 0.35, 3.5))}
+            className="p-1.5 text-foreground hover:text-primary transition-colors cursor-pointer"
             title="Zoom In"
           >
             <FiZoomIn size={18} />
           </button>
-          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--fg-muted)', minWidth: 40, textAlign: 'center' }}>
+          <span className="text-xs font-black text-muted-foreground min-w-[42px] text-center font-mono">
             {Math.round(scale * 100)}%
           </span>
           <button
-            onClick={() => setScale((s) => Math.max(s - 0.3, 0.6))}
-            style={{ background: 'none', border: 'none', color: 'var(--fg)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4 }}
+            onClick={() => setScale((s) => Math.max(s - 0.35, 0.5))}
+            className="p-1.5 text-foreground hover:text-primary transition-colors cursor-pointer"
             title="Zoom Out"
           >
             <FiZoomOut size={18} />
           </button>
           <button
             onClick={() => setScale(1)}
-            style={{ background: 'none', border: 'none', color: 'var(--fg)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4 }}
+            className="p-1.5 text-foreground hover:text-primary transition-colors cursor-pointer"
             title="Reset Zoom"
           >
             <FiMaximize2 size={16} />
           </button>
-          <div style={{ width: 1, height: 16, background: 'var(--border)', margin: '0 4px' }} />
+          <div className="w-[1px] h-4 bg-border/80 mx-1" />
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4 }}
-            title="Close"
+            className="p-1.5 text-red-500 hover:text-red-600 transition-colors cursor-pointer"
+            title="Close Lightbox"
           >
             <FiX size={20} />
           </button>
@@ -92,31 +70,16 @@ export default function ImageZoomModal({ src, alt, onClose }) {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          style={{
-            maxWidth: '90vw',
-            maxHeight: '82vh',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            overflow: 'auto',
-          }}
+          className="max-w-[92vw] max-h-[85vh] flex flex-col items-center justify-center overflow-auto p-2"
         >
           <img
-            src={src}
-            alt={alt || 'Zoomed diagram or figure'}
-            style={{
-              maxWidth: '100%',
-              maxHeight: '78vh',
-              objectFit: 'contain',
-              borderRadius: 16,
-              transform: `scale(${scale})`,
-              transition: 'transform 0.2s ease-out',
-              boxShadow: '0 24px 70px rgba(0,0,0,0.5)',
-              cursor: scale > 1 ? 'grab' : 'zoom-in',
-            }}
+            src={imageSrc}
+            alt={alt || 'Zoomed figure or diagram'}
+            style={{ transform: `scale(${scale})` }}
+            className="max-w-full max-h-[80vh] object-contain rounded-2xl transition-transform duration-200 ease-out shadow-[0_24px_80px_rgba(0,0,0,0.6)] border border-border/40 select-none cursor-grab active:cursor-grabbing"
           />
           {alt && (
-            <p style={{ marginTop: 16, color: 'rgba(255,255,255,0.7)', fontSize: '0.875rem', fontWeight: 500, textAlign: 'center' }}>
+            <p className="mt-4 text-xs md:text-sm font-semibold text-white/80 text-center max-w-md">
               {alt}
             </p>
           )}

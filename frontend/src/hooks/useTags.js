@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { getenv } from '../utils/getenv.js';
+import api from '../utils/api.js';
 
 const useTags = (refreshTrigger = 0) => {
   const [tags, setTags] = useState([]);
@@ -9,11 +8,10 @@ const useTags = (refreshTrigger = 0) => {
 
   useEffect(() => {
     const fetchTags = async () => {
-      const apiUrl = getenv('APIURL');
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get(`${apiUrl}/blog/tags`);
+        const response = await api.get('/lessons/tags');
         setTags(response.data.tags || []);
       } catch (err) {
         setError('Error fetching tags');

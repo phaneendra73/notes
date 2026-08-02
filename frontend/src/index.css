@@ -265,30 +265,67 @@ body {
   border: 1px solid var(--border);
   box-shadow: 0 16px 48px rgba(2, 6, 23, 0.08);
 }
-.markdown-body table {
+/* ── UNIVERSAL MARKDOWN TABLE STYLING ── */
+.markdown-body table,
+.prose table,
+table {
   width: 100%;
-  border-collapse: collapse;
-  margin: 1.75rem 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 1.5rem 0;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 16px;
   overflow: hidden;
-  display: block;
+  display: table;
   max-width: 100%;
   overflow-x: auto;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
 }
+
 .markdown-body th,
-.markdown-body td {
-  border: 1px solid var(--border);
-  padding: 0.8rem 1rem;
+.prose th,
+th,
+.markdown-body td,
+.prose td,
+td {
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  padding: 0.75rem 1rem;
   text-align: left;
-  vertical-align: top;
+  vertical-align: middle;
+  font-size: 0.9rem;
 }
-.markdown-body th {
+
+.markdown-body th:last-child,
+.prose th:last-child,
+th:last-child,
+.markdown-body td:last-child,
+.prose td:last-child,
+td:last-child {
+  border-right: none;
+}
+
+.markdown-body tr:last-child td,
+.prose tr:last-child td,
+tr:last-child td {
+  border-bottom: none;
+}
+
+.markdown-body th,
+.prose th,
+th {
   background: var(--muted);
-  font-weight: 700;
+  font-weight: 800;
+  color: var(--foreground);
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
 }
-.markdown-body tr:nth-child(even) td {
-  background: color-mix(in srgb, var(--card) 92%, var(--muted) 8%);
+
+.markdown-body tr:nth-child(even) td,
+.prose tr:nth-child(even) td,
+tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--card) 94%, var(--muted) 6%);
 }
 
 /* ── SCROLLBAR ── */

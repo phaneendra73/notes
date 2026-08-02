@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api.js';
 import { getenv } from '../utils/getenv.js';
 
 /**
@@ -11,7 +11,7 @@ const useBlogs = (
   selectedTags = [],
   searchQuery = '',
   sort = 'latest',
-  { enabled = true, includeUnpublished = false, refreshTrigger = 0 } = {}
+  { enabled = true, includeUnpublished = false, refreshTrigger = 0, limit } = {}
 ) => {
   const [blogs, setBlogs] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -23,8 +23,7 @@ const useBlogs = (
     if (!enabled) return;
 
     const fetchLessons = async () => {
-      const apiUrl = getenv('APIURL');
-      const blogLimit = getenv('BLOGSLIMIT');
+      const defaultLimit = getenv('BLOGSLIMIT');
 
       try {
         setLoading(true);
@@ -35,18 +34,14 @@ const useBlogs = (
           query: searchQuery,
           sort,
           page,
-          limit: blogLimit,
+          limit: limit || defaultLimit,
         };
-
-        const headers = {};
 
         if (includeUnpublished) {
           params.includeUnpublished = 'true';
-          const token = localStorage.getItem('jwt');
-          if (token) headers.Authorization = `Bearer ${token}`;
         }
 
-        const response = await axios.get(`${apiUrl}/lessons/getall`, { params, headers });
+        const response = await api.get('/lessons/getall', { params });
         setBlogs(response.data.lessons || response.data.blogs || []);
         setTotalCount(response.data.pagination?.totalCount || 0);
         setTotalPages(response.data.pagination?.totalPages || 1);
@@ -59,7 +54,7 @@ const useBlogs = (
     };
 
     fetchLessons();
-  }, [page, selectedTags.join(','), searchQuery, sort, enabled, includeUnpublished, refreshTrigger]);
+  }, [page, selectedTags.join(','), searchQuery, sort, enabled, includeUnpublished, refreshTrigger, limit]);
 
   return { blogs, totalCount, totalPages, loading, error };
 };

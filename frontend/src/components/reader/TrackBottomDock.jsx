@@ -1,12 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  FiChevronLeft,
-  FiChevronRight,
-  FiHome,
-} from 'react-icons/fi';
+import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { FiChevronLeft, FiChevronRight, FiHome, FiEdit2 } from "react-icons/fi";
 
 export default function TrackBottomDock({
+  blogId,
   slides = [],
   currentSlideIndex,
   slidesCount,
@@ -15,6 +12,7 @@ export default function TrackBottomDock({
   onSelectSlide,
 }) {
   const navigate = useNavigate();
+  const isAuthenticated = Boolean(localStorage.getItem("jwt"));
   const [jumpOpen, setJumpOpen] = useState(false);
   const [visible, setVisible] = useState(true);
   const jumpRef = useRef(null);
@@ -27,7 +25,10 @@ export default function TrackBottomDock({
       if (currentScrollY > lastScrollY.current + 15 && currentScrollY > 50) {
         setVisible(false);
         setJumpOpen(false); // Close jump popup if scrolling down
-      } else if (currentScrollY < lastScrollY.current - 10 || currentScrollY < 30) {
+      } else if (
+        currentScrollY < lastScrollY.current - 10 ||
+        currentScrollY < 30
+      ) {
         setVisible(true);
       }
       lastScrollY.current = currentScrollY;
@@ -46,181 +47,117 @@ export default function TrackBottomDock({
         setJumpOpen(false);
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, [jumpOpen]);
 
-  const dockBtnPrimary = {
-    padding: '8px 16px',
-    borderRadius: 12,
-    border: 'none',
-    background: 'var(--fg)',
-    color: 'var(--bg)',
-    fontSize: '0.85rem',
-    fontWeight: 800,
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-    transition: 'all 0.15s ease',
-  };
-
-  const dockBtnSecondary = {
-    padding: '8px 14px',
-    borderRadius: 12,
-    border: '1px solid var(--border)',
-    background: 'var(--card)',
-    color: 'var(--fg)',
-    fontSize: '0.85rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-    transition: 'all 0.15s ease',
-  };
-
   return (
-    <div
-      className="no-print fixed bottom-6 left-0 right-0 md:right-auto md:left-6 z-[100] flex justify-center pointer-events-none"
-    >
+    <div className="no-print fixed bottom-6 left-0 right-0 md:right-auto md:left-6 z-[100] flex justify-center pointer-events-none">
       <div
-        style={{
-          pointerEvents: visible ? 'auto' : 'none',
-          background: 'var(--card)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid var(--border)',
-          borderRadius: 20,
-          padding: '6px 10px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.3)',
-          whiteSpace: 'nowrap',
-          transform: visible ? 'translateY(0)' : 'translateY(80px)',
-          opacity: visible ? 1 : 0,
-          transition: 'transform 0.25s ease, opacity 0.25s ease',
-        }}
+        className={`pointer-events-auto bg-card/90 backdrop-blur-xl border border-border/80 rounded-2xl px-3 py-1.5 flex items-center gap-2 shadow-[0_20px_50px_rgba(0,0,0,0.35)] transition-all duration-300 ease-out ${
+          visible
+            ? "translate-y-0 opacity-100"
+            : "translate-y-20 opacity-0 pointer-events-none"
+        }`}
       >
         {/* Back to Home Catalog */}
-      <button
-        onClick={() => navigate('/')}
-        style={dockBtnSecondary}
-        title="Back to Home"
-      >
-        <FiHome size={15} style={{ color: 'var(--primary)' }} />
-        <span>Home</span>
-      </button>
-
-      <div style={{ width: 1, height: 20, background: 'var(--border)', opacity: 0.6 }} />
-
-      {/* Previous Slide Button */}
-      <button
-        disabled={currentSlideIndex === 0}
-        onClick={onPrev}
-        style={{
-          ...dockBtnPrimary,
-          background: currentSlideIndex === 0 ? 'var(--muted)' : 'var(--fg)',
-          color: currentSlideIndex === 0 ? 'var(--fg-muted)' : 'var(--bg)',
-          cursor: currentSlideIndex === 0 ? 'not-allowed' : 'pointer',
-          opacity: currentSlideIndex === 0 ? 0.4 : 1,
-        }}
-      >
-        <FiChevronLeft size={18} />
-        <span className="hidden sm:inline">Prev</span>
-      </button>
-
-      {/* Slide Counter (Clickable to jump) */}
-      <div ref={jumpRef} style={{ position: 'relative' }}>
         <button
-          onClick={() => setJumpOpen((v) => !v)}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: 'var(--fg)',
-            fontSize: '0.82rem',
-            fontWeight: 800,
-            padding: '6px 10px',
-            borderRadius: 10,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-          }}
-          title="Click to jump to slide"
+          onClick={() => navigate("/")}
+          className="px-3 py-1.5 rounded-xl border border-border/80 bg-background/80 text-foreground hover:border-primary/50 text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer"
+          title="Back to Home Catalog"
         >
-          <span>{currentSlideIndex + 1} / {slidesCount}</span>
+          <FiHome size={14} className="text-primary" />
+          <span className="hidden sm:inline">Home</span>
         </button>
 
-        {jumpOpen && slides && slides.length > 1 && (
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 'calc(100% + 14px)',
-              left: 0,
-              background: 'var(--card)',
-              border: '1px solid var(--border)',
-              borderRadius: 16,
-              padding: '8px',
-              minWidth: 240,
-              boxShadow: '0 20px 50px rgba(0,0,0,0.35)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 4,
-              maxHeight: 280,
-              overflowY: 'auto',
-            }}
-          >
-            {slides.map((s, idx) => (
-              <button
-                key={idx}
-                onClick={() => {
-                  onSelectSlide(idx);
-                  setJumpOpen(false);
-                }}
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: 10,
-                  border: 'none',
-                  background: idx === currentSlideIndex ? 'rgba(0,201,110,0.15)' : 'transparent',
-                  color: idx === currentSlideIndex ? 'var(--primary)' : 'var(--fg)',
-                  fontWeight: idx === currentSlideIndex ? 800 : 500,
-                  fontSize: '0.82rem',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  transition: 'all 0.12s',
-                }}
-              >
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {idx + 1}. {s.title}
-                </span>
-                {idx === currentSlideIndex && (
-                  <span style={{ fontSize: '0.68rem', fontWeight: 800, background: 'var(--primary)', color: '#000', padding: '2px 6px', borderRadius: 999 }}>Active</span>
-                )}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+        <div className="w-[1px] h-4 bg-border/60" />
 
-      {/* Next Slide Button */}
-      <button
-        disabled={currentSlideIndex === slidesCount - 1}
-        onClick={onNext}
-        style={{
-          ...dockBtnPrimary,
-          background: currentSlideIndex === slidesCount - 1 ? 'var(--muted)' : 'var(--fg)',
-          color: currentSlideIndex === slidesCount - 1 ? 'var(--fg-muted)' : 'var(--bg)',
-          cursor: currentSlideIndex === slidesCount - 1 ? 'not-allowed' : 'pointer',
-          opacity: currentSlideIndex === slidesCount - 1 ? 0.4 : 1,
-        }}
-      >
-        <span className="hidden sm:inline">Next</span>
-        <FiChevronRight size={18} />
-      </button>
+        {/* Previous Slide Button */}
+        <button
+          disabled={currentSlideIndex === 0}
+          onClick={onPrev}
+          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1 transition-all ${
+            currentSlideIndex === 0
+              ? "bg-muted/40 text-muted-foreground/40 cursor-not-allowed border border-transparent"
+              : "bg-primary text-primary-foreground shadow-sm hover:opacity-90 cursor-pointer active:scale-95"
+          }`}
+          title="Previous slide (Left Arrow)"
+        >
+          <FiChevronLeft size={16} />
+          <span className="hidden sm:inline">Prev</span>
+        </button>
+
+        {/* Slide Counter (Clickable to jump) */}
+        <div ref={jumpRef} className="relative">
+          <button
+            onClick={() => setJumpOpen((v) => !v)}
+            className="px-2.5 py-1.5 rounded-xl text-xs font-black text-foreground hover:bg-muted/60 transition-all flex items-center gap-1 cursor-pointer"
+            title="Click to jump to slide"
+          >
+            <span>
+              {currentSlideIndex + 1} / {slidesCount}
+            </span>
+          </button>
+
+          {/* Jump to Slide Popup Menu */}
+          {jumpOpen && slides && slides.length > 1 && (
+            <div className="absolute bottom-[calc(100%+12px)] left-0 bg-card border border-border/80 rounded-2xl p-2 min-w-[220px] max-w-[280px] max-h-[260px] overflow-y-auto shadow-2xl flex flex-col gap-1 z-50">
+              {slides.map((s, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    onSelectSlide(idx);
+                    setJumpOpen(false);
+                  }}
+                  className={`p-2 rounded-xl text-xs font-bold text-left transition-all flex items-center justify-between gap-2 cursor-pointer ${
+                    idx === currentSlideIndex
+                      ? "bg-primary/15 text-primary font-black border border-primary/30"
+                      : "text-foreground hover:bg-muted/60 border border-transparent"
+                  }`}
+                >
+                  <span className="truncate flex-1">
+                    {idx + 1}. {s.title}
+                  </span>
+                  {idx === currentSlideIndex && (
+                    <span className="text-[10px] font-black bg-primary text-primary-foreground px-2 py-0.5 rounded-full shrink-0">
+                      Active
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Next Slide Button */}
+        <button
+          disabled={currentSlideIndex === slidesCount - 1}
+          onClick={onNext}
+          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1 transition-all ${
+            currentSlideIndex === slidesCount - 1
+              ? "bg-muted/40 text-muted-foreground/40 cursor-not-allowed border border-transparent"
+              : "bg-primary text-primary-foreground shadow-sm hover:opacity-90 cursor-pointer active:scale-95"
+          }`}
+          title="Next slide (Right Arrow)"
+        >
+          <span className="hidden sm:inline">Next</span>
+          <FiChevronRight size={16} />
+        </button>
+
+        {/* Edit Note Button (Visible for logged-in author) */}
+        {isAuthenticated && blogId && (
+          <>
+            <div className="w-[1px] h-4 bg-border/60 mx-0.5" />
+            <button
+              onClick={() => navigate(`/editor/${blogId}`)}
+              className="px-3 py-1.5 rounded-xl border border-indigo-500/35 bg-indigo-500/15 text-indigo-400 hover:bg-indigo-500/25 text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95"
+              title="Edit this note directly in Studio"
+            >
+              <FiEdit2 size={14} />
+              <span className="hidden sm:inline">Edit Note</span>
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

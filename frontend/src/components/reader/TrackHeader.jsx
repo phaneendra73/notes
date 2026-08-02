@@ -13,6 +13,7 @@ import {
   FiCheckCircle,
   FiHome,
   FiSearch,
+  FiShare2,
 } from "react-icons/fi";
 import { useToast } from "../Toaster.jsx";
 
@@ -203,6 +204,41 @@ export default function TrackHeader({
                 className="p-2.5 rounded-xl border border-border bg-background/80 text-xs font-bold text-foreground hover:border-primary/50 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <FiFileText size={14} className="text-cyan-400" /> Export PDF
+              </button>
+
+              {/* Share / Copy Link */}
+              <button
+                onClick={async () => {
+                  const shareUrl = window.location.href;
+                  const shareData = {
+                    title: blog?.title || "Kadha Note",
+                    text: blog?.excerpt || `Check out "${blog?.title}" on Kadha Notes`,
+                    url: shareUrl,
+                  };
+
+                  try {
+                    if (navigator.share && navigator.canShare?.(shareData)) {
+                      await navigator.share(shareData);
+                      toast({ title: "Shared successfully!", variant: "success" });
+                    } else {
+                      await navigator.clipboard.writeText(shareUrl);
+                      toast({ title: "Link copied to clipboard!", variant: "success" });
+                    }
+                  } catch (err) {
+                    if (err.name !== "AbortError") {
+                      try {
+                        await navigator.clipboard.writeText(shareUrl);
+                        toast({ title: "Link copied to clipboard!", variant: "success" });
+                      } catch {
+                        toast({ title: "Unable to share", variant: "destructive" });
+                      }
+                    }
+                  }
+                  setMenuOpen(false);
+                }}
+                className="p-2.5 rounded-xl border border-border bg-background/80 text-xs font-bold text-foreground hover:border-primary/50 transition-all flex items-center justify-center gap-2 cursor-pointer col-span-2"
+              >
+                <FiShare2 size={14} className="text-emerald-400" /> Share Note
               </button>
             </div>
 

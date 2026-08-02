@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { getenv } from "../utils/getenv.js";
+import api from "../utils/api.js";
 import { Appbar, Footer } from "../components/ui/index.js";
 import {
   Card,
@@ -66,7 +65,7 @@ export default function Signin() {
       });
     setLoading(true);
     try {
-      const res = await axios.post(`${getenv("APIURL")}/user/signin`, {
+      const res = await api.post("/user/signin", {
         email,
         password,
       });

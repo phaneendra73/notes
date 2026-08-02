@@ -1,10 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiEye, FiClock, FiLayers } from 'react-icons/fi';
+import { FiEye, FiClock, FiLayers, FiBookmark } from 'react-icons/fi';
+import useBookmarks from '../../hooks/useBookmarks.js';
 
-export default function BlogCard({ blog }) {
+import { parseRawMarkdownToSlides } from '../../utils/markdown.js';
+
+export default function BlogCard({ blog, onBookmarkChange }) {
   const navigate = useNavigate();
+  const { isBookmarked, toggleBookmark } = useBookmarks();
 
   // Calculate relative time
   const getRelativeTime = (dateStr) => {
@@ -20,22 +24,15 @@ export default function BlogCard({ blog }) {
     return `${Math.floor(diffInDays / 365)} yr ago`;
   };
 
-  // Get real slide/chapter count from DB field slidesCount
+  // Get real slide/chapter count from DB field slidesCount or parse raw markdown
   const countSlides = (b) => {
     if (typeof b.slidesCount === 'number' && b.slidesCount > 0) return b.slidesCount;
     if (typeof b.chaptersCount === 'number' && b.chaptersCount > 0) return b.chaptersCount;
     if (Array.isArray(b.slides) && b.slides.length > 0) return b.slides.length;
     const raw = b.content || b.markdownContent || '';
     if (!raw) return 1;
-    let parts = [];
-    if (raw.includes('\n---\n') || raw.includes('\n***\n')) {
-      parts = raw.split(/\n(?:---|[*]{3})\n/g);
-    } else if (raw.split(/(?=\n#{1,2}\s+)/g).length > 1) {
-      parts = raw.split(/(?=\n#{1,2}\s+)/g);
-    } else {
-      parts = [raw];
-    }
-    return Math.max(1, parts.filter((p) => p.trim().length > 0).length);
+    const parsed = parseRawMarkdownToSlides(raw);
+    return Math.max(1, parsed.length);
   };
 
   const slidesCount = countSlides(blog);
@@ -82,6 +79,26 @@ export default function BlogCard({ blog }) {
               </div>
             )}
           </div>
+
+          {/* Bookmark Toggle */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleBookmark(blog.id);
+              if (onBookmarkChange) onBookmarkChange(blog.id);
+            }}
+            className={`p-2 rounded-xl border transition-all duration-200 cursor-pointer shrink-0 flex items-center justify-center ${
+              isBookmarked(blog.id)
+                ? 'bg-primary/15 border-primary/40 text-primary shadow-[0_0_10px_var(--neon-glow)]'
+                : 'bg-transparent border-transparent text-muted-foreground hover:text-primary hover:border-border'
+            }`}
+            title={isBookmarked(blog.id) ? 'Remove bookmark' : 'Bookmark this note'}
+          >
+            <FiBookmark
+              size={16}
+              fill={isBookmarked(blog.id) ? 'currentColor' : 'none'}
+            />
+          </button>
         </div>
 
         {/* Right / Bottom Stats */}

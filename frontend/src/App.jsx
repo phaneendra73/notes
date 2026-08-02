@@ -38,8 +38,8 @@ export default function App() {
         <Route path="/tags" element={<TagManager />} />
         <Route path="/profile" element={<ProfilePage />} />
 
-        {/* Legacy PascalCase route redirects for backward compatibility */}
-        <Route path="/BlogPosts" element={<Navigate to="/blog" replace />} />
+        {/* Legacy route redirects for backward compatibility */}
+        <Route path="/BlogPosts" element={<Navigate to="/" replace />} />
         <Route path="/Read" element={<Navigate to="/read" replace />} />
         <Route path="/Editor/*" element={<Navigate to="/editor" replace />} />
         <Route path="/Admin" element={<Navigate to="/admin" replace />} />

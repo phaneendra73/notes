@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { getenv } from '../utils/getenv.js';
+import api from '../utils/api.js';
 import { Appbar, Footer, Pagination } from '../components/ui/index.js';
 import { Button } from '../components/ui/Button.jsx';
 import { Badge } from '../components/ui/Badge.jsx';
@@ -23,6 +22,7 @@ import {
   FiCheckCircle,
   FiLock,
   FiPlus,
+  FiSettings,
 } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 
@@ -67,9 +67,8 @@ export default function ProfilePage() {
       navigate('/signin');
       return;
     }
-    const headers = { Authorization: `Bearer ${token}` };
-    axios
-      .get(`${getenv('APIURL')}/user/profile`, { headers })
+    api
+      .get('/user/profile')
       .then((res) => {
         const u = res.data.user;
         setProfile(u);
@@ -91,9 +90,8 @@ export default function ProfilePage() {
   // Fetch paginated user notes
   useEffect(() => {
     if (!token) return;
-    const headers = { Authorization: `Bearer ${token}` };
-    axios
-      .get(`${getenv('APIURL')}/blog/getall`, { headers, params: { includeUnpublished: 'true', page, limit: 20 } })
+    api
+      .get('/lessons/getall', { params: { includeUnpublished: 'true', page, limit: 20 } })
       .then((res) => {
         setMyBlogs(res.data.blogs || res.data.lessons || []);
         if (res.data.pagination) {
@@ -108,17 +106,13 @@ export default function ProfilePage() {
     e.preventDefault();
     setSavingProfile(true);
     try {
-      const res = await axios.put(
-        `${getenv('APIURL')}/user/profile`,
-        {
-          name: editName,
-          profileUrl: editAvatar,
-          bio: editBio,
-          githubUrl: editGithub,
-          twitterUrl: editTwitter,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await api.put('/user/profile', {
+        name: editName,
+        profileUrl: editAvatar,
+        bio: editBio,
+        githubUrl: editGithub,
+        twitterUrl: editTwitter,
+      });
       setProfile(res.data.user);
       toast({ title: 'Profile updated successfully!', variant: 'success' });
       setActiveTab('stories');
@@ -136,11 +130,7 @@ export default function ProfilePage() {
     }
     setUpdatingPassword(true);
     try {
-      await axios.post(
-        `${getenv('APIURL')}/user/reset-password`,
-        { currentPassword, newPassword },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.post('/user/reset-password', { currentPassword, newPassword });
       toast({ title: 'Password updated successfully!', description: 'Your new password is now active.', variant: 'success' });
       setCurrentPassword('');
       setNewPassword('');
@@ -162,16 +152,12 @@ export default function ProfilePage() {
     }
     setCreatingAuthor(true);
     try {
-      await axios.post(
-        `${getenv('APIURL')}/user/add-author`,
-        {
-          name: newAuthorName,
-          email: newAuthorEmail,
-          password: newAuthorPassword,
-          role: newAuthorRole,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.post('/user/add-author', {
+        name: newAuthorName,
+        email: newAuthorEmail,
+        password: newAuthorPassword,
+        role: newAuthorRole,
+      });
       toast({ title: 'Author account created!', description: `Account created for ${newAuthorEmail}.`, variant: 'success' });
       setNewAuthorName('');
       setNewAuthorEmail('');
@@ -190,9 +176,7 @@ export default function ProfilePage() {
   const handleDeleteBlog = async (blogId) => {
     if (!window.confirm('Are you sure you want to delete this note? This action cannot be undone.')) return;
     try {
-      await axios.delete(`${getenv('APIURL')}/blog/delete/${blogId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/lessons/delete/${blogId}`);
       setMyBlogs((prev) => prev.filter((b) => b.id !== blogId));
       toast({ title: 'Note deleted successfully', variant: 'success' });
     } catch (err) {
@@ -248,8 +232,8 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-                  <Button variant="primary" size="sm" onClick={() => navigate('/editor')} className="rounded-xl gap-2 font-extrabold text-xs flex-1 sm:flex-initial justify-center">
-                    <FiPlus size={14} /> New Tech Note
+                  <Button variant="neon" size="sm" onClick={() => navigate('/admin')} className="rounded-xl gap-2 font-extrabold text-xs flex-1 sm:flex-initial justify-center">
+                    <FiSettings size={14} /> Open Author Studio
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => setActiveTab('edit')} className="rounded-xl gap-2 font-extrabold text-xs flex-1 sm:flex-initial justify-center">
                     <FiEdit3 size={14} /> Edit Profile
@@ -294,9 +278,29 @@ export default function ProfilePage() {
               </Button>
             </div>
 
-            {/* ─── Tab Content: Stories / Notes ─── */}
+            {/* ─── Tab Content: Published Portfolio Notes ─── */}
             {activeTab === 'stories' && (
               <div className="flex flex-col gap-6">
+                {/* Author Studio Banner */}
+                <div className="p-4 rounded-2xl border border-primary/30 bg-primary/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                  <div>
+                    <h3 className="font-heading font-extrabold text-sm text-foreground">
+                      Author Studio & Content Workspace
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      To create new notes, manage drafts, publish, edit, or delete notes, open your Studio dashboard.
+                    </p>
+                  </div>
+                  <Button
+                    variant="neon"
+                    size="sm"
+                    onClick={() => navigate('/admin')}
+                    className="rounded-xl font-extrabold text-xs gap-1.5 shrink-0"
+                  >
+                    <FiSettings size={14} /> Go to Author Studio →
+                  </Button>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {loading ? (
                     [1, 2, 3, 4].map((i) => (
@@ -312,7 +316,7 @@ export default function ProfilePage() {
                   ) : (
                     myBlogs.length === 0 ? (
                       <div className="col-span-full text-center py-16 text-muted-foreground flex flex-col items-center gap-3">
-                        <p className="font-bold">You haven't created any tech notes yet.</p>
+                        <p className="font-bold">You haven't published any tech notes yet.</p>
                         <Button onClick={() => navigate('/editor')}>Create Your First Note</Button>
                       </div>
                     ) : (
@@ -329,38 +333,21 @@ export default function ProfilePage() {
                             </div>
                           </div>
 
-                          {/* Card Buttons: View, Edit, Delete */}
-                          <div className="p-2.5 bg-muted/20 border-t border-border/60 flex items-center justify-end gap-2">
+                          {/* Clean Portfolio Action: View Reader */}
+                          <div className="p-2.5 bg-muted/20 border-t border-border/60 flex items-center justify-between gap-2">
+                            <span className="text-[11px] font-bold text-muted-foreground pl-1">
+                              {b.viewsCount || 0} Reads
+                            </span>
                             <Button
                               size="xs"
-                              variant="secondary"
+                              variant="view"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigate(`/read?id=${b.id}`);
                               }}
+                              className="rounded-xl font-bold"
                             >
-                              <FiEye size={12} /> View
-                            </Button>
-                            <Button
-                              size="xs"
-                              variant="info"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/editor/${b.id}`);
-                              }}
-                            >
-                              <FiEdit3 size={12} /> Edit Note
-                            </Button>
-                            <Button
-                              size="xs"
-                              variant="destructive"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteBlog(b.id);
-                              }}
-                              title="Delete Note"
-                            >
-                              <FiTrash2 size={12} />
+                              <FiEye size={12} /> Read Note
                             </Button>
                           </div>
                         </Card>

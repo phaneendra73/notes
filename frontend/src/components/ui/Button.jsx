@@ -30,6 +30,16 @@ const buttonVariants = cva(
           "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 font-bold",
         purple:
           "bg-purple-500/15 text-purple-400 border border-purple-500/30 hover:bg-purple-500/25 font-bold",
+        view:
+          "bg-sky-500/15 text-sky-400 border border-sky-500/35 hover:bg-sky-500/25 font-extrabold",
+        edit:
+          "bg-indigo-500/15 text-indigo-400 border border-indigo-500/35 hover:bg-indigo-500/25 font-extrabold",
+        publish:
+          "bg-emerald-500/15 text-emerald-400 border border-emerald-500/35 hover:bg-emerald-500/25 font-extrabold",
+        unpublish:
+          "bg-amber-500/15 text-amber-400 border border-amber-500/35 hover:bg-amber-500/25 font-extrabold",
+        delete:
+          "bg-red-500/15 text-red-400 border border-red-500/35 hover:bg-red-500 hover:text-white font-extrabold",
       },
       size: {
         default: "h-9 px-4 py-2 text-sm",

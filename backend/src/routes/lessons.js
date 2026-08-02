@@ -112,10 +112,22 @@ const handleGetAllLessons = async (c) => {
       whereClauses.push("l.isPublished = 1");
     }
 
-    // Filter by text search query
+    // Filter by text search query (title, excerpt, or tag names with character sequence fuzzy matching)
     if (query) {
-      whereClauses.push("(l.title LIKE ? OR l.excerpt LIKE ?)");
-      bindArgs.push(`%${query}%`, `%${query}%`);
+      const words = query.split(/\s+/).filter((w) => w.length > 0);
+      if (words.length > 0) {
+        const queryConditions = words
+          .map(() =>
+            `(l.title LIKE ? OR l.excerpt LIKE ? OR l.title LIKE ? OR l.id IN (SELECT tl.lessonId FROM tagsonlessons tl JOIN tags t ON tl.tagId = t.id WHERE t.name LIKE ?))`
+          )
+          .join(" AND ");
+
+        whereClauses.push(`(${queryConditions})`);
+        words.forEach((w) => {
+          const sequencePattern = w.length >= 3 ? `%${w.split("").join("%")}%` : `%${w}%`;
+          bindArgs.push(`%${w}%`, `%${w}%`, sequencePattern, `%${w}%`);
+        });
+      }
     }
 
     // Filter by tags
@@ -235,6 +247,41 @@ const handleCreateTags = async (c) => {
 
 lessonRoutes.post("/tags", authenticateUser, handleCreateTags);
 lessonRoutes.post("/tags/create", authenticateUser, handleCreateTags);
+
+/**
+ * DELETE /api/lessons/tags/:id
+ * Delete a tag and remove all tag-lesson associations (Admin Protected)
+ */
+lessonRoutes.delete("/tags/:id", authenticateUser, async (c) => {
+  try {
+    const tagId = parseInt(c.req.param("id"));
+    if (!tagId || isNaN(tagId)) {
+      return c.json({ error: "Invalid tag ID" }, 400);
+    }
+
+    const existing = await c.env.DB.prepare("SELECT * FROM tags WHERE id = ?")
+      .bind(tagId)
+      .first();
+    if (!existing) {
+      return c.json({ error: "Tag not found" }, 404);
+    }
+
+    // Remove tag-lesson associations first
+    await c.env.DB.prepare("DELETE FROM tagsonlessons WHERE tagId = ?")
+      .bind(tagId)
+      .run();
+
+    // Delete the tag itself
+    await c.env.DB.prepare("DELETE FROM tags WHERE id = ?")
+      .bind(tagId)
+      .run();
+
+    return c.json({ message: `Tag '${existing.name}' deleted successfully` }, 200);
+  } catch (error) {
+    console.error("Error deleting tag:", error);
+    return c.json({ error: "Failed to delete tag", details: error.message }, 500);
+  }
+});
 
 /**
  * GET /api/lessons/stats

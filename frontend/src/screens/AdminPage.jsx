@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { getenv } from "../utils/getenv.js";
+import api from "../utils/api.js";
 import { Appbar, Footer, Pagination } from "../components/ui/index.js";
 import { Button } from "../components/ui/Button.jsx";
 import { Badge } from "../components/ui/Badge.jsx";
 import { Skeleton } from "../components/ui/Skeleton.jsx";
 import useBlogs from "../hooks/useBlogs.js";
 import { useToast } from "../components/Toaster.jsx";
-import { FiPlus, FiEdit2, FiAlertCircle, FiEye } from "react-icons/fi";
+import { FiPlus, FiEdit2, FiAlertCircle, FiEye, FiTrash2, FiX } from "react-icons/fi";
 import { motion } from "framer-motion";
 
 /**
@@ -25,6 +24,9 @@ export default function AdminPage() {
   const toast = useToast();
   const [page, setPage] = useState(1);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Fetch all notes (including drafts) for the author studio
   const {
@@ -50,11 +52,7 @@ export default function AdminPage() {
    */
   const handleTogglePublish = async (note) => {
     try {
-      await axios.put(
-        `${getenv("APIURL")}/lessons/edit/${note.id}`,
-        { isPublished: !note.published },
-        { headers: { Authorization: `Bearer ${localStorage.getItem("jwt")}` } },
-      );
+      await api.put(`/lessons/edit/${note.id}`, { isPublished: !note.published });
       setRefreshTrigger((p) => p + 1);
       toast({
         title: note.published ? "Note Unpublished" : "Note Published",
@@ -66,6 +64,29 @@ export default function AdminPage() {
         description: "Failed to update note status.",
         variant: "destructive",
       });
+    }
+  };
+
+  /**
+   * Delete a lesson note permanently after confirmation
+   */
+  const handleDeleteNote = async () => {
+    if (!deleteTargetId) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/lessons/delete/${deleteTargetId}`);
+      setRefreshTrigger((p) => p + 1);
+      toast({ title: "Note deleted permanently", variant: "success" });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to delete note.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+      setConfirmDeleteOpen(false);
+      setDeleteTargetId(null);
     }
   };
 
@@ -171,24 +192,36 @@ export default function AdminPage() {
                   <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end pt-2 sm:pt-0 border-t border-border/40 sm:border-0 shrink-0">
                     <Button
                       size="xs"
-                      variant="secondary"
+                      variant="view"
                       onClick={() => navigate(`/read?id=${note.id}`)}
                     >
                       <FiEye size={12} /> View
                     </Button>
                     <Button
                       size="xs"
-                      variant="info"
+                      variant="edit"
                       onClick={() => navigate(`/editor/${note.id}`)}
                     >
                       <FiEdit2 size={12} /> Edit
                     </Button>
                     <Button
                       size="xs"
-                      variant={note.published ? "destructive" : "neon"}
+                      variant={note.published ? "unpublish" : "publish"}
                       onClick={() => handleTogglePublish(note)}
                     >
                       {note.published ? "Unpublish" : "Publish"}
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant="delete"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteTargetId(note.id);
+                        setConfirmDeleteOpen(true);
+                      }}
+                      title="Delete note permanently"
+                    >
+                      <FiTrash2 size={12} />
                     </Button>
                   </div>
                 </motion.div>
@@ -210,6 +243,55 @@ export default function AdminPage() {
       </main>
 
       <Footer />
+
+      {/* ─── Delete Confirmation Modal ─── */}
+      {confirmDeleteOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => { setConfirmDeleteOpen(false); setDeleteTargetId(null); }}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-3xl border border-red-500/30 bg-card p-6 shadow-2xl flex flex-col gap-4"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="font-heading font-extrabold text-base text-foreground flex items-center gap-2">
+                <FiTrash2 className="text-red-500" /> Delete Note
+              </h3>
+              <button
+                onClick={() => { setConfirmDeleteOpen(false); setDeleteTargetId(null); }}
+                className="p-1 rounded-lg hover:bg-muted text-muted-foreground cursor-pointer"
+              >
+                <FiX size={16} />
+              </button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              This action is <strong className="text-red-500">permanent</strong> and cannot be undone. All slides associated with this note will also be deleted.
+            </p>
+            <div className="flex items-center gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 rounded-xl"
+                onClick={() => { setConfirmDeleteOpen(false); setDeleteTargetId(null); }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="flex-1 rounded-xl font-extrabold"
+                onClick={handleDeleteNote}
+                disabled={deleting}
+              >
+                {deleting ? "Deleting..." : "Delete Permanently"}
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
