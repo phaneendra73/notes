@@ -359,7 +359,12 @@ export default function VisualSlideEditor({
 
             {imageUrl && (
               <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-purple-500/10 border border-purple-500/30 text-[10px] font-bold text-purple-300">
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                <img
+                  src={imageUrl}
+                  alt="Course cover"
+                  className="w-7 h-7 rounded-md object-cover border border-purple-500/30 shrink-0"
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
                 <span className="truncate max-w-[120px]">Cover attached</span>
                 <button
                   onClick={() => onChangeImageUrl && onChangeImageUrl('')}
@@ -377,6 +382,33 @@ export default function VisualSlideEditor({
           </span>
         </div>
       </div>
+
+      {/* ── Cover Image Preview Strip (shown when cover is set) ── */}
+      {imageUrl && (
+        <div className="rounded-[20px] border border-purple-500/30 bg-gradient-to-r from-purple-500/5 via-card to-card p-3 flex items-center gap-4 shadow-sm">
+          <img
+            src={imageUrl}
+            alt="Course cover preview"
+            className="w-24 h-16 rounded-xl object-cover border border-purple-500/30 shrink-0 shadow-sm"
+            onError={(e) => { e.target.style.display = 'none'; }}
+          />
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <span className="text-[11px] font-black uppercase tracking-wider text-purple-400 flex items-center gap-1">
+              <FiImage size={12} /> Cover Image Preview
+            </span>
+            <span className="text-xs text-muted-foreground truncate max-w-xs" title={imageUrl}>
+              {imageUrl}
+            </span>
+          </div>
+          <button
+            onClick={() => onChangeImageUrl && onChangeImageUrl('')}
+            className="ml-auto px-3 py-1.5 rounded-xl text-xs font-extrabold text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 transition-all cursor-pointer shrink-0"
+            title="Remove cover image"
+          >
+            Remove
+          </button>
+        </div>
+      )}
 
       {/* ── Main Studio Split Grid ── */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
@@ -819,6 +851,7 @@ export default function VisualSlideEditor({
       <MediaLibraryModal
         isOpen={coverMediaModalOpen}
         onClose={() => setCoverMediaModalOpen(false)}
+        mode="cover"
         onSelectImage={(imgUrl) => {
           if (onChangeImageUrl) onChangeImageUrl(imgUrl);
           setCoverMediaModalOpen(false);

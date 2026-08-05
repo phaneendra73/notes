@@ -56,7 +56,7 @@ export default function BlogCard({ blog, onBookmarkChange }) {
           <img
             src={blog.imageUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=300'}
             alt={blog.title}
-            className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl object-cover border border-border/60 shrink-0 group-hover:scale-105 transition-transform duration-300 shadow-xs"
+            className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl object-cover border border-border/60 shrink-0 group-hover:scale-105 transition-transform duration-300 shadow-sm"
             loading="lazy"
           />
 

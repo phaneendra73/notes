@@ -57,7 +57,7 @@ function compressImageToWebP(file, maxWidth = 1200, quality = 0.75) {
   });
 }
 
-export default function MediaLibraryModal({ isOpen, onClose, onSelectImage }) {
+export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode = 'slide' }) {
   const toast = useToast();
   const fileInputRef = useRef(null);
 
@@ -234,7 +234,7 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage }) {
 
             {/* Search filter & Image formatting options */}
             <div className="flex items-center gap-3 flex-wrap">
-              {onSelectImage && (
+              {onSelectImage && mode !== 'cover' && (
                 <div className="flex items-center gap-2 text-xs bg-background/80 px-2.5 py-1 rounded-xl border border-border">
                   <span className="text-[10px] font-bold text-muted-foreground uppercase">Size:</span>
                   <select
@@ -363,7 +363,7 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage }) {
                                 }}
                                 className="w-full font-extrabold rounded-lg text-xs"
                               >
-                                Insert into Slide
+                                {mode === 'cover' ? 'Set as Cover' : 'Insert into Slide'}
                               </Button>
                             )}
 

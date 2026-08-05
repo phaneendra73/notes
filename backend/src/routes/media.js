@@ -47,19 +47,14 @@ mediaRoutes.post("/upload", authenticateUser, async (c) => {
           .bind(hash)
           .first();
         if (existing) {
-          let cleanUrl = existing.url;
-          if (cleanUrl && cleanUrl.startsWith("data:image/")) {
-            const origin = new URL(c.req.url).origin;
-            cleanUrl = `${origin}/media/file/${existing.id}`;
-            await c.env.DB.prepare("UPDATE media SET url = ? WHERE id = ?")
-              .bind(cleanUrl, existing.id)
-              .run();
-            existing.url = cleanUrl;
-          }
+          // Always return a clean /media/file/:id URL to the client
+          // (DB may store base64 internally — that's fine, don't change it)
+          const origin = new URL(c.req.url).origin;
+          const clientUrl = `${origin}/media/file/${existing.id}`;
           return c.json(
             {
               message: "Image already exists in Media Library (deduplicated)",
-              image: existing,
+              image: { ...existing, url: clientUrl },
               deduplicated: true,
             },
             200,
@@ -70,28 +65,7 @@ mediaRoutes.post("/upload", authenticateUser, async (c) => {
       }
     }
 
-    // 2. Store image
-    let publicUrl = dataUrl;
-
-    if (c.env.MEDIA_BUCKET && hash) {
-      try {
-        const key = `uploads/${hash}-${filename.replace(/[^a-z0-9.]/gi, "_")}`;
-        const base64Data = dataUrl.split(",")[1] || dataUrl;
-        const buffer = Uint8Array.from(atob(base64Data), (char) =>
-          char.charCodeAt(0),
-        );
-
-        await c.env.MEDIA_BUCKET.put(key, buffer, {
-          httpMetadata: { contentType: "image/webp" },
-        });
-
-        publicUrl = `https://kadha2-backend.phaneendra73.workers.dev/media/file/${key}`;
-      } catch (r2Err) {
-        console.error("R2 upload warning:", r2Err);
-      }
-    }
-
-    // 3. Save metadata to D1 media table
+    // 2. Insert base64 directly into D1 — this IS the storage (no R2)
     const fileHash =
       hash || `hash_${Date.now()}_${Math.random().toString(36).substring(2)}`;
     const result = await c.env.DB.prepare(
@@ -99,7 +73,7 @@ mediaRoutes.post("/upload", authenticateUser, async (c) => {
     )
       .bind(
         filename,
-        publicUrl,
+        dataUrl,          // ← base64 stays in DB permanently — serve route reads it
         fileHash,
         "image/webp",
         parseInt(size) || 0,
@@ -111,28 +85,22 @@ mediaRoutes.post("/upload", authenticateUser, async (c) => {
 
     const mediaId = result.meta.last_row_id;
 
-    // Convert base64 data URLs into short backend file URLs so editor stays clean
-    let cleanUrl = publicUrl;
-    if (publicUrl.startsWith("data:image/")) {
-      const origin = new URL(c.req.url).origin;
-      cleanUrl = `${origin}/media/file/${mediaId}`;
-      await c.env.DB.prepare("UPDATE media SET url = ? WHERE id = ?")
-        .bind(cleanUrl, mediaId)
-        .run();
-    }
-
-    const newMedia = await c.env.DB.prepare("SELECT * FROM media WHERE id = ?")
-      .bind(mediaId)
-      .first();
+    // 3. Return a clean public URL to the client (DO NOT overwrite DB url)
+    const origin = new URL(c.req.url).origin;
+    const clientUrl = `${origin}/media/file/${mediaId}`;
 
     return c.json(
       {
         message: "Image uploaded successfully to Media Library",
-        image: newMedia || {
+        image: {
           id: mediaId,
           filename,
-          url: cleanUrl,
+          url: clientUrl,   // ← client gets the clean serve URL
           hash: fileHash,
+          mimeType: "image/webp",
+          size: parseInt(size) || 0,
+          width: parseInt(width) || 0,
+          height: parseInt(height) || 0,
         },
         deduplicated: false,
       },
@@ -148,6 +116,7 @@ mediaRoutes.post("/upload", authenticateUser, async (c) => {
 });
 
 // ── Serve Binary Media File by ID ──
+// DB stores base64 data URLs — this route decodes and serves the binary.
 mediaRoutes.get("/file/:id", async (c) => {
   try {
     await ensureMediaTable(c.env.DB);
@@ -161,6 +130,7 @@ mediaRoutes.get("/file/:id", async (c) => {
       .first();
     if (!media || !media.url) return c.text("Not Found", 404);
 
+    // Base64 stored in D1 — decode and serve binary
     if (media.url.startsWith("data:image/")) {
       const parts = media.url.split(",");
       const mime = parts[0].match(/:(.*?);/)?.[1] || "image/webp";
@@ -174,6 +144,7 @@ mediaRoutes.get("/file/:id", async (c) => {
       });
     }
 
+    // Fallback: external URL stored — redirect
     if (media.url.startsWith("http://") || media.url.startsWith("https://")) {
       return c.redirect(media.url);
     }
@@ -224,13 +195,11 @@ mediaRoutes.get("/list", authenticateUser, async (c) => {
     const rawMedia = result.results || [];
     const origin = new URL(c.req.url).origin;
 
+    // Always return /media/file/:id URLs to the client.
+    // NEVER overwrite the base64 in DB — the serve route needs it to decode images.
     const mediaList = rawMedia.map((img) => {
       if (img.url && img.url.startsWith("data:image/")) {
-        const cleanUrl = `${origin}/media/file/${img.id}`;
-        c.env.DB.prepare("UPDATE media SET url = ? WHERE id = ?")
-          .bind(cleanUrl, img.id)
-          .run();
-        return { ...img, url: cleanUrl };
+        return { ...img, url: `${origin}/media/file/${img.id}` };
       }
       return img;
     });
