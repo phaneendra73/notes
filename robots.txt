@@ -1,0 +1,15 @@
+# Kadha 2.0 Robots.txt
+User-agent: *
+Allow: /
+Allow: /blog
+Allow: /read
+
+# Disallow Author Studio / Private routes from indexing
+Disallow: /admin
+Disallow: /editor
+Disallow: /tags
+Disallow: /profile
+Disallow: /signin
+
+# Sitemap location
+Sitemap: https://phaneendra73.github.io/kadha2.0/sitemap.xml
