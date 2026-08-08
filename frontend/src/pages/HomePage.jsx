@@ -1,18 +1,20 @@
-import React, { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import SEO from '../components/SEO.jsx';
-import Navbar from '../components/layout/Navbar.jsx';
-import Footer from '../components/layout/Footer.jsx';
-import Hero from '../components/ui/Hero.jsx';
-import LessonCatalog from '../components/ui/LessonCatalog.jsx';
+import React, { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import SEO from "../components/SEO.jsx";
+import Navbar from "../components/layout/Navbar.jsx";
+import Footer from "../components/layout/Footer.jsx";
+import Hero from "../components/ui/Hero.jsx";
+import LessonCatalog from "../components/ui/LessonCatalog.jsx";
 
 export default function HomePage() {
   const location = useLocation();
 
   useEffect(() => {
-    if (location.hash === '#notes-section') {
+    if (location.hash === "#notes-section") {
       setTimeout(() => {
-        document.getElementById('notes-section')?.scrollIntoView({ behavior: 'smooth' });
+        document
+          .getElementById("notes-section")
+          ?.scrollIntoView({ behavior: "smooth" });
       }, 100);
     }
   }, [location]);
@@ -26,7 +28,10 @@ export default function HomePage() {
       <Navbar />
       <main className="flex-grow">
         <Hero />
-        <section id="notes-section" className="max-w-6xl mx-auto px-4 md:px-6 pb-20">
+        <section
+          id="notes-section"
+          className="max-w-6xl mx-auto px-4 md:px-6 pb-20"
+        >
           <LessonCatalog />
         </section>
       </main>
