@@ -1,94 +1,95 @@
-import * as React from "react";
-import * as ToastPrimitives from "@radix-ui/react-toast";
-import { cn } from "../../lib/utils.js";
-import { FiX } from "react-icons/fi";
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiCheckCircle, FiAlertCircle, FiInfo, FiX } from 'react-icons/fi';
 
-const ToastProvider = ToastPrimitives.Provider;
+const ToastContext = createContext(null);
 
-const ToastViewport = React.forwardRef(({ className, ...props }, ref) => (
-  <ToastPrimitives.Viewport
-    ref={ref}
-    className={cn(
-      "fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 w-full max-w-sm",
-      className
-    )}
-    {...props}
-  />
-));
-ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
+let toastId = 0;
 
-const toastVariants = {
-  default: {
-    backgroundColor: "var(--card)",
-    color: "var(--foreground)",
-    borderColor: "var(--border)",
-  },
-  success: {
-    backgroundColor: "color-mix(in srgb, var(--primary) 14%, var(--card) 86%)",
-    color: "var(--foreground)",
-    borderColor: "var(--primary)",
-  },
-  destructive: {
-    backgroundColor: "rgba(239, 68, 68, 0.14)",
-    color: "var(--foreground)",
-    borderColor: "#ef4444",
-  },
+/**
+ * ToastProvider — wraps the app and provides the toast system.
+ * Use useToast() to trigger toasts from any component.
+ */
+export function ToastProvider({ children }) {
+  const [toasts, setToasts] = useState([]);
+
+  const dismiss = useCallback((id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const show = useCallback(({ title, description, variant = 'default', duration = 3500 }) => {
+    const id = ++toastId;
+    setToasts((prev) => [...prev.slice(-4), { id, title, description, variant }]);
+    setTimeout(() => dismiss(id), duration);
+    return id;
+  }, [dismiss]);
+
+  const api = {
+    show,
+    success: (title, description) => show({ title, description, variant: 'success' }),
+    error: (title, description) => show({ title, description, variant: 'error' }),
+    info: (title, description) => show({ title, description, variant: 'info' }),
+    dismiss,
+  };
+
+  return (
+    <ToastContext.Provider value={api}>
+      {children}
+      <ToastStack toasts={toasts} onDismiss={dismiss} />
+    </ToastContext.Provider>
+  );
+}
+
+/**
+ * useToast — returns the toast API.
+ * @returns {{ success, error, info, show, dismiss }}
+ */
+export function useToast() {
+  const ctx = useContext(ToastContext);
+  if (!ctx) throw new Error('useToast must be used inside <ToastProvider>');
+  return ctx;
+}
+
+const VARIANT_STYLES = {
+  success: { icon: FiCheckCircle, cls: 'toast-success' },
+  error:   { icon: FiAlertCircle, cls: 'toast-error' },
+  info:    { icon: FiInfo,        cls: 'toast-info' },
+  default: { icon: FiInfo,        cls: 'toast-default' },
 };
 
-const Toast = React.forwardRef(({ className, variant = "default", style, ...props }, ref) => (
-  <ToastPrimitives.Root
-    ref={ref}
-    className={cn(
-      "group pointer-events-auto relative flex w-full items-center justify-between gap-3 overflow-hidden rounded-xl border p-4 shadow-lg transition-all duration-300 backdrop-blur-sm",
-      "data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)]",
-      "data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none",
-      "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-80",
-      "data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-bottom-full",
-      className
-    )}
-    style={{
-      ...toastVariants[variant],
-      ...style,
-    }}
-    {...props}
-  />
-));
-Toast.displayName = ToastPrimitives.Root.displayName;
-
-const ToastTitle = React.forwardRef(({ className, ...props }, ref) => (
-  <ToastPrimitives.Title
-    ref={ref}
-    className={cn("text-sm font-semibold", className)}
-    style={{ color: "var(--foreground)" }}
-    {...props}
-  />
-));
-ToastTitle.displayName = ToastPrimitives.Title.displayName;
-
-const ToastDescription = React.forwardRef(({ className, ...props }, ref) => (
-  <ToastPrimitives.Description
-    ref={ref}
-    className={cn("text-xs", className)}
-    style={{ color: "var(--muted-foreground)" }}
-    {...props}
-  />
-));
-ToastDescription.displayName = ToastPrimitives.Description.displayName;
-
-const ToastClose = React.forwardRef(({ className, ...props }, ref) => (
-  <ToastPrimitives.Close
-    ref={ref}
-    className={cn(
-      "absolute right-2 top-2 rounded-md p-0.5 opacity-0 transition-opacity hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-1 group-hover:opacity-100",
-      className
-    )}
-    style={{ color: "var(--muted-foreground)" }}
-    toast-close=""
-    {...props}
-  >
-    <FiX className="h-4 w-4" />
-  </ToastPrimitives.Close>
-));
-ToastClose.displayName = ToastPrimitives.Close.displayName;
-
-export { ToastProvider, ToastViewport, Toast, ToastTitle, ToastDescription, ToastClose };
+function ToastStack({ toasts, onDismiss }) {
+  return (
+    <div className="toast-stack" aria-live="polite">
+      <AnimatePresence initial={false}>
+        {toasts.map((t) => {
+          const { icon: Icon, cls } = VARIANT_STYLES[t.variant] || VARIANT_STYLES.default;
+          return (
+            <motion.div
+              key={t.id}
+              layout
+              initial={{ opacity: 0, y: 24, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -12, scale: 0.96 }}
+              transition={{ duration: 0.2 }}
+              className={`toast ${cls}`}
+              role="alert"
+            >
+              <Icon size={16} className="toast-icon" />
+              <div className="toast-text">
+                {t.title && <p className="toast-title">{t.title}</p>}
+                {t.description && <p className="toast-desc">{t.description}</p>}
+              </div>
+              <button
+                className="toast-close"
+                onClick={() => onDismiss(t.id)}
+                aria-label="Dismiss"
+              >
+                <FiX size={14} />
+              </button>
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
+    </div>
+  );
+}

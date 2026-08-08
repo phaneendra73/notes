@@ -1,60 +1,63 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { userprofilesRoutes } from './routes/user.js';
+import { authRoutes } from './routes/auth.js';
 import { lessonRoutes } from './routes/lessons.js';
+import { tagRoutes } from './routes/tags.js';
 import { mediaRoutes } from './routes/media.js';
-import { createRateLimiter } from './routes/rateLimiter.js';
+import { createRateLimiter } from './middleware/rateLimit.js';
 
 const app = new Hono();
 
-// Rate limiting: Strict limit for auth endpoints (10 req/min per IP)
-const authLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 10, keyPrefix: 'auth' });
+// ── CORS ──────────────────────────────────────────────────────────────────────
+const ALLOWED_ORIGINS = [
+  'https://phaneendra73.github.io',
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:8787',
+];
 
-// Rate limiting: General limit for public API (100 req/min per IP)
-const globalLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 100, keyPrefix: 'global' });
+app.use(
+  '*',
+  cors({
+    origin: (origin) => {
+      if (!origin) return '*';
+      return ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+    },
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 86400,
+  })
+);
 
-// Restrict CORS to allowed origins
-app.use('/*', cors({
-  origin: (origin) => {
-    const allowed = [
-      'https://phaneendra73.github.io',
-      'http://localhost:3000',
-      'http://localhost:5173',
-    ];
-    if (!origin) return origin;
-    return allowed.includes(origin) ? origin : null;
-  },
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization'],
-  maxAge: 86400,
-}));
+// ── RATE LIMITING ─────────────────────────────────────────────────────────────
+const authLimiter = createRateLimiter({ windowMs: 60_000, max: 10, keyPrefix: 'auth' });
+const globalLimiter = createRateLimiter({ windowMs: 60_000, max: 100, keyPrefix: 'global' });
 
-// Apply Rate Limiters
-app.use('/user/*', authLimiter);
-app.use('/*', globalLimiter);
+app.use('/api/auth/*', authLimiter);
+app.use('/api/*', globalLimiter);
 
-// Route mounts on lessons table architecture
-app.route('/user', userprofilesRoutes);
-app.route('/api/v2/lessons', lessonRoutes);
-app.route('/lessons', lessonRoutes);
-app.route('/blog', lessonRoutes); // Backward compatibility alias mapping /blog -> lessons table
-app.route('/media', mediaRoutes);
+// ── ROUTES ────────────────────────────────────────────────────────────────────
+app.route('/api/auth', authRoutes);
+app.route('/api/lessons', lessonRoutes);
+app.route('/api/tags', tagRoutes);
+app.route('/api/media', mediaRoutes);
 
-app.get('/', (c) => {
-  return c.json({
-    message: 'Welcome to Kadha Tech Notes Learning Platform API powered by Cloudflare D1!',
-    status: 'ONLINE',
-    version: '2.2.0',
-  }, 200);
-});
+// ── HEALTH ────────────────────────────────────────────────────────────────────
+app.get('/', (c) =>
+  c.json({
+    name: 'Kadha API',
+    status: 'online',
+    version: '3.0.0',
+  })
+);
 
-app.notFound((c) => {
-  return c.json({ error: 'Endpoint Not Found' }, 404);
-});
+// ── 404 ───────────────────────────────────────────────────────────────────────
+app.notFound((c) => c.json({ error: 'Endpoint not found' }, 404));
 
+// ── GLOBAL ERROR HANDLER ──────────────────────────────────────────────────────
 app.onError((err, c) => {
-  console.error('API Error:', err);
-  return c.json({ error: 'Internal Server Error', message: err.message }, 500);
+  console.error('Unhandled API error:', err);
+  return c.json({ error: 'Internal server error' }, 500);
 });
 
 export default app;

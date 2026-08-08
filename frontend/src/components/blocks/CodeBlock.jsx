@@ -1,37 +1,45 @@
 import React, { useState } from 'react';
-import { FiCheck, FiCopy } from 'react-icons/fi';
+import { FiCopy, FiCheck } from 'react-icons/fi';
 
-export default function CodeBlock({ language = 'csharp', content = '' }) {
+export default function CodeBlock({ block }) {
   const [copied, setCopied] = useState(false);
+  if (!block) return null;
+
+  const code = block.content || '';
+  const lang = (block.language || 'code').toUpperCase();
+  const filename = block.filename || null;
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (!code) return;
+    navigator.clipboard.writeText(code).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   };
 
   return (
-    <div className="relative group my-4 rounded-2xl overflow-hidden border border-border/80 bg-[#141923] shadow-md">
-      <div className="flex items-center justify-between px-4 py-2 bg-[#1b2230] border-b border-white/10 text-xs font-mono text-muted-foreground">
-        <span className="font-bold text-primary uppercase tracking-wider">{language}</span>
-        <button
-          onClick={handleCopy}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/90 text-[11px] font-bold transition-all cursor-pointer"
-        >
+    <div className="code-block">
+      <div className="code-header">
+        <div className="code-meta">
+          <span className="code-lang">{lang}</span>
+          {filename && <span className="code-filename">{filename}</span>}
+        </div>
+        <button onClick={handleCopy} className="code-copy-btn" title="Copy code">
           {copied ? (
             <>
-              <FiCheck className="text-emerald-400" size={12} /> Copied!
+              <FiCheck size={13} className="text-emerald-400" />
+              <span className="text-emerald-400">Copied!</span>
             </>
           ) : (
             <>
-              <FiCopy size={12} /> Copy
+              <FiCopy size={13} />
+              <span>Copy</span>
             </>
           )}
         </button>
       </div>
-
-      <pre className="p-4 text-xs md:text-sm font-mono text-emerald-300/90 leading-relaxed overflow-x-auto whitespace-pre">
-        <code>{content}</code>
+      <pre className="code-pre">
+        <code>{code}</code>
       </pre>
     </div>
   );

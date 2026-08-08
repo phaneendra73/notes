@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig(({ mode }) => ({
-  base: mode === 'production' ? '/kadha2.0/' : '/',
+  base: mode === 'production' ? '/notes/' : '/',
   plugins: [react(), tailwindcss()],
   server: {
     port: 3000,

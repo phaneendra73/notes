@@ -1,16 +1,15 @@
 {
-  "name": "kadha2-backend",
-  "version": "2.0.0",
+  "name": "notes-backend",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "wrangler dev src/index.js",
     "deploy": "wrangler deploy --minify src/index.js",
-    "db:init": "wrangler d1 execute kadha2-db --local --file=schema.sql",
-    "db:seed": "wrangler d1 execute kadha2-db --local --file=seed.sql",
-    "db:remote-init": "wrangler d1 execute kadha2-db --remote --file=schema.sql",
-    "db:remote-seed": "wrangler d1 execute kadha2-db --remote --file=seed.sql",
-    "db:migrate": "wrangler d1 execute kadha2-db --remote --file=migrate.sql"
+    "db:init": "wrangler d1 execute notes-db --local --file=schema.sql",
+    "db:seed": "wrangler d1 execute notes-db --local --file=seed.sql",
+    "db:remote-init": "wrangler d1 execute notes-db --remote --file=schema.sql",
+    "db:remote-seed": "wrangler d1 execute notes-db --remote --file=seed.sql"
   },
   "dependencies": {
     "hono": "^4.6.14"

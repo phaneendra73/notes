@@ -1,40 +1,85 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { FiAlertCircle, FiLoader } from 'react-icons/fi';
 
-export default function DiagramBlock({ content = '' }) {
+export default function DiagramBlock({ block }) {
+  const codeText = block?.content || '';
   const containerRef = useRef(null);
+  const [svgHtml, setSvgHtml] = useState('');
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!containerRef.current || !content) return;
-    const id = `mermaid-${Math.random().toString(36).substring(2, 11)}`;
+    if (!codeText.trim()) {
+      setLoading(false);
+      return;
+    }
+
     let isMounted = true;
 
-    import('mermaid')
-      .then((module) => {
-        const mermaid = module.default;
+    const renderDiagram = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const mermaidModule = await import('mermaid');
+        const mermaid = mermaidModule.default;
+
         mermaid.initialize({
           startOnLoad: false,
           theme: 'dark',
           securityLevel: 'loose',
+          fontFamily: 'inherit',
         });
-        return mermaid.render(id, content.trim());
-      })
-      .then(({ svg }) => {
-        if (isMounted && containerRef.current) {
-          containerRef.current.innerHTML = svg;
-        }
-      })
-      .catch((err) => {
-        console.error('Mermaid render error:', err);
-      });
 
-    return () => {
-      isMounted = false;
+        const id = `mermaid-${Math.random().toString(36).slice(2, 9)}`;
+        const { svg } = await mermaid.render(id, codeText.trim());
+
+        if (isMounted) {
+          setSvgHtml(svg);
+          setLoading(false);
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.error('Mermaid render error:', err);
+          setError(err?.message || 'Invalid diagram syntax');
+          setLoading(false);
+        }
+      }
     };
-  }, [content]);
+
+    renderDiagram();
+    return () => { isMounted = false; };
+  }, [codeText]);
 
   return (
-    <div className="my-6 p-4 rounded-2xl border border-border/80 bg-muted/20 flex flex-col items-center justify-center overflow-x-auto shadow-xs">
-      <div ref={containerRef} className="w-full flex justify-center text-xs md:text-sm" />
+    <div className="diagram-block">
+      {loading && (
+        <div className="diagram-loading">
+          <FiLoader size={16} className="spin" /> Rendering diagram…
+        </div>
+      )}
+
+      {!loading && error && (
+        <div className="diagram-error">
+          <p className="diagram-error-title">
+            <FiAlertCircle size={14} /> Diagram Syntax Error
+          </p>
+          <p className="diagram-error-msg">{error}</p>
+        </div>
+      )}
+
+      {!loading && !error && svgHtml && (
+        <div
+          ref={containerRef}
+          className="diagram-svg"
+          // mermaid render output is sanitized SVG from a controlled library — acceptable use
+          dangerouslySetInnerHTML={{ __html: svgHtml }}
+        />
+      )}
+
+      {block?.caption && (
+        <span className="diagram-caption">{block.caption}</span>
+      )}
     </div>
   );
 }

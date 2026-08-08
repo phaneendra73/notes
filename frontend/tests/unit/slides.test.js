@@ -1,46 +1,42 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseRawMarkdownToSlides } from '../../src/utils/markdown.js';
+import { BLOCK_TYPES, createDefaultBlock, BLOCK_PICKER_ORDER } from '../../src/lib/blocks.js';
 
-test('parseRawMarkdownToSlides splits multi-slide markdown by horizontal rules', () => {
-  const markdown = `# Introduction to C#
-C# is a modern object-oriented programming language.
-
----
-
-# Memory Management
-Garbage collection automatically reclaims unused memory.
-
----
-
-# Async and Await
-Use async task patterns for non-blocking I/O operations.`;
-
-  const slides = parseRawMarkdownToSlides(markdown);
-
-  assert.equal(slides.length, 3);
-  assert.equal(slides[0].step, 1);
-  assert.equal(slides[0].title, 'Introduction to C#');
-  assert.equal(slides[1].title, 'Memory Management');
-  assert.equal(slides[2].title, 'Async and Await');
+test('createDefaultBlock returns valid default block for heading', () => {
+  const block = createDefaultBlock(BLOCK_TYPES.HEADING);
+  assert.equal(block.type, 'heading');
+  assert.equal(block.level, 2);
+  assert.ok(typeof block.content === 'string');
 });
 
-test('parseRawMarkdownToSlides extracts slide titles from first line snippet if no heading present', () => {
-  const markdown = `Access Modifiers in OOP define variable visibility.
-
----
-
-Dependency Injection decouples classes from dependencies.`;
-
-  const slides = parseRawMarkdownToSlides(markdown);
-
-  assert.equal(slides.length, 2);
-  assert.equal(slides[0].title, 'Access Modifiers in OOP define variable vi...');
-  assert.equal(slides[1].title, 'Dependency Injection decouples classes fro...');
+test('createDefaultBlock returns valid default block for code', () => {
+  const block = createDefaultBlock(BLOCK_TYPES.CODE);
+  assert.equal(block.type, 'code');
+  assert.equal(block.language, 'csharp');
+  assert.ok(block.content.includes('//'));
 });
 
-test('parseRawMarkdownToSlides returns empty array for empty or non-string input', () => {
-  assert.deepEqual(parseRawMarkdownToSlides(''), []);
-  assert.deepEqual(parseRawMarkdownToSlides(null), []);
-  assert.deepEqual(parseRawMarkdownToSlides(undefined), []);
+test('createDefaultBlock returns valid default block for quiz', () => {
+  const block = createDefaultBlock(BLOCK_TYPES.QUIZ);
+  assert.equal(block.type, 'quiz');
+  assert.ok(Array.isArray(block.options));
+  assert.equal(block.options.length, 4);
+  assert.equal(block.answer, 0);
+});
+
+test('createDefaultBlock returns valid default block for callout', () => {
+  const block = createDefaultBlock(BLOCK_TYPES.CALLOUT);
+  assert.equal(block.type, 'callout');
+  assert.equal(block.variant, 'tip');
+});
+
+test('BLOCK_PICKER_ORDER contains all supported block types', () => {
+  assert.equal(BLOCK_PICKER_ORDER.length, 7);
+  assert.ok(BLOCK_PICKER_ORDER.includes(BLOCK_TYPES.HEADING));
+  assert.ok(BLOCK_PICKER_ORDER.includes(BLOCK_TYPES.PARAGRAPH));
+  assert.ok(BLOCK_PICKER_ORDER.includes(BLOCK_TYPES.CODE));
+  assert.ok(BLOCK_PICKER_ORDER.includes(BLOCK_TYPES.CALLOUT));
+  assert.ok(BLOCK_PICKER_ORDER.includes(BLOCK_TYPES.QUIZ));
+  assert.ok(BLOCK_PICKER_ORDER.includes(BLOCK_TYPES.DIAGRAM));
+  assert.ok(BLOCK_PICKER_ORDER.includes(BLOCK_TYPES.IMAGE));
 });

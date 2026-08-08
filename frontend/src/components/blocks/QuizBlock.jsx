@@ -1,76 +1,94 @@
 import React, { useState } from 'react';
-import { FiCheck, FiX, FiHelpCircle } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiCheckCircle, FiXCircle, FiHelpCircle, FiInfo } from 'react-icons/fi';
 
-export default function QuizBlock({ question, options = [], answer = 0, explanation = '' }) {
+export default function QuizBlock({ block }) {
   const [selectedIdx, setSelectedIdx] = useState(null);
   const [submitted, setSubmitted] = useState(false);
+
+  if (!block) return null;
+
+  const question = block.question || 'Knowledge Check';
+  const options = Array.isArray(block.options) ? block.options : [];
+  const correctAnswer = block.answer ?? 0;
+  const explanation = block.explanation || '';
 
   const handleSelect = (idx) => {
     if (submitted) return;
     setSelectedIdx(idx);
-  };
-
-  const handleSubmit = () => {
-    if (selectedIdx === null) return;
     setSubmitted(true);
   };
 
-  const isCorrect = selectedIdx === answer;
+  const isCorrect = selectedIdx === correctAnswer;
+
+  const getOptionClass = (idx) => {
+    if (!submitted) return 'quiz-option';
+    if (idx === correctAnswer) return 'quiz-option quiz-option-correct';
+    if (idx === selectedIdx && idx !== correctAnswer) return 'quiz-option quiz-option-wrong';
+    return 'quiz-option quiz-option-dim';
+  };
 
   return (
-    <div className="my-6 p-5 rounded-2xl border border-border bg-card shadow-md flex flex-col gap-4">
-      <div className="flex items-center gap-2 text-primary font-heading font-extrabold text-sm uppercase tracking-wider">
-        <FiHelpCircle size={16} /> Concept Knowledge Check
+    <div className="quiz-block">
+      <div className="quiz-header">
+        <span className="quiz-badge">
+          <FiHelpCircle size={13} /> Knowledge Check
+        </span>
       </div>
 
-      <h4 className="font-heading font-extrabold text-base md:text-lg text-foreground leading-snug">
-        {question}
-      </h4>
+      <h3 className="quiz-question">{question}</h3>
 
-      <div className="flex flex-col gap-2.5">
-        {options.map((opt, idx) => {
-          let btnStyle = 'border-border bg-muted/30 hover:bg-muted text-foreground';
-          if (selectedIdx === idx) {
-            btnStyle = 'border-primary bg-primary/10 text-primary font-extrabold';
-          }
-          if (submitted) {
-            if (idx === answer) {
-              btnStyle = 'border-emerald-500 bg-emerald-500/15 text-emerald-400 font-extrabold';
-            } else if (selectedIdx === idx && idx !== answer) {
-              btnStyle = 'border-red-500 bg-red-500/15 text-red-400 font-extrabold';
-            }
-          }
-
-          return (
-            <button
-              key={idx}
-              onClick={() => handleSelect(idx)}
-              className={`w-full p-3.5 rounded-xl border text-left text-xs md:text-sm transition-all cursor-pointer flex items-center justify-between gap-3 ${btnStyle}`}
-            >
+      <div className="quiz-options">
+        {options.map((opt, idx) => (
+          <button
+            key={idx}
+            disabled={submitted}
+            onClick={() => handleSelect(idx)}
+            className={getOptionClass(idx)}
+          >
+            <div className="quiz-option-inner">
+              <span className="quiz-option-letter">{String.fromCharCode(65 + idx)}</span>
               <span>{opt}</span>
-              {submitted && idx === answer && <FiCheck className="text-emerald-400 shrink-0" size={16} />}
-              {submitted && selectedIdx === idx && idx !== answer && <FiX className="text-red-400 shrink-0" size={16} />}
-            </button>
-          );
-        })}
+            </div>
+            {submitted && idx === correctAnswer && (
+              <FiCheckCircle size={16} className="quiz-icon-correct" />
+            )}
+            {submitted && idx === selectedIdx && idx !== correctAnswer && (
+              <FiXCircle size={16} className="quiz-icon-wrong" />
+            )}
+          </button>
+        ))}
       </div>
 
-      {!submitted ? (
-        <button
-          onClick={handleSubmit}
-          disabled={selectedIdx === null}
-          className="self-end px-5 py-2 rounded-xl bg-primary disabled:opacity-40 text-black font-extrabold text-xs shadow-sm transition-all cursor-pointer"
-        >
-          Check Answer
-        </button>
-      ) : (
-        <div className={`p-4 rounded-xl border text-xs md:text-sm font-medium leading-relaxed ${
-          isCorrect ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-red-500/10 border-red-500/30 text-red-300'
-        }`}>
-          <div className="font-extrabold mb-1">{isCorrect ? '🎉 Correct!' : '❌ Not quite right'}</div>
-          {explanation}
-        </div>
-      )}
+      <AnimatePresence>
+        {submitted && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className={isCorrect ? 'quiz-result quiz-result-correct' : 'quiz-result quiz-result-wrong'}
+          >
+            <div className="quiz-result-header">
+              <span>
+                {isCorrect ? <FiCheckCircle size={15} /> : <FiXCircle size={15} />}
+                {isCorrect ? 'Correct!' : 'Incorrect'}
+              </span>
+              <button
+                className="quiz-retry"
+                onClick={() => { setSelectedIdx(null); setSubmitted(false); }}
+              >
+                Try Again
+              </button>
+            </div>
+            {explanation && (
+              <p className="quiz-explanation">
+                <FiInfo size={13} />
+                {explanation}
+              </p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

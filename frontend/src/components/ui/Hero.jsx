@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import api from '../../utils/api.js';
+import client from '../../api/client.js';
 import { Button } from './Button.jsx';
 import { FiArrowRight, FiFeather, FiBookOpen, FiEye, FiTag } from 'react-icons/fi';
 
 export default function Hero() {
   const navigate = useNavigate();
-  const [stats, setStats] = useState({ totalBlogs: 3, totalViews: 1510, totalTags: 5 });
+  const [stats, setStats] = useState({ totalLessons: 0, totalViews: 0, totalTags: 0 });
 
   useEffect(() => {
-    api
-      .get('/lessons/stats')
+    client
+      .get('/api/lessons/stats')
       .then((res) => {
         if (res.data) {
           setStats({
-            totalBlogs: res.data.totalBlogs || res.data.totalLessons || 3,
-            totalViews: res.data.totalViews || 1510,
-            totalTags: res.data.totalTags || 5,
+            totalLessons: res.data.totalLessons || 0,
+            totalViews: res.data.totalViews || 0,
+            totalTags: res.data.totalTags || 0,
           });
         }
       })
@@ -26,7 +26,6 @@ export default function Hero() {
 
   return (
     <section className="relative overflow-hidden py-16 md:py-24 px-4 text-center">
-      {/* Radial Neon Background Glow */}
       <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
         <div className="w-[500px] h-[500px] rounded-full bg-primary/10 blur-3xl opacity-70" />
       </div>
@@ -84,11 +83,10 @@ export default function Hero() {
           )}
         </div>
 
-        {/* Live Platform Stats Pills */}
         <div className="flex flex-wrap items-center justify-center gap-6 pt-6 border-t border-border/60 w-full">
           <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
             <FiBookOpen size={16} className="text-primary" />
-            <strong className="text-foreground font-extrabold text-sm md:text-base">{stats.totalBlogs}</strong> Tech Notes
+            <strong className="text-foreground font-extrabold text-sm md:text-base">{stats.totalLessons}</strong> Tech Notes
           </div>
           <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
             <FiTag size={16} className="text-sky-400" />

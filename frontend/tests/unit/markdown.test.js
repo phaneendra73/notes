@@ -1,79 +1,53 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { renderMarkdown, autoWrapMermaid } from '../../src/utils/markdown.js';
+import { parseInline } from '../../src/lib/inline.js';
 
-test('renders formatted content inside markdown tables with responsive container', () => {
-  const markdown = [
-    '| Feature | Description | Status |',
-    '| --- | --- | --- |',
-    '| **Auth** | JWT Token authentication | `Active` |',
-    '| **Search** | Levenshtein typo-tolerant search | `Active` |',
-  ].join('\n');
-
-  const html = renderMarkdown(markdown);
-
-  assert.match(html, /<table/);
-  assert.match(html, /<strong>Auth<\/strong>/);
-  assert.match(html, /<code>Active<\/code>/);
+test('parseInline parses plain text as array containing plain text string', () => {
+  const result = parseInline('Hello world');
+  assert.equal(result.length, 1);
+  assert.equal(result[0], 'Hello world');
 });
 
-test('autoWrapMermaid wraps unfenced raw mermaid blocks cleanly', () => {
-  const input = `Architecture Overview
-
-graph TD
-    A[Client] --> B[API Gateway]
-    B --> C[(SQLite D1)]
-
-> System Diagram`;
-
-  const wrapped = autoWrapMermaid(input);
-  assert.match(wrapped, /```mermaid\n\s*graph TD/);
-
-  const html = renderMarkdown(input);
-  assert.match(html, /class="mermaid/);
-  assert.match(html, /data-code=/);
+test('parseInline parses **bold** formatting into strong element', () => {
+  const result = parseInline('This is **bold** text');
+  assert.equal(result.length, 3);
+  assert.equal(result[0], 'This is ');
+  assert.equal(result[1].type, 'strong');
+  assert.equal(result[1].props.children, 'bold');
+  assert.equal(result[2], ' text');
 });
 
-test('renders styled code blocks with language badge and copy button data attribute', () => {
-  const markdown = `\`\`\`csharp
-public async Task<int> ProcessDataAsync()
-{
-    return 42;
-}
-\`\`\``;
-
-  const html = renderMarkdown(markdown);
-  assert.match(html, /CSHARP/);
-  assert.match(html, /copy-code-btn/);
-  assert.match(html, /data-code=/);
-  assert.match(html, /ProcessDataAsync/);
+test('parseInline parses *italic* formatting into em element', () => {
+  const result = parseInline('This is *italic* text');
+  assert.equal(result.length, 3);
+  assert.equal(result[0], 'This is ');
+  assert.equal(result[1].type, 'em');
+  assert.equal(result[1].props.children, 'italic');
+  assert.equal(result[2], ' text');
 });
 
-test('renders images with custom width and alignment classes', () => {
-  const markdown = `![Architecture | 300px | center](https://images.unsplash.com/photo-1550745165-9bc0b252726f)`;
-
-  const html = renderMarkdown(markdown);
-  assert.match(html, /max-width:\s*300px/);
-  assert.match(html, /flex-col items-center/);
-  assert.match(html, /Architecture/);
+test('parseInline parses `code` formatting into code element', () => {
+  const result = parseInline('Use `Task.Delay` for async sleep');
+  assert.equal(result.length, 3);
+  assert.equal(result[0], 'Use ');
+  assert.equal(result[1].type, 'code');
+  assert.equal(result[1].props.children, 'Task.Delay');
+  assert.equal(result[2], ' for async sleep');
 });
 
-test('sanitizes malicious links and returns valid HTML structure', () => {
-  const markdown = `[Safe Link](javascript:alert(1))
-[Valid Link](https://example.com)`;
-
-  const html = renderMarkdown(markdown);
-
-  assert.match(html, /<a /);
-  assert.match(html, /https:\/\/example\.com/);
+test('parseInline parses [text](url) links into anchor element with security attrs', () => {
+  const result = parseInline('Check [Docs](https://example.com) for details');
+  assert.equal(result.length, 3);
+  assert.equal(result[0], 'Check ');
+  assert.equal(result[1].type, 'a');
+  assert.equal(result[1].props.href, 'https://example.com');
+  assert.equal(result[1].props.target, '_blank');
+  assert.equal(result[1].props.rel, 'noopener noreferrer');
+  assert.equal(result[1].props.children, 'Docs');
 });
 
-test('handles raw base64 data URIs inside markdown text seamlessly', () => {
-  const base64Img = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEAD8D+JaQAA3AA/v59WAAAAA==';
-  const markdown = `Here is an inline diagram:
-
-${base64Img}`;
-
-  const html = renderMarkdown(markdown);
-  assert.match(html, /<img src="data:image\/webp;base64,/);
+test('parseInline neutralizes malicious javascript: URLs in links', () => {
+  const result = parseInline('[Click](javascript:alert(1))');
+  assert.equal(result[0].type, 'a');
+  assert.equal(result[0].props.href, '#');
 });

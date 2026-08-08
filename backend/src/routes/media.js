@@ -1,240 +1,163 @@
-import { Hono } from "hono";
-import { authenticateUser } from "./middleware.js";
+import { Hono } from 'hono';
+import { requireAuth } from '../middleware/auth.js';
 
 export const mediaRoutes = new Hono();
 
-// Helper to ensure media table exists in D1
-async function ensureMediaTable(db) {
-  await db
-    .prepare(
-      `
-    CREATE TABLE IF NOT EXISTS media (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      filename TEXT NOT NULL,
-      url TEXT NOT NULL,
-      hash TEXT UNIQUE NOT NULL,
-      mimeType TEXT DEFAULT 'image/webp',
-      size INTEGER DEFAULT 0,
-      width INTEGER,
-      height INTEGER,
-      authorId INTEGER NOT NULL,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `,
-    )
-    .run();
-}
-
-// ── Upload Image (with SHA-256 deduplication hash check) ──
-mediaRoutes.post("/upload", authenticateUser, async (c) => {
+// ── POST /api/media/upload ────────────────────────────────────────────────────
+// Accepts a base64 data URL. Deduplicates via SHA-256 hash.
+mediaRoutes.post('/upload', requireAuth, async (c) => {
   try {
-    await ensureMediaTable(c.env.DB);
-
-    const body = await c.req.json();
-    const { filename, dataUrl, hash, size = 0, width = 0, height = 0 } = body;
-    const authorId = c.get("UserId") || 1;
+    const { filename, dataUrl, hash, size = 0, width = 0, height = 0 } = await c.req.json();
+    const authorId = parseInt(c.get('userId') || 1);
 
     if (!dataUrl || !filename) {
-      return c.json({ error: "Image data and filename are required" }, 400);
+      return c.json({ error: 'Image data and filename are required' }, 400);
     }
 
-    // 1. Deduplication check via SHA-256 hash
+    // Limit base64 payload to ~750KB
+    if (dataUrl.length > 1_000_000) {
+      return c.json({ error: 'Image payload exceeds 750KB. Please compress before uploading.' }, 400);
+    }
+
+    // Deduplication check
     if (hash) {
-      try {
-        const existing = await c.env.DB.prepare(
-          "SELECT * FROM media WHERE hash = ?",
-        )
-          .bind(hash)
-          .first();
-        if (existing) {
-          // Always return a clean /media/file/:id URL to the client
-          // (DB may store base64 internally — that's fine, don't change it)
-          const origin = new URL(c.req.url).origin;
-          const clientUrl = `${origin}/media/file/${existing.id}`;
-          return c.json(
-            {
-              message: "Image already exists in Media Library (deduplicated)",
-              image: { ...existing, url: clientUrl },
-              deduplicated: true,
-            },
-            200,
-          );
-        }
-      } catch (hashErr) {
-        console.error("Hash check warning:", hashErr);
+      const existing = await c.env.DB.prepare('SELECT id FROM media WHERE hash = ?')
+        .bind(hash)
+        .first();
+      if (existing) {
+        const origin = new URL(c.req.url).origin;
+        return c.json({
+          deduplicated: true,
+          image: { id: existing.id, url: `${origin}/api/media/${existing.id}` },
+        });
       }
     }
 
-    // 2. Insert base64 directly into D1 — this IS the storage (no R2)
-    const fileHash =
-      hash || `hash_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+    const fileHash = hash || `h_${Date.now().toString(36)}`;
     const result = await c.env.DB.prepare(
-      "INSERT INTO media (filename, url, hash, mimeType, size, width, height, authorId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      'INSERT INTO media (filename, base64Data, hash, mimeType, size, width, height, authorId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
     )
-      .bind(
-        filename,
-        dataUrl,          // ← base64 stays in DB permanently — serve route reads it
-        fileHash,
-        "image/webp",
-        parseInt(size) || 0,
-        parseInt(width) || 0,
-        parseInt(height) || 0,
-        parseInt(authorId),
-      )
+      .bind(filename, dataUrl, fileHash, 'image/webp', parseInt(size), parseInt(width), parseInt(height), authorId)
       .run();
 
     const mediaId = result.meta.last_row_id;
-
-    // 3. Return a clean public URL to the client (DO NOT overwrite DB url)
     const origin = new URL(c.req.url).origin;
-    const clientUrl = `${origin}/media/file/${mediaId}`;
 
     return c.json(
       {
-        message: "Image uploaded successfully to Media Library",
+        deduplicated: false,
         image: {
           id: mediaId,
           filename,
-          url: clientUrl,   // ← client gets the clean serve URL
+          url: `${origin}/api/media/${mediaId}`,
           hash: fileHash,
-          mimeType: "image/webp",
-          size: parseInt(size) || 0,
-          width: parseInt(width) || 0,
-          height: parseInt(height) || 0,
+          mimeType: 'image/webp',
+          size: parseInt(size),
+          width: parseInt(width),
+          height: parseInt(height),
         },
-        deduplicated: false,
       },
-      201,
+      201
     );
-  } catch (error) {
-    console.error("Media upload error:", error);
-    return c.json(
-      { error: "Failed to upload media", details: error.message },
-      500,
-    );
+  } catch (err) {
+    console.error('Media upload error:', err);
+    return c.json({ error: 'Failed to upload media' }, 500);
   }
 });
 
-// ── Serve Binary Media File by ID ──
-// DB stores base64 data URLs — this route decodes and serves the binary.
-mediaRoutes.get("/file/:id", async (c) => {
+// ── GET /api/media/:id ────────────────────────────────────────────────────────
+// Serves the binary image from stored base64 data. Public (no auth required).
+mediaRoutes.get('/:id', async (c) => {
   try {
-    await ensureMediaTable(c.env.DB);
-    const id = parseInt(c.req.param("id"));
-    if (!id || isNaN(id)) return c.text("Not Found", 404);
+    const id = parseInt(c.req.param('id'));
+    if (!id || isNaN(id)) return c.text('Not Found', 404);
 
-    const media = await c.env.DB.prepare(
-      "SELECT url, mimeType FROM media WHERE id = ?",
-    )
+    const media = await c.env.DB.prepare('SELECT base64Data, mimeType FROM media WHERE id = ?')
       .bind(id)
       .first();
-    if (!media || !media.url) return c.text("Not Found", 404);
 
-    // Base64 stored in D1 — decode and serve binary
-    if (media.url.startsWith("data:image/")) {
-      const parts = media.url.split(",");
-      const mime = parts[0].match(/:(.*?);/)?.[1] || "image/webp";
-      const base64Data = parts[1];
-      const buffer = Uint8Array.from(atob(base64Data), (char) =>
-        char.charCodeAt(0),
-      );
+    if (!media?.base64Data) return c.text('Not Found', 404);
+
+    const rawData = media.base64Data;
+
+    if (rawData.startsWith('data:image/')) {
+      const [header, base64Str] = rawData.split(',');
+      const mime = header.match(/:(.*?);/)?.[1] || 'image/webp';
+      const buffer = Uint8Array.from(atob(base64Str), (ch) => ch.charCodeAt(0));
       return c.body(buffer, 200, {
-        "Content-Type": mime,
-        "Cache-Control": "public, max-age=31536000, immutable",
+        'Content-Type': mime,
+        'Cache-Control': 'public, max-age=31536000, immutable',
       });
     }
 
-    // Fallback: external URL stored — redirect
-    if (media.url.startsWith("http://") || media.url.startsWith("https://")) {
-      return c.redirect(media.url);
-    }
+    if (rawData.startsWith('http')) return c.redirect(rawData);
 
-    return c.text("Not Found", 404);
+    return c.text('Not Found', 404);
   } catch (err) {
-    console.error("Error serving media file:", err);
-    return c.text("Error serving file", 500);
+    console.error('Media serve error:', err);
+    return c.text('Error serving media', 500);
   }
 });
 
-// ── List & Search Media Library Items ──
-mediaRoutes.get("/list", authenticateUser, async (c) => {
+// ── GET /api/media ────────────────────────────────────────────────────────────
+// Paginated media library list (author only).
+mediaRoutes.get('/', requireAuth, async (c) => {
   try {
-    await ensureMediaTable(c.env.DB);
-
-    const query = (c.req.query("query") || "").trim();
-    const page = parseInt(c.req.query("page")) || 1;
-    const limit = Math.min(parseInt(c.req.query("limit")) || 24, 60);
+    const page = Math.max(1, parseInt(c.req.query('page')) || 1);
+    const limit = Math.min(parseInt(c.req.query('limit')) || 24, 60);
+    const query = (c.req.query('query') || '').trim();
     const skip = (page - 1) * limit;
 
-    let whereSql = "";
-    let bindArgs = [];
-
+    let whereSql = '';
+    const bindArgs = [];
     if (query) {
-      whereSql = "WHERE filename LIKE ? OR hash LIKE ?";
-      bindArgs.push(`%${query}%`, `%${query}%`);
+      whereSql = 'WHERE filename LIKE ?';
+      bindArgs.push(`%${query}%`);
     }
 
     const countRow = await c.env.DB.prepare(
-      `SELECT COUNT(*) as total FROM media ${whereSql}`,
+      `SELECT COUNT(*) as total FROM media ${whereSql}`
     )
       .bind(...bindArgs)
       .first();
     const totalCount = countRow?.total || 0;
 
-    const selectSql = `
-      SELECT id, filename, url, hash, mimeType, size, width, height, createdAt
-      FROM media
-      ${whereSql}
-      ORDER BY createdAt DESC
-      LIMIT ? OFFSET ?
-    `;
-
-    const result = await c.env.DB.prepare(selectSql)
+    const result = await c.env.DB.prepare(
+      `SELECT id, filename, hash, mimeType, size, width, height, createdAt
+       FROM media ${whereSql} ORDER BY createdAt DESC LIMIT ? OFFSET ?`
+    )
       .bind(...bindArgs, limit, skip)
       .all();
-    const rawMedia = result.results || [];
+
     const origin = new URL(c.req.url).origin;
+    const items = (result.results || []).map((img) => ({
+      ...img,
+      url: `${origin}/api/media/${img.id}`,
+    }));
 
-    // Always return /media/file/:id URLs to the client.
-    // NEVER overwrite the base64 in DB — the serve route needs it to decode images.
-    const mediaList = rawMedia.map((img) => {
-      if (img.url && img.url.startsWith("data:image/")) {
-        return { ...img, url: `${origin}/media/file/${img.id}` };
-      }
-      return img;
-    });
-
-    return c.json(
-      {
-        media: mediaList,
-        pagination: {
-          currentPage: page,
-          totalPages: Math.ceil(totalCount / limit) || 1,
-          totalCount,
-        },
+    return c.json({
+      media: items,
+      pagination: {
+        page,
+        totalPages: Math.ceil(totalCount / limit) || 1,
+        totalCount,
       },
-      200,
-    );
-  } catch (error) {
-    console.error("Error fetching media library:", error);
-    return c.json(
-      { error: "Failed to fetch media", details: error.message },
-      500,
-    );
+    });
+  } catch (err) {
+    console.error('Media list error:', err);
+    return c.json({ error: 'Failed to fetch media' }, 500);
   }
 });
 
-// ── Delete Image from Media Library ──
-mediaRoutes.delete("/:id", authenticateUser, async (c) => {
+// ── DELETE /api/media/:id ─────────────────────────────────────────────────────
+mediaRoutes.delete('/:id', requireAuth, async (c) => {
   try {
-    await ensureMediaTable(c.env.DB);
-    const id = parseInt(c.req.param("id"));
-    if (!id || isNaN(id)) return c.json({ error: "Invalid ID" }, 400);
-
-    await c.env.DB.prepare("DELETE FROM media WHERE id = ?").bind(id).run();
-    return c.json({ message: "Image deleted from Media Library" }, 200);
-  } catch (error) {
-    console.error("Error deleting media:", error);
-    return c.json({ error: "Failed to delete media" }, 500);
+    const id = parseInt(c.req.param('id'));
+    if (!id || isNaN(id)) return c.json({ error: 'Invalid media ID' }, 400);
+    await c.env.DB.prepare('DELETE FROM media WHERE id = ?').bind(id).run();
+    return c.json({ message: 'Media deleted' });
+  } catch (err) {
+    console.error('Media delete error:', err);
+    return c.json({ error: 'Failed to delete media' }, 500);
   }
 });

@@ -1,30 +1,36 @@
 import { useState, useEffect } from 'react';
-import api from '../utils/api.js';
+import client from '../api/client.js';
 
-const useTags = (refreshTrigger = 0) => {
+/**
+ * useTags — fetches the full list of subject tags from the API.
+ *
+ * @param {number} [refreshKey] - Increment to force a re-fetch
+ * @returns {{ tags, loading, error }}
+ */
+export default function useTags(refreshKey = 0) {
   const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchTags = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await api.get('/lessons/tags');
-        setTags(response.data.tags || []);
+        const res = await client.get('/api/tags');
+        if (!cancelled) setTags(res.data.tags || []);
       } catch (err) {
-        setError('Error fetching tags');
-        console.error(err);
+        if (!cancelled) setError('Failed to load tags');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchTags();
-  }, [refreshTrigger]);
+    return () => { cancelled = true; };
+  }, [refreshKey]);
 
   return { tags, loading, error };
-};
-
-export default useTags;
+}

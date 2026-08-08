@@ -1,14 +1,46 @@
 import React from 'react';
-import { FiAlertCircle, FiCheckCircle, FiInfo } from 'react-icons/fi';
+import { FiZap, FiAlertTriangle, FiInfo, FiBookmark } from 'react-icons/fi';
+import { renderInlineText } from '../../lib/inline.js';
 
-export default function CalloutBlock({ type = 'info', content = '' }) {
+const VARIANTS = {
+  tip: {
+    Icon: FiZap,
+    label: 'Key Takeaway',
+    className: 'callout-tip',
+  },
+  warning: {
+    Icon: FiAlertTriangle,
+    label: 'Warning',
+    className: 'callout-warning',
+  },
+  info: {
+    Icon: FiInfo,
+    label: 'Info',
+    className: 'callout-info',
+  },
+  note: {
+    Icon: FiBookmark,
+    label: 'Note',
+    className: 'callout-note',
+  },
+};
+
+export default function CalloutBlock({ block }) {
+  if (!block) return null;
+  const calloutVariant = block.variant || 'tip';
+  const style = VARIANTS[calloutVariant] || VARIANTS.tip;
+  const { Icon } = style;
+  const label = block.title || style.label;
+  const text = block.content || '';
+
   return (
-    <div className="my-4 p-4 rounded-2xl bg-primary/10 border border-primary/30 text-foreground flex items-start gap-3 shadow-xs">
-      <div className="p-1.5 rounded-xl bg-primary/20 text-primary shrink-0 mt-0.5">
-        <FiInfo size={18} />
+    <div className={`callout-block ${style.className}`}>
+      <div className="callout-header">
+        <Icon size={15} />
+        <span>{label}</span>
       </div>
-      <div className="text-xs md:text-sm leading-relaxed font-medium">
-        {content}
+      <div className="callout-body">
+        {renderInlineText(text)}
       </div>
     </div>
   );

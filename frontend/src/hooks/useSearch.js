@@ -1,151 +1,125 @@
 import { useState, useEffect } from 'react';
-import api from '../utils/api.js';
 import { useDebounce } from 'use-debounce';
+import client from '../api/client.js';
 
-// Calculate Levenshtein distance between two strings
+// ── Levenshtein distance (for client-side fuzzy fallback) ─────────────────────
 function levenshtein(a, b) {
-  const tmp = [];
-  let i, j;
-  const alen = a.length, blen = b.length;
-  if (alen === 0) return blen;
-  if (blen === 0) return alen;
-  for (i = 0; i <= alen; i++) tmp[i] = [i];
-  for (j = 0; j <= blen; j++) tmp[0][j] = j;
-  for (i = 1; i <= alen; i++) {
-    for (j = 1; j <= blen; j++) {
-      tmp[i][j] = a[i - 1] === b[j - 1]
-        ? tmp[i - 1][j - 1]
-        : Math.min(tmp[i - 1][j] + 1, tmp[i][j - 1] + 1, tmp[i - 1][j - 1] + 1);
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+  const dp = [];
+  for (let i = 0; i <= a.length; i++) dp[i] = [i];
+  for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      dp[i][j] =
+        a[i - 1] === b[j - 1]
+          ? dp[i - 1][j - 1]
+          : Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + 1);
     }
   }
-  return tmp[alen][blen];
+  return dp[a.length][b.length];
 }
 
-// Calculate fuzzy match score (lower is better, 0 = exact)
-function calculateFuzzyScore(item, searchQuery) {
-  if (!item || !searchQuery) return Infinity;
-  const queryLower = searchQuery.toLowerCase().trim();
-  const titleLower = (item.title || '').toLowerCase();
-  const excerptLower = (item.excerpt || '').toLowerCase();
-  const tagNames = Array.isArray(item.tags)
-    ? item.tags.map((t) => (typeof t === 'object' ? t.name || '' : t).toLowerCase())
-    : [];
+function fuzzyScore(lesson, query) {
+  if (!lesson || !query) return Infinity;
+  const q = query.toLowerCase().trim();
+  const title = (lesson.title || '').toLowerCase();
+  const excerpt = (lesson.excerpt || '').toLowerCase();
+  const tags = (lesson.tags || []).map((t) =>
+    (typeof t === 'string' ? t : t.name || '').toLowerCase()
+  );
 
-  // 1. Direct exact or substring match
-  if (titleLower === queryLower) return 0;
-  if (titleLower.startsWith(queryLower)) return 1;
-  if (titleLower.includes(queryLower)) return 2;
-  if (tagNames.some((t) => t.includes(queryLower))) return 3;
-  if (excerptLower.includes(queryLower)) return 4;
+  if (title === q) return 0;
+  if (title.startsWith(q)) return 1;
+  if (title.includes(q)) return 2;
+  if (tags.some((t) => t.includes(q))) return 3;
+  if (excerpt.includes(q)) return 4;
 
-  // 2. Word-level fuzzy match (allows 1-2 typos e.g., 'acess' -> 'Access')
-  const queryWords = queryLower.split(/\s+/).filter(Boolean);
-  const titleWords = titleLower.split(/\s+/).filter(Boolean);
-  let totalDistance = 0;
-  let matchedWordCount = 0;
-
-  for (const qWord of queryWords) {
-    const maxDist = qWord.length <= 4 ? 1 : 2;
-    let bestDistForWord = Infinity;
-
-    // Check title words
-    for (const tWord of titleWords) {
-      if (Math.abs(tWord.length - qWord.length) > maxDist + 1) continue;
-      const dist = levenshtein(tWord, qWord);
-      if (dist <= maxDist && dist < bestDistForWord) {
-        bestDistForWord = dist;
-      }
-      // Partial prefix typo match
-      if (tWord.length >= 4 && qWord.length >= 3 && levenshtein(tWord.slice(0, qWord.length), qWord) <= 1) {
-        bestDistForWord = Math.min(bestDistForWord, 1);
-      }
+  // Word-level fuzzy with Levenshtein
+  const qWords = q.split(/\s+/).filter(Boolean);
+  const tWords = title.split(/\s+/).filter(Boolean);
+  let total = 0;
+  let matched = 0;
+  for (const qw of qWords) {
+    const maxDist = qw.length <= 4 ? 1 : 2;
+    let best = Infinity;
+    for (const tw of tWords) {
+      if (Math.abs(tw.length - qw.length) > maxDist + 1) continue;
+      const d = levenshtein(tw, qw);
+      if (d <= maxDist) best = Math.min(best, d);
     }
-
-    // Check tag names
-    for (const tag of tagNames) {
-      const dist = levenshtein(tag, qWord);
-      if (dist <= maxDist && dist < bestDistForWord) {
-        bestDistForWord = dist;
-      }
+    for (const tag of tags) {
+      const d = levenshtein(tag, qw);
+      if (d <= maxDist) best = Math.min(best, d);
     }
-
-    if (bestDistForWord < Infinity) {
-      totalDistance += bestDistForWord;
-      matchedWordCount++;
-    }
+    if (best < Infinity) { total += best; matched++; }
   }
-
-  if (matchedWordCount > 0) {
-    return 10 + totalDistance - matchedWordCount * 2;
-  }
-
-  return Infinity;
+  return matched > 0 ? 10 + total - matched * 2 : Infinity;
 }
 
-const useSearch = (query) => {
+/**
+ * useSearch — debounced lesson search with client-side fuzzy ranking fallback.
+ *
+ * @param {string} query - Raw search input
+ * @returns {{ results, loading, error }}
+ */
+export default function useSearch(query) {
   const [debouncedQuery] = useDebounce(query, 250);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!debouncedQuery || debouncedQuery.trim().length === 0) {
+    if (!debouncedQuery?.trim()) {
       setResults([]);
       setLoading(false);
       return;
     }
 
-    const fetchResults = async () => {
+    let cancelled = false;
+
+    const search = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const isAuthenticated = Boolean(localStorage.getItem('jwt'));
+        const isAuth = Boolean(localStorage.getItem('jwt'));
+        const params = {
+          query: debouncedQuery,
+          limit: 20,
+          ...(isAuth && { includeUnpublished: 'true' }),
+        };
 
-        // 1. Primary search query with backend sequence pattern support
-        const response = await api.get('/lessons/getall', {
-          params: {
-            query: debouncedQuery,
-            limit: 20,
-            includeUnpublished: isAuthenticated ? 'true' : 'false',
-          },
-        });
-        let fetchedList = response.data.lessons || response.data.blogs || [];
+        const res = await client.get('/api/lessons', { params });
+        let candidates = res.data.lessons || [];
 
-        // 2. If backend returns 0 exact results, fetch all lessons for client fuzzy fallback
-        if (fetchedList.length === 0) {
-          const fallbackRes = await api.get('/lessons/getall', {
-            params: {
-              limit: 50,
-              includeUnpublished: isAuthenticated ? 'true' : 'false',
-            },
+        // If backend returns nothing, fetch all for client fuzzy fallback
+        if (candidates.length === 0) {
+          const fallback = await client.get('/api/lessons', {
+            params: { limit: 50, ...(isAuth && { includeUnpublished: 'true' }) },
           });
-          fetchedList = fallbackRes.data.lessons || fallbackRes.data.blogs || [];
+          candidates = fallback.data.lessons || [];
         }
 
-        // 3. Rank & sort all candidate notes by fuzzy relevance score
-        const rankedResults = fetchedList
-          .map((note) => ({
-            note,
-            score: calculateFuzzyScore(note, debouncedQuery),
-          }))
-          .filter((item) => item.score < Infinity)
+        const ranked = candidates
+          .map((l) => ({ lesson: l, score: fuzzyScore(l, debouncedQuery) }))
+          .filter((x) => x.score < Infinity)
           .sort((a, b) => a.score - b.score)
-          .map((item) => item.note);
+          .map((x) => x.lesson)
+          .slice(0, 10);
 
-        setResults(rankedResults.slice(0, 10));
+        if (!cancelled) setResults(ranked);
       } catch (err) {
-        setError('Error searching notes');
-        console.error(err);
+        if (!cancelled) setError('Search failed');
+        console.error('useSearch error:', err);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
-    fetchResults();
+    search();
+    return () => { cancelled = true; };
   }, [debouncedQuery]);
 
   return { results, loading, error };
-};
-
-export default useSearch;
+}

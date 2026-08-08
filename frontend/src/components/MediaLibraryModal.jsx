@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '../utils/api.js';
-import { useToast } from './Toaster.jsx';
+import client from '../api/client.js';
+import { useToast } from './ui/Toast.jsx';
 import { Button } from './ui/Button.jsx';
 import { Input } from './ui/Input.jsx';
 import {
@@ -13,8 +13,6 @@ import {
   FiTrash2,
   FiImage,
   FiLoader,
-  FiAlertCircle,
-  FiMaximize2,
 } from 'react-icons/fi';
 
 /** Compute SHA-256 hash of an ArrayBuffer in browser */
@@ -75,11 +73,11 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
   const fetchMedia = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/media/list', { params: { query: searchQuery } });
+      const res = await client.get('/api/media', { params: { query: searchQuery } });
       setImages(res.data.media || []);
     } catch (err) {
       console.error('Error fetching media:', err);
-      toast({ title: 'Failed to load media library', variant: 'destructive' });
+      toast.error('Failed to load media library');
     } finally {
       setLoading(false);
     }
@@ -94,20 +92,17 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
     if (!files || files.length === 0) return;
     const file = files[0];
     if (!file.type.startsWith('image/')) {
-      return toast({ title: 'Invalid file type. Please upload an image.', variant: 'destructive' });
+      return toast.error('Invalid file type. Please upload an image.');
     }
 
     setUploading(true);
     try {
-      // 1. Calculate SHA-256 hash of original file for deduplication
       const arrayBuffer = await file.arrayBuffer();
       const hash = await computeSHA256(arrayBuffer);
 
-      // 2. Compress image to WebP client-side
       const { dataUrl, width, height } = await compressImageToWebP(file);
 
-      // 3. Upload to API
-      const res = await api.post('/media/upload', {
+      const res = await client.post('/api/media/upload', {
         filename: file.name.replace(/\.[^/.]+$/, '') + '.webp',
         dataUrl,
         hash,
@@ -117,16 +112,16 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
       });
 
       if (res.data.deduplicated) {
-        toast({ title: 'Image deduplicated!', description: 'Identical image found in Media Library.', variant: 'default' });
+        toast.info('Image deduplicated!', 'Identical image found in Media Library.');
       } else {
-        toast({ title: 'Image uploaded & compressed to WebP!', variant: 'success' });
+        toast.success('Image uploaded & compressed to WebP!');
       }
 
       fetchMedia();
       setActiveTab('gallery');
     } catch (err) {
       console.error('Upload error:', err);
-      toast({ title: 'Failed to upload image', variant: 'destructive' });
+      toast.error('Failed to upload image');
     } finally {
       setUploading(false);
     }
@@ -138,11 +133,11 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
     if (!window.confirm('Delete this image from Media Library?')) return;
 
     try {
-      await api.delete(`/media/${id}`);
+      await client.delete(`/api/media/${id}`);
       setImages((prev) => prev.filter((img) => img.id !== id));
-      toast({ title: 'Image deleted from library', variant: 'success' });
+      toast.success('Image deleted from library');
     } catch {
-      toast({ title: 'Failed to delete image', variant: 'destructive' });
+      toast.error('Failed to delete image');
     }
   };
 
@@ -152,7 +147,7 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
     try {
       await navigator.clipboard.writeText(url);
       setCopiedId(id);
-      toast({ title: 'Image URL copied to clipboard!', variant: 'success' });
+      toast.success('Image URL copied to clipboard!');
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
       /* fallback */
@@ -242,8 +237,9 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
                     onChange={(e) => setSelectedSize(e.target.value)}
                     className="bg-transparent text-xs font-extrabold text-primary focus:outline-none cursor-pointer"
                   >
-                    <option value="300px">Small (300px)</option>
-                    <option value="500px">Medium (500px)</option>
+                    <option value="small">Small (~320px)</option>
+                    <option value="medium">Medium (~560px)</option>
+                    <option value="large">Large (~800px)</option>
                     <option value="full">Full Width</option>
                   </select>
 
@@ -277,7 +273,6 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
           {/* Modal Body */}
           <div className="flex-1 p-5 overflow-y-auto min-h-[350px]">
             {activeTab === 'upload' || images.length === 0 ? (
-              /* Drag & Drop Upload Zone */
               <div
                 onDragOver={(e) => {
                   e.preventDefault();
@@ -326,7 +321,6 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
                 )}
               </div>
             ) : (
-              /* Gallery Grid */
               <div>
                 {loading && (
                   <div className="flex items-center justify-center py-16 text-muted-foreground">
@@ -342,7 +336,6 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
                         whileHover={{ scale: 1.02 }}
                         className="group relative rounded-2xl border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-primary/50 transition-all flex flex-col"
                       >
-                        {/* Image Preview Container */}
                         <div className="relative h-36 w-full bg-black/40 overflow-hidden flex items-center justify-center">
                           <img
                             src={img.url}
@@ -351,7 +344,6 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
                             loading="lazy"
                           />
 
-                          {/* Hover Actions Bar */}
                           <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center gap-2 p-2">
                             {onSelectImage && (
                               <Button
@@ -389,7 +381,6 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
                           </div>
                         </div>
 
-                        {/* Image Info Footer */}
                         <div className="p-2.5 bg-muted/10 border-t border-border flex flex-col gap-0.5">
                           <p className="font-semibold text-xs text-foreground truncate" title={img.filename}>
                             {img.filename}
