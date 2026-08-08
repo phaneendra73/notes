@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import SEO from '../components/SEO.jsx';
 import Navbar from '../components/layout/Navbar.jsx';
 import Footer from '../components/layout/Footer.jsx';
 import Hero from '../components/ui/Hero.jsx';
-import SearchBar from '../components/ui/SearchBar.jsx';
 import LessonCatalog from '../components/ui/LessonCatalog.jsx';
 
 export default function HomePage() {
   const location = useLocation();
-  const [activeQuery, setActiveQuery] = useState('');
 
   useEffect(() => {
     if (location.hash === '#notes-section') {
@@ -18,12 +16,6 @@ export default function HomePage() {
       }, 100);
     }
   }, [location]);
-
-  const handleSelectQuery = (query) => {
-    setActiveQuery(query);
-    const el = document.getElementById('notes-section');
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
-  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -34,9 +26,8 @@ export default function HomePage() {
       <Navbar />
       <main className="flex-grow">
         <Hero />
-        <SearchBar onSelectQuery={handleSelectQuery} />
         <section id="notes-section" className="max-w-6xl mx-auto px-4 md:px-6 pb-20">
-          <LessonCatalog searchQuery={activeQuery} />
+          <LessonCatalog />
         </section>
       </main>
       <Footer />
