@@ -17,10 +17,18 @@ function LoadingFallback() {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-3">
         <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-        <span className="text-sm font-medium text-muted-foreground">Loading Kadha…</span>
+        <span className="text-sm font-semibold text-muted-foreground">Loading Notes…</span>
       </div>
     </div>
   );
+}
+
+function ProtectedRoute({ children }) {
+  const token = localStorage.getItem('jwt');
+  if (!token) {
+    return <Navigate to="/signin" replace />;
+  }
+  return children;
 }
 
 export default function App() {
@@ -33,11 +41,11 @@ export default function App() {
           <Route path="/read" element={<LessonReaderPage />} />
           <Route path="/signin" element={<SigninPage />} />
 
-          {/* Lazy-loaded author studio routes */}
-          <Route path="/editor" element={<LessonEditorPage />} />
-          <Route path="/studio" element={<StudioPage />} />
-          <Route path="/tags" element={<TagManagerPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          {/* Lazy-loaded protected author studio routes */}
+          <Route path="/editor" element={<ProtectedRoute><LessonEditorPage /></ProtectedRoute>} />
+          <Route path="/studio" element={<ProtectedRoute><StudioPage /></ProtectedRoute>} />
+          <Route path="/tags" element={<ProtectedRoute><TagManagerPage /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 
           {/* Legacy route redirects */}
           <Route path="/admin" element={<Navigate to="/studio" replace />} />

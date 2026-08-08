@@ -17,14 +17,14 @@ client.interceptors.request.use((config) => {
   return config;
 });
 
-// On 401, clear stale JWT and redirect to signin
+// On 401, clear stale JWT and redirect to signin (HashRouter-aware)
 client.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err?.response?.status === 401) {
       localStorage.removeItem('jwt');
-      if (typeof window !== 'undefined' && !window.location.pathname.includes('/signin')) {
-        window.location.href = '/signin';
+      if (typeof window !== 'undefined' && !window.location.hash.includes('/signin')) {
+        window.location.hash = '#/signin';
       }
     }
     return Promise.reject(err);

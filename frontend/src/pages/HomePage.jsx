@@ -19,10 +19,10 @@ export default function HomePage() {
   }, [location]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
       <SEO
-        title="Kadha — Interactive Technical Notes"
-        description="Master C#, .NET, DSA & SQL with interactive slide-based study notes."
+        title="Notes — Your Personal Knowledge Base | Notes.phaneendramarri.com"
+        description="Interactive visual study notes for software engineers covering C#, .NET Core, Data Structures, SQL, and System Design."
       />
       <Navbar />
       <main className="flex-grow">

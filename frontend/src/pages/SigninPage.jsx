@@ -41,7 +41,7 @@ export default function SigninPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <SEO title="Sign In — Kadha" />
+      <SEO title="Sign In — Notes" />
       <Navbar />
       <main className="flex-1 flex items-center justify-center px-4 py-20 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

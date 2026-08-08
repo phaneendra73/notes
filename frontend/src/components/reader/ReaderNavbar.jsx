@@ -59,7 +59,7 @@ export default function ReaderNavbar({
   const handleShare = () => {
     const url = window.location.href;
     if (navigator.share) {
-      navigator.share({ title: lesson?.title || 'Kadha Lesson', url }).catch(() => {});
+      navigator.share({ title: lesson?.title || 'Notes', url }).catch(() => {});
     } else {
       navigator.clipboard.writeText(url).then(() => toast.success('Link copied!'));
     }

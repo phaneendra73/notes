@@ -57,7 +57,7 @@ export default function StudioPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <SEO title="Author Studio — Kadha" />
+      <SEO title="Author Studio — Notes" />
       <Navbar />
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 md:px-6 py-8 md:py-12">

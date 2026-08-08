@@ -48,3 +48,18 @@ test('matchTagIds returns empty array if no tags match', () => {
 
   assert.deepEqual(matchedIds, []);
 });
+
+// Helper function: Format tag param for API query requests
+function formatTagQueryParam(tagId) {
+  if (tagId == null || tagId === '') return undefined;
+  return Array.isArray(tagId) ? tagId.join(',') : String(tagId);
+}
+
+test('formatTagQueryParam formats tag ID correctly as a scalar or CSV string for query params', () => {
+  assert.equal(formatTagQueryParam(1), '1');
+  assert.equal(formatTagQueryParam('C#'), 'C#');
+  assert.equal(formatTagQueryParam([1, 2]), '1,2');
+  assert.equal(formatTagQueryParam(null), undefined);
+  assert.equal(formatTagQueryParam(undefined), undefined);
+});
+

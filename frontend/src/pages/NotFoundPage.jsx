@@ -28,7 +28,7 @@ export default function NotFoundPage() {
             Page Not Found
           </h2>
           <p className="text-sm text-muted-foreground max-w-sm leading-relaxed">
-            The lesson or page you are looking for does not exist on Kadha.
+            The note or page you are looking for does not exist on Notes.
           </p>
           <div className="flex gap-3 mt-2">
             <Button variant="neon" onClick={() => navigate('/')} className="gap-2">

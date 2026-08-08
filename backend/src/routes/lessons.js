@@ -66,9 +66,9 @@ lessonRoutes.get('/', async (c) => {
     if (tagsParam.length > 0) {
       const placeholders = tagsParam.map(() => '?').join(',');
       whereClauses.push(
-        `l.id IN (SELECT tl.lessonId FROM tagsonlessons tl JOIN tags t ON tl.tagId = t.id WHERE t.name IN (${placeholders}))`
+        `l.id IN (SELECT tl.lessonId FROM tagsonlessons tl JOIN tags t ON tl.tagId = t.id WHERE t.id IN (${placeholders}) OR t.name IN (${placeholders}))`
       );
-      bindArgs.push(...tagsParam);
+      bindArgs.push(...tagsParam, ...tagsParam);
     }
 
     const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
@@ -162,8 +162,8 @@ lessonRoutes.get('/:id', async (c) => {
     const slidesRow = await c.env.DB.prepare(slidesQuery).bind(...slideParams).all();
     const slides = (slidesRow.results || []).map((row, idx) => parseSlideRow(row, offset + idx));
 
-    // Increment view count on first load (offset 0), non-blocking
-    if (offset === 0) {
+    // Increment view count ONLY on explicit request (incrementView=1) to prevent double counts
+    if (offset === 0 && c.req.query('incrementView') === '1') {
       const updatePromise = c.env.DB.prepare(
         'UPDATE lessons SET viewsCount = viewsCount + 1 WHERE id = ?'
       )

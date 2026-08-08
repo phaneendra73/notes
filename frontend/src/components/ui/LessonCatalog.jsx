@@ -1,74 +1,135 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import useLessons from '../../hooks/useLessons.js';
 import useTags from '../../hooks/useTags.js';
+import useBookmarks from '../../hooks/useBookmarks.js';
 import LessonCard from './LessonCard.jsx';
 import { Pagination } from './Pagination.jsx';
 import { Skeleton } from './Skeleton.jsx';
-import { Badge } from './Badge.jsx';
-import { FiBookOpen, FiTag, FiSearch, FiRefreshCw, FiAlertCircle } from 'react-icons/fi';
+import { FiBookOpen, FiTag, FiRefreshCw, FiAlertCircle, FiBookmark } from 'react-icons/fi';
 
 export default function LessonCatalog({ searchQuery = '', isBookmarkedOnly = false, bookmarkedIds = [] }) {
   const [selectedTagId, setSelectedTagId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showSavedOnly, setShowSavedOnly] = useState(false);
 
+  const { bookmarks } = useBookmarks();
   const { tags, loading: tagsLoading } = useTags();
   const { lessons, loading, error, pagination, refetch } = useLessons(selectedTagId, searchQuery, currentPage, 9);
 
   let filteredLessons = lessons;
-  if (isBookmarkedOnly) {
-    filteredLessons = lessons.filter((l) => bookmarkedIds.includes(l.id));
+  if (isBookmarkedOnly || showSavedOnly) {
+    const activeIds = isBookmarkedOnly ? bookmarkedIds : bookmarks;
+    filteredLessons = lessons.filter((l) => activeIds.includes(l.id));
   }
 
   const handleTagClick = (tagId) => {
     setSelectedTagId(selectedTagId === tagId ? null : tagId);
+    setShowSavedOnly(false);
     setCurrentPage(1);
   };
 
   return (
     <div className="w-full flex flex-col gap-6">
-      {/* Tags Filter Header Bar */}
-      <div className="flex flex-col gap-3 p-4 rounded-2xl bg-card border border-border/80 shadow-xs">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-            <FiTag size={13} className="text-primary" /> Filter by Subject Tag:
-          </span>
-          {selectedTagId && (
-            <button
-              onClick={() => setSelectedTagId(null)}
-              className="text-xs text-primary hover:underline font-bold cursor-pointer"
-            >
-              Clear Filter
-            </button>
-          )}
+      {/* Section Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-heading font-extrabold text-2xl md:text-3xl text-foreground">
+            Explore Notes Library
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Slide-by-slide engineering guides & visual study tracks
+          </p>
         </div>
+        {(selectedTagId || showSavedOnly) && (
+          <button
+            onClick={() => { setSelectedTagId(null); setShowSavedOnly(false); }}
+            className="px-4 py-2 rounded-full text-xs font-extrabold bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-black transition-all cursor-pointer shadow-xs"
+          >
+            Clear Filter
+          </button>
+        )}
+      </div>
+
+      {/* Raycast-style Sliding Tag Filter Bar */}
+      <div className="flex flex-col gap-3 p-4 md:p-5 rounded-3xl bg-card/90 backdrop-blur-2xl border border-border/80 shadow-[0_8px_30px_rgba(0,0,0,0.3)]">
+        <span className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5 px-1">
+          <FiTag size={13} className="text-primary" /> Filter by Track:
+        </span>
 
         <div className="flex flex-wrap gap-2">
-          <Badge
-            variant={selectedTagId === null ? 'default' : 'outline'}
-            onClick={() => handleTagClick(null)}
-            className="cursor-pointer text-xs px-3 py-1 font-bold rounded-xl transition-all"
+          {/* All Tracks Pill */}
+          <button
+            onClick={() => { setSelectedTagId(null); setShowSavedOnly(false); }}
+            className={`relative px-4 py-2 rounded-full text-xs font-extrabold transition-all cursor-pointer z-10 ${
+              selectedTagId === null && !showSavedOnly
+                ? 'text-black'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
+            }`}
           >
+            {selectedTagId === null && !showSavedOnly && (
+              <motion.div
+                layoutId="activeTagBg"
+                transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                className="absolute inset-0 bg-primary rounded-full shadow-[0_0_15px_var(--neon-glow)] -z-10"
+              />
+            )}
             All Tracks
-          </Badge>
+          </button>
 
+          {/* Saved Bookmarks Pill */}
+          {bookmarks.length > 0 && (
+            <button
+              onClick={() => { setShowSavedOnly((s) => !s); setSelectedTagId(null); }}
+              className={`relative px-4 py-2 rounded-full text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 z-10 ${
+                showSavedOnly
+                  ? 'text-black'
+                  : 'text-primary hover:text-primary hover:bg-primary/10'
+              }`}
+            >
+              {showSavedOnly && (
+                <motion.div
+                  layoutId="activeTagBg"
+                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  className="absolute inset-0 bg-primary rounded-full shadow-[0_0_15px_var(--neon-glow)] -z-10"
+                />
+              )}
+              <FiBookmark size={13} /> Saved Bookmarks ({bookmarks.length})
+            </button>
+          )}
+
+          {/* Dynamic Subject Tag Pills */}
           {tagsLoading
-            ? Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-7 w-20 rounded-xl" />
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-8 w-24 rounded-full" />
               ))
-            : tags.map((t) => (
-                <Badge
-                  key={t.id}
-                  variant={selectedTagId === t.id ? 'default' : 'outline'}
-                  onClick={() => handleTagClick(t.id)}
-                  className="cursor-pointer text-xs px-3 py-1 font-bold rounded-xl transition-all hover:border-primary/50"
-                >
-                  {t.name}
-                </Badge>
-              ))}
+            : tags.map((t) => {
+                const isActive = selectedTagId === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => handleTagClick(t.id)}
+                    className={`relative px-4 py-2 rounded-full text-xs font-extrabold transition-all cursor-pointer z-10 ${
+                      isActive
+                        ? 'text-black'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
+                    }`}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeTagBg"
+                        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                        className="absolute inset-0 bg-primary rounded-full shadow-[0_0_15px_var(--neon-glow)] -z-10"
+                      />
+                    )}
+                    {t.name}
+                  </button>
+                );
+              })}
         </div>
       </div>
 
-      {/* Main Grid or Loading State */}
+      {/* Note Grid with Smooth Layout Animations */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -93,26 +154,37 @@ export default function LessonCatalog({ searchQuery = '', isBookmarkedOnly = fal
           </button>
         </div>
       ) : filteredLessons.length === 0 ? (
-        <div className="p-12 rounded-2xl border border-border/80 bg-card text-center flex flex-col items-center gap-3 my-4">
-          <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground">
-            {searchQuery ? <FiSearch size={24} /> : <FiBookOpen size={24} />}
+        <div className="p-12 rounded-2xl border border-border/80 bg-gradient-to-br from-card to-muted/20 text-center flex flex-col items-center gap-4 my-4">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/20">
+            <FiBookOpen size={32} className="text-primary" />
           </div>
-          <h3 className="font-heading font-extrabold text-lg text-foreground">No Lessons Found</h3>
-          <p className="text-xs text-muted-foreground max-w-md">
-            {searchQuery
-              ? `No tracks matched "${searchQuery}". Try searching for another topic or clear tag filters.`
-              : isBookmarkedOnly
-              ? 'You have not saved any bookmarked lessons yet.'
-              : 'No lessons are published currently.'}
-          </p>
+          <div>
+            <h3 className="font-heading font-extrabold text-xl text-foreground mb-1">
+              {searchQuery ? 'No Notes Found' : 'No Notes Yet'}
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+              {searchQuery ? 'Try adjusting your search terms or tags' : 'Start creating your first note today!'}
+            </p>
+          </div>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredLessons.map((l) => (
-              <LessonCard key={l.id} lesson={l} />
-            ))}
-          </div>
+          <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <AnimatePresence>
+              {filteredLessons.map((l) => (
+                <motion.div
+                  key={l.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  <LessonCard lesson={l} />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
 
           {pagination.totalPages > 1 && (
             <div className="mt-4 flex justify-center">

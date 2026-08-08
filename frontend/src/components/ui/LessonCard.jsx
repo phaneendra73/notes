@@ -25,11 +25,11 @@ export default function LessonCard({ lesson, blog }) {
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       className="h-full select-none"
     >
-      <Card className="h-full flex flex-col overflow-hidden border border-border/80 bg-card hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-md group">
+      <Card className="h-full flex flex-col overflow-hidden border border-border/80 bg-card hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-primary/10 group">
         <div className="relative aspect-video w-full overflow-hidden bg-muted/30">
           <img
             src={cover}
-            alt={item.title || 'Lesson'}
+            alt={item.title || 'Note'}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
             onError={(e) => {
@@ -47,8 +47,8 @@ export default function LessonCard({ lesson, blog }) {
             }}
             className={`absolute top-3 right-3 p-2 rounded-xl backdrop-blur-md border transition-all cursor-pointer ${
               bookmarked
-                ? 'bg-primary text-black border-primary shadow-sm'
-                : 'bg-black/40 text-white border-white/20 hover:bg-black/60 hover:scale-105'
+                ? 'bg-primary text-black border-primary shadow-[0_0_12px_var(--neon-glow)] scale-110'
+                : 'bg-black/50 text-white border-white/20 hover:bg-black/80 hover:border-primary/50 hover:scale-110'
             }`}
             title={bookmarked ? 'Remove Bookmark' : 'Save Bookmark'}
           >
@@ -56,8 +56,8 @@ export default function LessonCard({ lesson, blog }) {
           </button>
 
           <div className="absolute bottom-3 left-3 flex items-center gap-2">
-            <span className="text-[11px] font-extrabold text-foreground/90 bg-background/80 backdrop-blur-md px-2.5 py-1 rounded-full border border-border/80 shadow-xs">
-              By {item.authorName || 'Phaneendra'}
+            <span className="text-[10px] font-bold text-foreground bg-background/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-border/80 shadow-sm">
+              By {item.authorName || 'Phaneendra Marri'}
             </span>
           </div>
         </div>
@@ -101,7 +101,7 @@ export default function LessonCard({ lesson, blog }) {
 
             <Link
               to={`/read?id=${item.id}`}
-              className="flex items-center gap-1 text-xs font-extrabold text-foreground group-hover:text-primary transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white transition-all duration-200 font-extrabold text-xs group-hover:bg-primary group-hover:text-white group-hover:border-primary"
             >
               <span>Read Note</span>
               <FiChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />

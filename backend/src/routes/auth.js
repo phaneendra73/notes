@@ -157,6 +157,15 @@ authRoutes.post('/password', requireAuth, async (c) => {
 // ── POST /api/auth/authors ────────────────────────────────────────────────────
 authRoutes.post('/authors', requireAuth, async (c) => {
   try {
+    const requesterId = c.get('userId');
+    const requester = await c.env.DB.prepare('SELECT role FROM userprofiles WHERE id = ?')
+      .bind(parseInt(requesterId))
+      .first();
+
+    if (requester?.role !== 'admin') {
+      return c.json({ error: 'Forbidden: Only admins can create author accounts' }, 403);
+    }
+
     const { name, email, password, bio, role = 'author' } = await c.req.json();
 
     if (!name || !email || !password) {

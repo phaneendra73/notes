@@ -32,17 +32,17 @@ export default function Footer() {
           {/* Brand */}
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-primary to-cyan-400 p-[1px] shadow-[0_0_12px_var(--neon-glow)]">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-primary to-emerald-500 p-[1px] shadow-[0_0_12px_var(--neon-glow)]">
                 <div className="w-full h-full bg-card rounded-[11px] flex items-center justify-center p-1.5">
-                  <img src={kadhaLogo} alt="Kadha" className="w-full h-full object-contain" />
+                  <img src={kadhaLogo} alt="Notes" className="w-full h-full object-contain" />
                 </div>
               </div>
               <span className="font-heading font-extrabold text-base text-foreground">
-                Notes<span className="text-primary font-black ml-1">.io</span>
+                Notes<span className="text-primary font-black ml-0.5">.</span>
               </span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
-              Interactive engineering study notes for C#, .NET Core, Algorithms, SQL, and System Design.
+              Interactive engineering study notes for C#, .NET Core, Algorithms, SQL, and System Design at <strong className="text-foreground">Notes.phaneendramarri.com</strong>.
             </p>
           </div>
 
@@ -96,7 +96,7 @@ export default function Footer() {
         </div>
 
         <div className="pt-6 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground font-medium">
-          <span>&copy; {year} Notes. All rights reserved.</span>
+          <span>&copy; {year} Notes.phaneendramarri.com. All rights reserved.</span>
           <div className="flex items-center gap-2">
             <FiBookOpen size={14} className="text-primary" />
             <span>Learn • Code • Master</span>

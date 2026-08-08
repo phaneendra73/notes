@@ -2,7 +2,9 @@ import React from 'react';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 
-export function Pagination({ page, totalPages, totalCount, onPageChange, className = '' }) {
+export function Pagination({ page, currentPage, totalPages, totalCount, onPageChange, className = '' }) {
+  // Accept both `page` and `currentPage` for backward compatibility across callers.
+  const activePage = Number(page ?? currentPage) || 1;
   if (!totalPages || totalPages <= 0) return null;
 
   // Generate page numbers array with optional ellipsis for large page counts
@@ -12,16 +14,16 @@ export function Pagination({ page, totalPages, totalCount, onPageChange, classNa
       for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
       pages.push(1);
-      if (page > 3) pages.push('...');
-      
-      const start = Math.max(2, page - 1);
-      const end = Math.min(totalPages - 1, page + 1);
-      
+      if (activePage > 3) pages.push('...');
+
+      const start = Math.max(2, activePage - 1);
+      const end = Math.min(totalPages - 1, activePage + 1);
+
       for (let i = start; i <= end; i++) {
         if (!pages.includes(i)) pages.push(i);
       }
 
-      if (page < totalPages - 2) pages.push('...');
+      if (activePage < totalPages - 2) pages.push('...');
       pages.push(totalPages);
     }
     return pages;
@@ -35,7 +37,7 @@ export function Pagination({ page, totalPages, totalCount, onPageChange, classNa
       <div className="text-[11px] sm:text-xs font-bold text-muted-foreground flex items-center gap-1.5 text-center">
         <span className="w-2 h-2 rounded-full bg-primary animate-pulse shrink-0" />
         <span>
-          Showing <span className="text-foreground font-extrabold">{totalCount > 0 ? page : 0}</span> of{' '}
+          Showing <span className="text-foreground font-extrabold">{totalCount > 0 ? activePage : 0}</span> of{' '}
           <span className="text-foreground font-extrabold">{totalPages}</span> pages
           {totalCount ? ` (${totalCount} notes)` : ''}
         </span>
@@ -45,8 +47,8 @@ export function Pagination({ page, totalPages, totalCount, onPageChange, classNa
       <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap justify-center max-w-full">
         {/* Previous Button */}
         <button
-          disabled={page <= 1}
-          onClick={() => onPageChange(page - 1)}
+          disabled={activePage <= 1}
+          onClick={() => onPageChange(activePage - 1)}
           className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl border border-border/80 bg-background/80 hover:bg-muted/80 text-foreground disabled:opacity-40 disabled:cursor-not-allowed text-xs font-extrabold flex items-center gap-1 cursor-pointer transition-all duration-200 shadow-xs hover:border-primary/50 disabled:hover:border-border/80"
           title="Previous Page"
         >
@@ -64,7 +66,7 @@ export function Pagination({ page, totalPages, totalCount, onPageChange, classNa
                 </span>
               );
             }
-            const isCurrent = p === page;
+            const isCurrent = p === activePage;
             return (
               <motion.button
                 key={p}
@@ -85,8 +87,8 @@ export function Pagination({ page, totalPages, totalCount, onPageChange, classNa
 
         {/* Next Button */}
         <button
-          disabled={page >= totalPages}
-          onClick={() => onPageChange(page + 1)}
+          disabled={activePage >= totalPages}
+          onClick={() => onPageChange(activePage + 1)}
           className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl border border-border/80 bg-background/80 hover:bg-muted/80 text-foreground disabled:opacity-40 disabled:cursor-not-allowed text-xs font-extrabold flex items-center gap-1 cursor-pointer transition-all duration-200 shadow-xs hover:border-primary/50 disabled:hover:border-border/80"
           title="Next Page"
         >

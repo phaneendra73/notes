@@ -22,11 +22,12 @@ export default function useLessons(tagId = null, searchQuery = '', page = 1, lim
       setError(null);
 
       const isAuth = Boolean(localStorage.getItem('jwt'));
+      const tagParam = Array.isArray(tagId) ? tagId.join(',') : tagId;
       const params = {
         page: pageNum,
         limit,
         ...(searchQuery && { query: searchQuery }),
-        ...(tagId && { tags: tagId }),
+        ...(tagId != null && { tags: tagParam }),
         ...(isAuth && { includeUnpublished: 'true' }),
       };
 

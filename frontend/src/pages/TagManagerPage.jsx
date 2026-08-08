@@ -52,7 +52,7 @@ export default function TagManagerPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <SEO title="Tag Manager — Kadha" />
+      <SEO title="Tag Manager — Notes" />
       <Navbar />
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 md:px-6 py-10">
         <h1 className="font-heading font-extrabold text-2xl md:text-3xl mb-1 flex items-center gap-2">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import client from '../api/client.js';
 import { Skeleton } from '../components/ui/Skeleton.jsx';
 import SEO from '../components/SEO.jsx';
@@ -76,8 +76,19 @@ export default function LessonReaderPage() {
       try {
         setLoading(true);
         setError(null);
+        // Only increment view count ONCE per session view
+        const sessionKey = `view_counted_${lessonId}`;
+        const shouldIncrement = !sessionStorage.getItem(sessionKey);
+        if (shouldIncrement) {
+          sessionStorage.setItem(sessionKey, '1');
+        }
+
         const res = await client.get(`/api/lessons/${lessonId}`, {
-          params: { offset: 0, limit: BATCH_SIZE },
+          params: {
+            offset: 0,
+            limit: BATCH_SIZE,
+            ...(shouldIncrement ? { incrementView: 1 } : {}),
+          },
         });
         const { lesson: lessonData } = res.data;
 
@@ -207,7 +218,7 @@ export default function LessonReaderPage() {
       <div className="reader-error">
         <FiAlertCircle size={40} className="text-rose-400" />
         <h2>{error}</h2>
-        <a href="/" className="reader-error-back">Back to Catalog</a>
+        <Link to="/" className="reader-error-back">Back to Catalog</Link>
       </div>
     );
   }
@@ -215,8 +226,8 @@ export default function LessonReaderPage() {
   return (
     <div className="reader-page">
       <SEO
-        title={lesson ? `${lesson.title} — Kadha` : 'Lesson Reader'}
-        description={lesson?.excerpt || 'Interactive visual lesson on Kadha'}
+        title={lesson ? `${lesson.title} — Notes` : 'Notes — Lesson Reader'}
+        description={lesson?.excerpt || 'Interactive visual notes lesson'}
       />
 
       <ReaderNavbar

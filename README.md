@@ -1,6 +1,6 @@
-# ✍️ Kadha 2.0 – Edge-Powered Modern Interactive Notes Platform
+# ✍️ Notes – Edge-Powered Modern Interactive Notes Platform
 
-**Kadha 2.0** is an edge-native, serverless educational note-sharing and slide-based learning platform. Built with **React 19**, **Vite**, **Tailwind CSS**, **Framer Motion**, **Hono**, and powered by Cloudflare's serverless edge database service **Cloudflare D1 (SQLite)**.
+**Notes** is an edge-native, serverless educational note-sharing and slide-based learning platform. Built with **React 19**, **Vite**, **Tailwind CSS**, **Framer Motion**, **Hono**, and powered by Cloudflare's serverless edge database service **Cloudflare D1 (SQLite)**.
 
 ---
 
