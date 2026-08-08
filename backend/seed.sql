@@ -3,7 +3,7 @@
 INSERT OR REPLACE INTO userprofiles (id, email, password, name, profileUrl, bio, githubUrl, twitterUrl)
 VALUES (
   1,
-  'phaneendra@kadha.io',
+  'author@kadha.io',
   'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', -- SHA-256 hash of 'password123'
   'Phaneendra',
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
