@@ -23,7 +23,7 @@ const BATCH_SIZE = 5;
  */
 export default function LessonReaderPage() {
   const location = useLocation();
-  const lessonId = new URLSearchParams(location.search).get('id');
+  const lessonId = new URLSearchParams(location.search).get('id') || '1';
 
   const [lesson, setLesson] = useState(null);
   const [slidesMap, setSlidesMap] = useState({}); // { [slideIndex]: slide }
