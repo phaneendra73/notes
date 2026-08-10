@@ -131,9 +131,9 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative py-16 md:py-24 px-4 sm:px-6 bg-[var(--bg)] border-b border-[var(--line)]">
+    <section className="relative py-16 md:py-24 px-4 sm:px-6 bg-[var(--bg)] border-b border-[var(--line)] font-sans">
       <div className="max-w-[var(--maxw)] mx-auto flex flex-col items-center text-center">
-        {/* Domain Badge */}
+        {/* Visual Engineering Notes Badge */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -142,19 +142,19 @@ export default function Hero() {
         >
           <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[var(--radius-sm)] border border-[var(--accent-soft)] bg-[var(--accent-soft)] text-[var(--accent)] text-xs font-semibold uppercase tracking-widest">
             <Zap size={14} className="text-[var(--accent)]" />
-            <span>notes.phaneendramarri.com</span>
+            <span>Visual Engineering Notes for Software Engineers</span>
             <span className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse" />
           </span>
         </motion.div>
 
-        {/* Master Headline - Serif Fraunces Editorial Display */}
+        {/* Master Headline */}
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, delay: 0.05 }}
           className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.15] text-[var(--ink)] max-w-4xl mb-6"
         >
-          Visual Engineering Notes for Software Engineers.
+          Master C#, .NET, DSA & SQL with Interactive Notes.
         </motion.h1>
 
         {/* Subtitle */}
@@ -164,7 +164,7 @@ export default function Hero() {
           transition={{ duration: 0.25, delay: 0.1 }}
           className="font-sans text-base sm:text-lg text-[var(--ink-2)] max-w-2xl leading-relaxed mb-8 font-normal"
         >
-          Slide-by-slide interactive study notes covering C#, .NET Core 8, Data Structures, SQL Indexing, and Distributed System Architecture.
+          A personal study hub with slide-by-slide interactive notes covering C#, .NET Core 8, Data Structures & Algorithms, SQL Indexing, and Distributed System Architecture.
         </motion.p>
 
         {/* Action Buttons */}
@@ -174,7 +174,6 @@ export default function Hero() {
           transition={{ duration: 0.25, delay: 0.15 }}
           className="flex flex-wrap items-center justify-center gap-4 mb-14"
         >
-          {/* Primary Button = accent bg + dark text (--accent-on) */}
           <Button
             size="lg"
             className="rounded-[var(--radius-md)] font-semibold gap-2 px-7 py-3 text-sm cursor-pointer bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] hover:bg-[var(--accent-strong)] transition-colors shadow-[var(--shadow-sm)]"
@@ -185,7 +184,6 @@ export default function Hero() {
             <ArrowRight size={17} />
           </Button>
 
-          {/* Ghost / Outline Button */}
           <Button
             size="lg"
             variant="outline"

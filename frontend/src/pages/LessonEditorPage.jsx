@@ -196,7 +196,7 @@ export default function LessonEditorPage() {
     }
   };
 
-  // Save lesson
+  // Save lesson and redirect to Studio page
   const handleSave = async () => {
     if (!title.trim()) {
       toast.error('Title is required');
@@ -223,11 +223,10 @@ export default function LessonEditorPage() {
         await client.put(`/api/lessons/${lessonId}`, payload);
         toast.success('Visual note updated successfully!');
       } else {
-        const res = await client.post('/api/lessons', payload);
-        const newId = res.data.id;
-        toast.success('Visual note created!');
-        navigate(`/editor?id=${newId}`, { replace: true });
+        await client.post('/api/lessons', payload);
+        toast.success('Visual note created successfully!');
       }
+      navigate('/studio');
     } catch (err) {
       console.error('Save error:', err);
       toast.error('Failed to save note');
@@ -248,7 +247,7 @@ export default function LessonEditorPage() {
   }
 
   return (
-    <div className="editor-page min-h-screen flex flex-col bg-[var(--bg)] text-[var(--ink)] selection:bg-[var(--accent)] selection:text-[var(--accent-on)]">
+    <div className="editor-page min-h-screen flex flex-col bg-[var(--bg)] text-[var(--ink)] selection:bg-[var(--accent)] selection:text-[var(--accent-on)] font-sans">
       <SEO
         title={lessonId ? `Edit: ${title || 'Note'} — Notes Author Studio` : 'Create Visual Note — Notes Author Studio'}
       />
@@ -321,7 +320,7 @@ export default function LessonEditorPage() {
         </div>
       </header>
 
-      {/* Metadata Collapsible Bar with Non-overlapping Layout */}
+      {/* Metadata Collapsible Bar */}
       <div className="border-b border-[var(--line)] bg-[var(--surface-2)] px-4 sm:px-6 py-2.5">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 flex-1 min-w-0">
