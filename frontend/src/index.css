@@ -183,10 +183,20 @@ h1, h2, h3, h4, h5, h6, .font-heading, .font-serif {
   color: var(--accent-on);
 }
 
-/* 2px Accent Focus Rings */
+/* Accent Focus Rings for interactive buttons & links */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* Suppress inner outline ring for text inputs so container handles border */
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
 }
 
 /* Custom Minimal Scrollbars */

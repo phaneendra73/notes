@@ -111,7 +111,7 @@ export default function LessonCatalog({ isBookmarkedOnly = false, bookmarkedIds 
   };
 
   return (
-    <div id="notes-section" className="w-full space-y-8 py-8 max-w-[var(--maxw)] mx-auto px-4 sm:px-6">
+    <div id="notes-section" className="w-full space-y-8 py-8 max-w-[var(--maxw)] mx-auto px-4 sm:px-6 font-sans">
       {/* Clean Editorial Catalog Header */}
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-[var(--line)]">
@@ -138,7 +138,7 @@ export default function LessonCatalog({ isBookmarkedOnly = false, bookmarkedIds 
           </div>
         </div>
 
-        {/* Clean Minimal Search Input */}
+        {/* Clean Single-Border Search Input Container */}
         <div className="relative w-full">
           <div className={`relative flex items-center rounded-[var(--radius-md)] border transition-colors duration-[var(--dur)] ${
             searchFocused ? 'border-[var(--accent)] bg-[var(--surface)]' : 'border-[var(--line)] bg-[var(--surface)]'
@@ -155,7 +155,8 @@ export default function LessonCatalog({ isBookmarkedOnly = false, bookmarkedIds 
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
               placeholder={PLACEHOLDERS[placeholderIndex]}
-              className="w-full py-3.5 px-3.5 bg-transparent text-sm text-[var(--ink)] focus:outline-none placeholder:text-[var(--muted)] font-sans font-normal"
+              className="w-full py-3.5 px-3.5 bg-transparent text-sm text-[var(--ink)] placeholder:text-[var(--muted)] font-sans font-normal border-none outline-none focus:outline-none focus:ring-0 focus-visible:outline-none"
+              style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
             />
             {searchQuery ? (
               <button
