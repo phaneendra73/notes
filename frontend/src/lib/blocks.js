@@ -16,6 +16,10 @@ export const BLOCK_TYPES = {
   QUIZ:      'quiz',
   DIAGRAM:   'diagram',
   IMAGE:     'image',
+  TABLE:     'table',
+  DIVIDER:   'divider',
+  STEPS:     'steps',
+  KEYVALUE:  'keyvalue',
 };
 
 /**
@@ -29,6 +33,10 @@ export const BLOCK_LABELS = {
   quiz:      'Quiz',
   diagram:   'Diagram',
   image:     'Image',
+  table:     'Table',
+  divider:   'Divider',
+  steps:     'Steps',
+  keyvalue:  'Key / Value',
 };
 
 /**
@@ -42,6 +50,10 @@ export const BLOCK_ICONS = {
   quiz:      'FiCheckSquare',
   diagram:   'FiGitBranch',
   image:     'FiImage',
+  table:     'FiGrid',
+  divider:   'FiMinus',
+  steps:     'FiList',
+  keyvalue:  'FiColumns',
 };
 
 /**
@@ -55,6 +67,10 @@ export const BLOCK_DESCRIPTIONS = {
   quiz:      'Interactive multiple-choice knowledge check',
   diagram:   'Mermaid diagram (flowchart, sequence, class, etc.)',
   image:     'Image from media library or external URL',
+  table:     'Structured data table with headers and rows',
+  divider:   'Visual horizontal rule to separate sections',
+  steps:     'Numbered step-by-step list for tutorials or procedures',
+  keyvalue:  'Key/value pairs for definitions or comparisons',
 };
 
 /**
@@ -97,6 +113,41 @@ export function createDefaultBlock(type) {
         caption: '',
         size: 'medium',
         align: 'center',
+      };
+
+    case BLOCK_TYPES.TABLE:
+      return {
+        type: 'table',
+        caption: '',
+        headers: ['Column 1', 'Column 2', 'Column 3'],
+        rows: [['', '', ''], ['', '', '']],
+        striped: true,
+        bordered: true,
+      };
+
+    case BLOCK_TYPES.DIVIDER:
+      return {
+        type: 'divider',
+        label: '',
+        style: 'solid',
+      };
+
+    case BLOCK_TYPES.STEPS:
+      return {
+        type: 'steps',
+        title: '',
+        items: ['First step', 'Second step', 'Third step'],
+      };
+
+    case BLOCK_TYPES.KEYVALUE:
+      return {
+        type: 'keyvalue',
+        title: '',
+        layout: 'list',
+        pairs: [
+          { key: 'Term', value: 'Definition' },
+          { key: 'Term', value: 'Definition' },
+        ],
       };
 
     default:
@@ -143,6 +194,10 @@ export const BLOCK_PICKER_ORDER = [
   BLOCK_TYPES.CODE,
   BLOCK_TYPES.CALLOUT,
   BLOCK_TYPES.QUIZ,
+  BLOCK_TYPES.TABLE,
+  BLOCK_TYPES.STEPS,
+  BLOCK_TYPES.KEYVALUE,
   BLOCK_TYPES.DIAGRAM,
   BLOCK_TYPES.IMAGE,
+  BLOCK_TYPES.DIVIDER,
 ];

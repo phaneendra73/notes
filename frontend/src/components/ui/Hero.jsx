@@ -1,199 +1,329 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Button } from './Button.jsx';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "./Button.jsx";
 import {
-  FiArrowRight, FiFeather, FiCode, FiZap,
-  FiDatabase, FiCpu, FiLayers, FiCheck,
-} from 'react-icons/fi';
+  Code2,
+  Zap,
+  Database,
+  Cpu,
+  Layers,
+  Check,
+  Terminal,
+  Play,
+  BookOpen,
+  ArrowRight,
+  Sparkles,
+  Copy,
+  CheckCircle2,
+  HelpCircle,
+} from "lucide-react";
 
-const TECH_ORBITS = [
+const HERO_TRACKS = [
   {
-    id: 'csharp',
-    title: 'C# & .NET Core',
-    icon: FiCode,
-    tag: 'Backend & Runtime',
-    snippets: ['Task.WhenAll', 'LINQ Queries', 'Dependency Injection'],
-    floatDelay: 0,
+    id: "csharp",
+    title: "C# Async & State Machine",
+    icon: Code2,
+    tag: ".NET Core 8",
+    snippet: `// Task-based Async Pattern (TAP)
+public async Task<UserData> FetchAsync(int id)
+{
+    // Yield execution back to ThreadPool
+    var json = await _http.GetStringAsync($"/users/{id}");
+    return JsonSerializer.Deserialize<UserData>(json);
+}`,
+    diagram: "Thread [T1] --> Await Yields --> ThreadPool [T2]",
+    quizQuestion: "What happens during 'await' in C# async methods?",
+    quizOptions: ["Thread blocks continuously", "Thread yields to ThreadPool", "Exception thrown"],
+    correctIdx: 1,
   },
   {
-    id: 'dsa',
-    title: 'DSA & Algorithms',
-    icon: FiCpu,
-    tag: 'Data Structures',
-    snippets: ['AVL Trees', 'Graph BFS/DFS', 'Dynamic Programming'],
-    floatDelay: 0.8,
+    id: "dsa",
+    title: "Tree Traversals & DP",
+    icon: Cpu,
+    tag: "Data Structures",
+    snippet: `// BFS Level-Order Traversal
+public IList<IList<int>> LevelOrder(TreeNode root)
+{
+    var queue = new Queue<TreeNode>();
+    queue.Enqueue(root);
+    // Process nodes level by level O(N)
+}`,
+    diagram: "Root [Node A] --> Left [Node B] + Right [Node C]",
+    quizQuestion: "Which queue property enforces BFS ordering?",
+    quizOptions: ["LIFO Stack", "FIFO Queue", "Priority Heap"],
+    correctIdx: 1,
   },
   {
-    id: 'system-design',
-    title: 'System Design',
-    icon: FiLayers,
-    tag: 'Architecture',
-    snippets: ['Cache-Aside', 'Rate Limiting', 'Load Balancer'],
-    floatDelay: 1.6,
+    id: "system-design",
+    title: "System Design & Cache",
+    icon: Layers,
+    tag: "Architecture",
+    snippet: `// Cache-Aside Pattern with Redis
+public async Task<User> GetUser(string key)
+{
+    var cached = await _redis.GetAsync<User>(key);
+    if (cached != null) return cached;
+    var dbUser = await _db.QueryAsync(key);
+    await _redis.SetAsync(key, dbUser, TimeSpan.FromMinutes(30));
+    return dbUser;
+}`,
+    diagram: "Client --> Cache Hit (Redis) | Cache Miss --> DB Load",
+    quizQuestion: "Where does Cache-Aside check for data first?",
+    quizOptions: ["Primary Database", "Redis In-Memory Cache", "Disk Storage"],
+    correctIdx: 1,
   },
   {
-    id: 'sql',
-    title: 'SQL & Databases',
-    icon: FiDatabase,
-    tag: 'Data Engineering',
-    snippets: ['B-Tree Indexing', 'ACID Transactions', 'Query Optimization'],
-    floatDelay: 2.4,
+    id: "sql",
+    title: "SQL B-Tree Indexing",
+    icon: Database,
+    tag: "Databases",
+    snippet: `-- B-Tree Compound Index Optimization
+CREATE INDEX idx_users_status_created 
+ON users(status, created_at DESC);
+
+EXPLAIN QUERY PLAN 
+SELECT id, email FROM users 
+WHERE status = 'active' ORDER BY created_at DESC;`,
+    diagram: "Root Node --> Internal Index Page --> Leaf Data Page",
+    quizQuestion: "Why place high-cardinality columns first in B-Tree index?",
+    quizOptions: ["Reduces search space faster", "Ignores WHERE clause", "Disables index scans"],
+    correctIdx: 0,
   },
 ];
 
-const containerVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.1 } },
-};
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 35, scale: 0.96 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
-};
-
 export default function Hero() {
   const navigate = useNavigate();
+  const [activeTrackId, setActiveTrackId] = useState("csharp");
+  const [copied, setCopied] = useState(false);
+  const [selectedQuizIdx, setSelectedQuizIdx] = useState(null);
+  const [typedText, setTypedText] = useState("");
 
-  const handleTopicClick = () => {
-    const el = document.getElementById('notes-section');
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
-    else navigate('/#notes-section');
+  const activeTrack = HERO_TRACKS.find((t) => t.id === activeTrackId) || HERO_TRACKS[0];
+
+  // Typewriter effect when activeTrack changes
+  useEffect(() => {
+    setTypedText("");
+    setSelectedQuizIdx(null);
+    let i = 0;
+    const code = activeTrack.snippet;
+    const timer = setInterval(() => {
+      if (i < code.length) {
+        setTypedText((prev) => prev + code.charAt(i));
+        i++;
+      } else {
+        clearInterval(timer);
+      }
+    }, 10);
+    return () => clearInterval(timer);
+  }, [activeTrackId]);
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(activeTrack.snippet);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleExploreClick = () => {
+    const el = document.getElementById("notes-section");
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+    else navigate("/#notes-section");
   };
 
   return (
-    <section className="relative overflow-hidden py-12 md:py-20 px-4 text-center">
-      {/* Animated Backdrop */}
-      <div className="hero-gradient-bg" aria-hidden="true">
-        <div className="hero-orb hero-orb-1" />
-        <div className="hero-orb hero-orb-2" />
-        <div className="hero-orb hero-orb-3" />
-      </div>
-      <div className="absolute inset-0 pointer-events-none hero-noise-overlay" />
-
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="relative z-10 max-w-6xl mx-auto flex flex-col items-center"
-      >
+    <section className="relative py-16 md:py-24 px-4 sm:px-6 bg-[var(--bg)] border-b border-[var(--line)]">
+      <div className="max-w-[var(--maxw)] mx-auto flex flex-col items-center text-center">
         {/* Domain Badge */}
-        <motion.span
-          variants={cardVariants}
-          className="mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider backdrop-blur-md shadow-[0_0_20px_var(--neon-glow)]"
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          className="mb-5"
         >
-          <FiZap size={13} />
-          <span>notes.phaneendramarri.com</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-        </motion.span>
+          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[var(--radius-sm)] border border-[var(--accent-soft)] bg-[var(--accent-soft)] text-[var(--accent)] text-xs font-semibold uppercase tracking-widest">
+            <Zap size={14} className="text-[var(--accent)]" />
+            <span>notes.phaneendramarri.com</span>
+            <span className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse" />
+          </span>
+        </motion.div>
 
-        {/* Headline */}
+        {/* Master Headline - Serif Fraunces Editorial Display */}
         <motion.h1
-          variants={cardVariants}
-          className="font-heading text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.06] mb-6 text-foreground max-w-4xl"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, delay: 0.05 }}
+          className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.15] text-[var(--ink)] max-w-4xl mb-6"
         >
-          Visual Engineering Notes{' '}
-          <span className="gradient-text">for&nbsp;Software&nbsp;Developers.</span>
+          Visual Engineering Notes for Software Engineers.
         </motion.h1>
 
         {/* Subtitle */}
         <motion.p
-          variants={cardVariants}
-          className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed mb-8"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, delay: 0.1 }}
+          className="font-sans text-base sm:text-lg text-[var(--ink-2)] max-w-2xl leading-relaxed mb-8 font-normal"
         >
-          Interactive, slide-by-slide study notes for C#, .NET, Data Structures &amp; Algorithms, SQL, and System Design.
+          Slide-by-slide interactive study notes covering C#, .NET Core 8, Data Structures, SQL Indexing, and Distributed System Architecture.
         </motion.p>
 
-        {/* CTA Buttons */}
+        {/* Action Buttons */}
         <motion.div
-          variants={cardVariants}
-          className="flex flex-wrap items-center justify-center gap-3.5 mb-14"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, delay: 0.15 }}
+          className="flex flex-wrap items-center justify-center gap-4 mb-14"
         >
+          {/* Primary Button = accent bg + dark text (--accent-on) */}
           <Button
             size="lg"
-            className="rounded-full font-extrabold cursor-pointer gap-2 px-8 py-3.5 shadow-lg shadow-primary/25 text-sm md:text-base"
-            variant="neon"
-            onClick={handleTopicClick}
+            className="rounded-[var(--radius-md)] font-semibold gap-2 px-7 py-3 text-sm cursor-pointer bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] hover:bg-[var(--accent-strong)] transition-colors shadow-[var(--shadow-sm)]"
+            onClick={handleExploreClick}
           >
+            <BookOpen size={17} />
             Explore Notes Library
-            <FiArrowRight size={18} />
+            <ArrowRight size={17} />
           </Button>
 
-          {Boolean(localStorage.getItem('jwt')) && (
-            <Button
-              size="lg"
-              variant="outline"
-              className="rounded-full font-extrabold gap-2 px-7 py-3.5 border-border hover:border-primary/50 hover:shadow-md hover:shadow-primary/10 transition-all text-sm md:text-base"
-              onClick={() => navigate('/editor')}
+          {/* Ghost / Outline Button */}
+          <Button
+            size="lg"
+            variant="outline"
+            className="rounded-[var(--radius-md)] font-semibold gap-2 px-6 py-3 border-[var(--line)] bg-[var(--surface)] text-[var(--ink)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-2)] transition-colors text-sm cursor-pointer"
+            onClick={() => navigate("/read?id=1")}
+          >
+            <Play size={16} className="text-[var(--accent)]" />
+            Interactive Reader Demo
+          </Button>
+        </motion.div>
+
+        {/* EDITORIAL CARD SHOWCASE */}
+        <div className="w-full max-w-5xl rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-md)] text-left p-5 sm:p-7">
+          {/* Topic Tabs */}
+          <div className="flex flex-wrap items-center gap-2 pb-4 mb-6 border-b border-[var(--line)]">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-[var(--muted)] mr-2 flex items-center gap-1.5">
+              <Terminal size={14} className="text-[var(--accent)]" /> Core Topics:
+            </span>
+            {HERO_TRACKS.map((t) => {
+              const isActive = activeTrackId === t.id;
+              const Icon = t.icon;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setActiveTrackId(t.id)}
+                  className={`px-3.5 py-1.5 rounded-[var(--radius-md)] text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer border ${
+                    isActive
+                      ? "bg-[var(--accent)] text-[var(--accent-on)] border-[var(--accent-strong)] font-bold"
+                      : "bg-[var(--surface-2)] text-[var(--ink-2)] border-[var(--line)] hover:border-[var(--line-strong)] hover:text-[var(--ink)]"
+                  }`}
+                >
+                  <Icon size={14} />
+                  <span>{t.title}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Editorial Showcase Grid */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTrack.id}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.15 }}
+              className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch"
             >
-              <FiFeather size={18} className="text-primary" />
-              Create Note
-            </Button>
-          )}
-        </motion.div>
+              {/* Code Box with JetBrains Mono */}
+              <div className="lg:col-span-7 rounded-[var(--radius-md)] bg-[#141311] border border-[var(--line-strong)] p-5 font-mono text-xs text-[#00E57A] flex flex-col justify-between overflow-x-auto min-h-[250px] shadow-[var(--shadow-sm)]">
+                <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#2E2C27] text-[11px]">
+                  <span className="font-bold text-[#00E57A] uppercase tracking-wider flex items-center gap-1.5">
+                    <Code2 size={14} /> {activeTrack.tag}
+                  </span>
 
-        {/* Floating Tech Cards */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 w-full max-w-5xl text-left"
-        >
-          {TECH_ORBITS.map((orbit) => {
-            const Icon = orbit.icon;
-            return (
-              <motion.div
-                key={orbit.id}
-                variants={cardVariants}
-                animate={{
-                  y: [0, -8, 0],
-                  transition: {
-                    y: {
-                      duration: 4.5,
-                      repeat: Infinity,
-                      repeatType: 'mirror',
-                      ease: 'easeInOut',
-                      delay: orbit.floatDelay,
-                    },
-                  },
-                }}
-                whileHover={{ scale: 1.04, y: -10 }}
-                onClick={handleTopicClick}
-                className="hero-tech-card group"
-              >
-                <div className="hero-card-glow" />
+                  <button
+                    onClick={handleCopyCode}
+                    className="flex items-center gap-1 text-[11px] font-semibold text-[var(--muted)] hover:text-[#00E57A] transition-colors cursor-pointer"
+                  >
+                    {copied ? <CheckCircle2 size={13} className="text-[#00E57A]" /> : <Copy size={13} />}
+                    <span>{copied ? "Copied!" : "Copy Code"}</span>
+                  </button>
+                </div>
 
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="hero-card-icon-wrap">
-                      <Icon size={20} />
+                <pre className="whitespace-pre overflow-x-auto leading-relaxed py-2 text-[#EDEAE3] font-mono font-normal flex-1">
+                  <code>{typedText}</code>
+                  <span className="w-2 h-4 bg-[#00E57A] inline-block animate-pulse ml-0.5" />
+                </pre>
+
+                <div className="pt-3 mt-3 border-t border-[#2E2C27] flex items-center justify-between text-[11px]">
+                  <span className="flex items-center gap-1.5 text-[#00E57A] font-semibold">
+                    <Check size={13} /> Interactive Slide 1 of 4 • Ready
+                  </span>
+                  <button
+                    onClick={() => navigate("/read?id=1")}
+                    className="font-bold text-[#00E57A] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Open Note</span>
+                    <ArrowRight size={12} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Side Column: Workflow Diagram & Quiz */}
+              <div className="lg:col-span-5 flex flex-col gap-4">
+                <div className="rounded-[var(--radius-md)] bg-[var(--surface-2)] border border-[var(--line)] p-4 flex flex-col justify-between flex-1">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--accent)] flex items-center gap-1.5 mb-1.5">
+                      <Sparkles size={13} /> Architecture Flow
+                    </span>
+                    <h4 className="font-serif font-bold text-base text-[var(--ink)] mb-2">
+                      {activeTrack.title}
+                    </h4>
+                    <div className="p-3 rounded-[var(--radius-sm)] bg-[var(--surface)] border border-[var(--line)] text-xs font-mono text-[var(--accent)] flex items-center justify-center text-center font-medium">
+                      {activeTrack.diagram}
                     </div>
-                    <span className="hero-card-tag">{orbit.tag}</span>
-                  </div>
-
-                  <h3 className="font-heading font-extrabold text-base md:text-lg text-foreground mb-3 group-hover:text-primary transition-colors">
-                    {orbit.title}
-                  </h3>
-
-                  <div className="flex flex-col gap-1.5">
-                    {orbit.snippets.map((snip) => (
-                      <span key={snip} className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-                        <FiCheck size={11} className="text-primary shrink-0" />
-                        {snip}
-                      </span>
-                    ))}
                   </div>
                 </div>
 
-                <div className="relative z-10 pt-4 mt-4 border-t border-border/60 flex items-center justify-between text-xs font-bold text-primary">
-                  <span>Explore Track</span>
-                  <FiArrowRight size={14} />
+                <div className="rounded-[var(--radius-md)] bg-[var(--surface)] border border-[var(--line)] p-4 shadow-[var(--shadow-sm)] space-y-2.5">
+                  <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-[var(--accent)]">
+                    <span className="flex items-center gap-1">
+                      <HelpCircle size={13} /> Knowledge Checkpoint
+                    </span>
+                    <span className="px-2 py-0.5 rounded-[var(--radius-sm)] bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent-soft)]">1 Ques</span>
+                  </div>
+
+                  <p className="text-xs font-semibold text-[var(--ink)]">
+                    {activeTrack.quizQuestion}
+                  </p>
+
+                  <div className="space-y-1.5">
+                    {activeTrack.quizOptions.map((opt, idx) => {
+                      const isSelected = selectedQuizIdx === idx;
+                      const isCorrect = idx === activeTrack.correctIdx;
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => setSelectedQuizIdx(idx)}
+                          className={`w-full p-2 rounded-[var(--radius-sm)] text-xs font-semibold text-left transition-all cursor-pointer border ${
+                            isSelected
+                              ? isCorrect
+                                ? "bg-[var(--accent)] text-[var(--accent-on)] border-[var(--accent-strong)] font-bold"
+                                : "bg-[var(--err-soft)] text-[var(--err)] border-[var(--err)]"
+                              : "bg-[var(--surface-2)] border-[var(--line)] text-[var(--ink-2)] hover:border-[var(--line-strong)] hover:text-[var(--ink)]"
+                          }`}
+                        >
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </motion.div>
-            );
-          })}
-        </motion.div>
-      </motion.div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
     </section>
   );
 }

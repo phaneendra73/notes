@@ -1,73 +1,57 @@
-import React from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import BlockForm from './BlockForm.jsx';
-import BlockPicker from './BlockPicker.jsx';
-import BlockRenderer from '../blocks/BlockRenderer.jsx';
-import { FiEye, FiEdit3 } from 'react-icons/fi';
+import React from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import BlockForm     from "./BlockForm.jsx";
+import BlockPicker   from "./BlockPicker.jsx";
+import BlockRenderer from "../blocks/BlockRenderer.jsx";
+import { FiEye, FiEdit3 } from "react-icons/fi";
 
 /**
- * BlockListEditor — the main content editing area for a single slide.
- *
- * Shows the ordered list of blocks for the active slide.
- * Each block can be edited via BlockForm, moved, or deleted.
- * New blocks are added via BlockPicker.
- * A live preview of the rendered slide is togglable.
- *
- * @param {object[]} blocks - Current blocks array for the active slide
- * @param {function} onChange - Called with the updated blocks array
- * @param {function} [onOpenMediaLibrary] - Open media library modal (for image blocks)
+ * BlockListEditor � the main content editing area for a single slide.
  */
 export default function BlockListEditor({ blocks = [], onChange, onOpenMediaLibrary }) {
   const [previewMode, setPreviewMode] = React.useState(false);
 
-  const updateBlock = (idx, updatedBlock) => {
-    const next = [...blocks];
-    next[idx] = updatedBlock;
-    onChange(next);
+  const updateBlock = (idx, updated) => { const n = [...blocks]; n[idx] = updated; onChange(n); };
+  const deleteBlock = (idx)          => onChange(blocks.filter((_, i) => i !== idx));
+  const moveBlock   = (idx, dir)     => {
+    const n = [...blocks];
+    const t = idx + dir;
+    if (t < 0 || t >= n.length) return;
+    [n[idx], n[t]] = [n[t], n[idx]];
+    onChange(n);
   };
-
-  const deleteBlock = (idx) => {
-    onChange(blocks.filter((_, i) => i !== idx));
-  };
-
-  const moveBlock = (idx, direction) => {
-    const next = [...blocks];
-    const target = idx + direction;
-    if (target < 0 || target >= next.length) return;
-    [next[idx], next[target]] = [next[target], next[idx]];
-    onChange(next);
-  };
-
-  const addBlock = (newBlock) => {
-    onChange([...blocks, newBlock]);
-  };
+  const addBlock = (nb) => onChange([...blocks, nb]);
 
   return (
-    <div className="block-list-editor">
+    <div className="flex flex-col gap-4">
       {/* Toolbar */}
-      <div className="block-list-toolbar">
-        <span className="block-list-count">
-          {blocks.length} block{blocks.length !== 1 ? 's' : ''}
+      <div className="flex items-center justify-between pb-2 border-b border-border">
+        <span className="text-[0.75rem] font-extrabold text-muted-foreground uppercase tracking-widest">
+          {blocks.length} block{blocks.length !== 1 ? "s" : ""}
         </span>
         <button
           type="button"
-          className={`block-list-preview-toggle ${previewMode ? 'active' : ''}`}
           onClick={() => setPreviewMode((p) => !p)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[0.75rem] font-extrabold cursor-pointer transition-all ${
+            previewMode
+              ? "border-primary text-primary bg-[var(--neon-subtle)]"
+              : "border-border bg-card text-foreground"
+          }`}
         >
           {previewMode ? <><FiEdit3 size={14} /> Edit</> : <><FiEye size={14} /> Preview</>}
         </button>
       </div>
 
       {previewMode ? (
-        /* ── Preview Mode ── */
-        <div className="block-list-preview">
+        /* Preview */
+        <div className="p-6 rounded-[1.25rem] border border-border bg-card">
           <BlockRenderer blocks={blocks} />
         </div>
       ) : (
-        /* ── Edit Mode ── */
-        <div className="block-list-forms">
+        /* Edit */
+        <div className="flex flex-col gap-3">
           {blocks.length === 0 && (
-            <div className="block-list-empty">
+            <div className="p-8 text-center text-muted-foreground text-[0.85rem] border border-dashed border-border rounded-[1rem]">
               <p>No blocks yet. Add one below.</p>
             </div>
           )}

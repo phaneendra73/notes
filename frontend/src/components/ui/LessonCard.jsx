@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from './Card.jsx';
 import { Badge } from './Badge.jsx';
-import { FiClock, FiBookmark, FiChevronRight, FiEye } from 'react-icons/fi';
+import { Clock, Bookmark, ChevronRight, Eye, Sliders } from 'lucide-react';
 import useBookmarks from '../../hooks/useBookmarks.js';
 
 export default function LessonCard({ lesson, blog }) {
@@ -18,15 +18,17 @@ export default function LessonCard({ lesson, blog }) {
 
   const tags = item.tagObjects || item.tags || [];
   const cover = item.coverUrl || item.imageUrl || fallbackImage;
+  const slidesCount = item.totalSlidesCount || item.slidesCount || 4;
 
   return (
     <motion.div
-      whileHover={{ y: -4, scale: 1.01 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      whileHover={{ y: -3 }}
+      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
       className="h-full select-none"
     >
-      <Card className="h-full flex flex-col overflow-hidden border border-border/80 bg-card hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-primary/10 group">
-        <div className="relative aspect-video w-full overflow-hidden bg-muted/30">
+      <Card className="h-full flex flex-col overflow-hidden border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--line-strong)] transition-all duration-[var(--dur)] ease-[var(--ease)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] group rounded-[var(--radius-md)]">
+        {/* Cover Image */}
+        <div className="relative aspect-video w-full overflow-hidden bg-[var(--surface-2)]">
           <img
             src={cover}
             alt={item.title || 'Note'}
@@ -37,39 +39,41 @@ export default function LessonCard({ lesson, blog }) {
               e.target.src = fallbackImage;
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent opacity-90" />
 
+          {/* Bookmark Button */}
           <button
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               toggleBookmark(item.id);
             }}
-            className={`absolute top-3 right-3 p-2 rounded-xl backdrop-blur-md border transition-all cursor-pointer ${
+            className={`absolute top-3 right-3 p-1.5 rounded-[var(--radius-sm)] border transition-colors cursor-pointer ${
               bookmarked
-                ? 'bg-primary text-black border-primary shadow-[0_0_12px_var(--neon-glow)] scale-110'
-                : 'bg-black/50 text-white border-white/20 hover:bg-black/80 hover:border-primary/50 hover:scale-110'
+                ? 'bg-[var(--accent)] text-[var(--accent-on)] border-[var(--accent-strong)] shadow-[var(--shadow-sm)]'
+                : 'bg-[var(--surface)] text-[var(--ink)] border-[var(--line)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
             }`}
             title={bookmarked ? 'Remove Bookmark' : 'Save Bookmark'}
           >
-            <FiBookmark size={15} className={bookmarked ? 'fill-current' : ''} />
+            <Bookmark size={14} className={bookmarked ? 'fill-current' : ''} />
           </button>
 
-          <div className="absolute bottom-3 left-3 flex items-center gap-2">
-            <span className="text-[10px] font-bold text-foreground bg-background/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-border/80 shadow-sm">
-              By {item.authorName || 'Phaneendra Marri'}
+          {/* Slide Count Badge Overlay */}
+          <div className="absolute bottom-2.5 left-2.5">
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--accent-on)] bg-[var(--accent)] px-2 py-0.5 rounded-[var(--radius-sm)] font-mono">
+              <Sliders size={11} /> {slidesCount} Slides
             </span>
           </div>
         </div>
 
-        <CardContent className="p-5 flex flex-col flex-1 gap-3">
+        {/* Card Body */}
+        <CardContent className="p-5 flex flex-col flex-1 gap-2.5">
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {tags.slice(0, 3).map((t, idx) => (
                 <Badge
                   key={idx}
                   variant="secondary"
-                  className="text-[10px] uppercase font-black tracking-wider px-2 py-0.5 rounded-md border-border/60 bg-muted/60"
+                  className="text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 rounded-[var(--radius-sm)] border border-[var(--line)] text-[var(--accent)] bg-[var(--accent-soft)] font-sans"
                 >
                   {typeof t === 'string' ? t : t.name}
                 </Badge>
@@ -77,34 +81,34 @@ export default function LessonCard({ lesson, blog }) {
             </div>
           )}
 
-          <h3 className="font-heading font-extrabold text-lg md:text-xl text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors">
+          <h3 className="font-serif font-bold text-lg text-[var(--ink)] line-clamp-2 leading-snug group-hover:text-[var(--accent)] transition-colors">
             <Link to={`/read?id=${item.id}`} className="hover:underline">
               {item.title}
             </Link>
           </h3>
 
-          <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-            {item.excerpt || 'Interactive step-by-step visual tech note and code explanation.'}
+          <p className="font-sans text-xs text-[var(--ink-2)] line-clamp-2 leading-relaxed font-normal">
+            {item.excerpt || 'Interactive step-by-step visual tech note and production code breakdown.'}
           </p>
 
-          <div className="mt-auto pt-4 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground font-medium">
+          <div className="mt-auto pt-3.5 border-t border-[var(--line)] flex items-center justify-between text-xs text-[var(--muted)] font-sans font-medium">
             <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1 font-semibold text-primary">
-                <FiClock size={13} /> {item.readingTime ? `${item.readingTime} min read` : '3 min read'}
+              <span className="flex items-center gap-1 font-semibold text-[var(--accent)]">
+                <Clock size={13} /> {item.readingTime ? `${item.readingTime} min read` : '3 min read'}
               </span>
               {item.viewsCount !== undefined && (
-                <span className="flex items-center gap-1 text-[11px] opacity-80">
-                  <FiEye size={12} /> {item.viewsCount}
+                <span className="flex items-center gap-1 text-[11px] font-mono text-[var(--muted)]">
+                  <Eye size={12} /> {item.viewsCount}
                 </span>
               )}
             </div>
 
             <Link
               to={`/read?id=${item.id}`}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white transition-all duration-200 font-extrabold text-xs group-hover:bg-primary group-hover:text-white group-hover:border-primary"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[var(--radius-sm)] bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent-soft)] hover:bg-[var(--accent)] hover:text-[var(--accent-on)] transition-colors font-semibold text-xs cursor-pointer"
             >
-              <span>Read Note</span>
-              <FiChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+              <span>Read</span>
+              <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </div>
         </CardContent>

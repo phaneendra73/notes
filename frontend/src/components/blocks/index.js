@@ -6,3 +6,7 @@ export { default as CalloutBlock } from './CalloutBlock.jsx';
 export { default as QuizBlock } from './QuizBlock.jsx';
 export { default as DiagramBlock } from './DiagramBlock.jsx';
 export { default as ImageBlock } from './ImageBlock.jsx';
+export { default as TableBlock } from './TableBlock.jsx';
+export { default as DividerBlock } from './DividerBlock.jsx';
+export { default as StepsBlock } from './StepsBlock.jsx';
+export { default as KeyValueBlock } from './KeyValueBlock.jsx';

@@ -1,78 +1,104 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { FiBookOpen, FiSearch, FiZap, FiFeather } from 'react-icons/fi';
+import React from "react";
+import { motion } from "framer-motion";
+import { Sliders, Cpu, Code2, Zap, CheckCircle2, Monitor } from "lucide-react";
 
 const FEATURES = [
   {
-    icon: FiBookOpen,
-    title: 'Visual Slide Reader',
-    desc: 'Bite-sized, slide-by-slide note format with code snippets, diagrams, and progress tracking.',
-    badge: '1-Min Slides',
+    icon: Sliders,
+    title: "Bite-Sized Visual Notes",
+    desc: "Complex software topics broken down into slide-by-slide visual notes for instant retention.",
+    tag: "Visual Memory",
   },
   {
-    icon: FiSearch,
-    title: 'Instant Fuzzy Search (⌘K)',
-    desc: 'Instant fuzzy search across engineering titles, concept topics, and code tags with typo tolerance.',
-    badge: 'Typo-Tolerant',
+    icon: Cpu,
+    title: "System Architecture Workflows",
+    desc: "Clear visual diagrams mapping thread scheduling, Redis cache-aside, and SQL B-Tree indexes.",
+    tag: "Deep Systems",
   },
   {
-    icon: FiZap,
-    title: 'Interactive Quizzes & Callouts',
-    desc: 'Test your understanding with instant knowledge-check quizzes and key takeaway callouts.',
-    badge: 'Real-Time',
+    icon: Code2,
+    title: "Production-Grade Snippets",
+    desc: "Actual C# 12, .NET 8, and Data Structure implementations ready to paste and study.",
+    tag: "Production Code",
   },
   {
-    icon: FiFeather,
-    title: 'Author Studio Editor',
-    desc: 'Visual block-based editor to quickly create, structure, reorder slides, and publish notes.',
-    badge: 'Block-Based',
+    icon: Monitor,
+    title: "Immersive Keyboard Reader",
+    desc: "Navigate notes effortlessly with Arrow keys, spacebar, outline drawers, and full-screen focus.",
+    tag: "Keyboard First",
   },
 ];
 
+const containerVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.1 } },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
+};
+
 export default function HeroFeatures() {
   return (
-    <section className="py-12 px-4 max-w-6xl mx-auto">
-      <div className="text-center mb-10">
-        <span className="text-xs font-black uppercase tracking-widest text-primary bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
-          Built for Software Engineers
-        </span>
-        <h2 className="font-heading font-extrabold text-2xl md:text-4xl text-foreground mt-3">
-          Designed for Deep Technical Clarity
-        </h2>
-      </div>
+    <section className="py-16 md:py-24 px-4 sm:px-6 bg-[var(--bg)] border-b border-[var(--line)]">
+      <div className="max-w-[var(--maxw)] mx-auto">
+        {/* Section Header */}
+        <div className="text-center max-w-3xl mx-auto mb-14">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-[var(--radius-sm)] border border-[var(--accent-soft)] bg-[var(--accent-soft)] text-[var(--accent)] text-xs font-semibold uppercase tracking-widest mb-4">
+            <Zap size={14} className="text-[var(--accent)]" />
+            <span>Built for Modern Software Engineers</span>
+          </div>
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-[var(--ink)] mb-4">
+            Why Learn with Visual Study Notes?
+          </h2>
+          <p className="font-sans text-[var(--ink-2)] text-base font-normal leading-relaxed">
+            Stop scrolling through endless text documentation. Master complex engineering concepts faster with slide-by-slide visual notes.
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        {FEATURES.map((f, i) => {
-          const Icon = f.icon;
-          return (
-            <motion.div
-              key={f.title}
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.08 }}
-              whileHover={{ y: -4 }}
-              className="p-6 rounded-2xl border border-border/80 bg-card hover:border-primary/50 transition-all shadow-xs hover:shadow-lg hover:shadow-primary/10 flex flex-col justify-between group"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center group-hover:bg-primary group-hover:text-black transition-colors">
-                    <Icon size={20} />
+        {/* Feature Cards Grid */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+        >
+          {FEATURES.map((feat, i) => {
+            const Icon = feat.icon;
+            return (
+              <motion.div
+                key={i}
+                variants={cardVariants}
+                className="group relative rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] p-6 transition-all duration-[var(--dur)] ease-[var(--ease)] hover:border-[var(--line-strong)] hover:shadow-[var(--shadow-md)] flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-10 h-10 rounded-[var(--radius-sm)] bg-[var(--accent-soft)] border border-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center transition-colors">
+                      <Icon size={18} />
+                    </div>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-[var(--radius-sm)] bg-[var(--surface-2)] text-[var(--muted)] border border-[var(--line)]">
+                      {feat.tag}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md">
-                    {f.badge}
-                  </span>
+
+                  <h3 className="font-serif font-bold text-lg text-[var(--ink)] mb-2 group-hover:text-[var(--accent)] transition-colors">
+                    {feat.title}
+                  </h3>
+                  <p className="font-sans text-[var(--ink-2)] text-xs sm:text-sm leading-relaxed font-normal">
+                    {feat.desc}
+                  </p>
                 </div>
-                <h3 className="font-heading font-extrabold text-base md:text-lg text-foreground mb-2 group-hover:text-primary transition-colors">
-                  {f.title}
-                </h3>
-                <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
-                  {f.desc}
-                </p>
-              </div>
-            </motion.div>
-          );
-        })}
+
+                <div className="pt-4 mt-5 border-t border-[var(--line)] flex items-center gap-1.5 text-[11px] font-semibold text-[var(--accent)]">
+                  <CheckCircle2 size={13} />
+                  <span>Interactive Note Ready</span>
+                </div>
+              </motion.div>
+            );
+          })}
+        </motion.div>
       </div>
     </section>
   );

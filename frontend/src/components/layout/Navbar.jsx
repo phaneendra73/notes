@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../ui/Button.jsx';
 import kadhaLogo from '../../assets/kadha.svg';
+import useBookmarks from '../../hooks/useBookmarks.js';
 import {
-  FiEdit3, FiLogOut, FiSettings, FiTag,
-  FiLogIn, FiBookOpen, FiSun, FiMoon,
-  FiMenu, FiX, FiUser, FiSearch, FiZap,
-} from 'react-icons/fi';
+  Edit3, LogOut, Settings, Tag,
+  LogIn, BookOpen, Sun, Moon,
+  Menu, X, User, Search, Zap, Bookmark
+} from 'lucide-react';
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -16,7 +17,17 @@ export default function Navbar() {
   const { theme, setTheme } = useTheme();
   const isDark = theme === 'dark';
   const isAuthenticated = Boolean(localStorage.getItem('jwt'));
+  const { bookmarks } = useBookmarks();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Sync body.dark-theme class for exact design system compliance
+  useEffect(() => {
+    if (isDark) {
+      document.body.classList.add('dark-theme');
+    } else {
+      document.body.classList.remove('dark-theme');
+    }
+  }, [isDark]);
 
   const handleSignOut = () => {
     localStorage.removeItem('jwt');
@@ -25,12 +36,12 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    { to: '/', icon: FiBookOpen, label: 'Explore' },
+    { to: '/', icon: BookOpen, label: 'All Notes' },
     ...(isAuthenticated
       ? [
-          { to: '/profile', icon: FiUser, label: 'Profile' },
-          { to: '/studio', icon: FiSettings, label: 'Studio' },
-          { to: '/tags', icon: FiTag, label: 'Tags' },
+          { to: '/profile', icon: User, label: 'Profile' },
+          { to: '/studio', icon: Settings, label: 'Studio' },
+          { to: '/tags', icon: Tag, label: 'Tags' },
         ]
       : []),
   ];
@@ -54,41 +65,41 @@ export default function Navbar() {
       setTimeout(() => {
         const input = document.querySelector('input[placeholder*="Search"]');
         if (input) input.focus();
-      }, 300);
+      }, 200);
     }
   };
 
-  return (
-    <div className="sticky top-3 z-50 w-full max-w-5xl mx-auto px-4">
-      <motion.header
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="w-full rounded-full bg-card/85 backdrop-blur-2xl border border-border/80 shadow-[0_12px_40px_rgba(0,0,0,0.35)] hover:border-primary/40 transition-all px-4 sm:px-6 h-14 flex items-center justify-between gap-4 relative overflow-hidden"
-      >
-        {/* Ambient Top Glow Line */}
-        <div className="absolute top-0 left-1/4 right-1/4 h-[1px] bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+  // Global Ctrl+K / Cmd+K keyboard shortcut handler
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        focusSearch();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
-        {/* Brand Logo & Title */}
-        <div className="flex items-center gap-5">
+  return (
+    <header className="sticky top-0 z-50 w-full border-b border-[var(--line)] bg-[var(--surface)] transition-colors duration-[var(--dur)]">
+      <div className="max-w-[var(--maxw)] mx-auto px-4 sm:px-6 h-[var(--header-h)] flex items-center justify-between gap-4">
+        {/* Left: Brand Logo */}
+        <div className="flex items-center gap-8">
           <button
             onClick={() => navigate('/')}
-            className="flex items-center gap-2.5 bg-transparent border-none cursor-pointer group"
+            className="flex items-center gap-3 bg-transparent border-none cursor-pointer group"
           >
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-primary via-emerald-400 to-teal-400 p-[1.5px] shadow-[0_0_15px_var(--neon-glow)] group-hover:scale-110 transition-transform">
-              <div className="w-full h-full bg-card rounded-[10px] flex items-center justify-center p-1">
-                <img src={kadhaLogo} alt="Notes" className="w-full h-full object-contain" />
-              </div>
+            <div className="w-8 h-8 rounded-[var(--radius-sm)] bg-[var(--surface-2)] border border-[var(--line)] p-1 flex items-center justify-center group-hover:border-[var(--accent)] transition-colors">
+              <img src={kadhaLogo} alt="Notes" className="w-full h-full object-contain" />
             </div>
-            <div className="flex flex-col text-left">
-              <span className="font-heading font-extrabold text-base text-foreground tracking-tight group-hover:text-primary transition-colors flex items-center gap-1">
-                Notes<span className="text-primary font-black">.</span>
-              </span>
-            </div>
+            <span className="font-serif font-bold text-xl text-[var(--ink)] tracking-tight group-hover:text-[var(--accent)] transition-colors">
+              Notes<span className="text-[var(--accent)] font-bold">.</span>
+            </span>
           </button>
 
-          {/* Raycast-style Nav Tabs with Gliding Pill */}
-          <nav className="hidden md:flex items-center gap-1 bg-muted/40 p-1 rounded-full border border-border/60">
+          {/* Desktop Nav Links */}
+          <nav className="hidden lg:flex items-center gap-1">
             {navLinks.map((n) => {
               const active = location.pathname === n.to;
               const Icon = n.icon;
@@ -96,18 +107,13 @@ export default function Navbar() {
                 <button
                   key={n.to}
                   onClick={() => handleNavClick(n.to)}
-                  className={`relative px-4 py-1.5 rounded-full text-xs font-extrabold flex items-center gap-2 transition-colors cursor-pointer z-10 ${
-                    active ? 'text-black font-black' : 'text-muted-foreground hover:text-foreground'
+                  className={`px-3.5 py-1.5 rounded-[var(--radius-md)] text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                    active
+                      ? 'bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent-soft)] font-bold'
+                      : 'text-[var(--ink-2)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)] border border-transparent'
                   }`}
                 >
-                  {active && (
-                    <motion.div
-                      layoutId="navTabIndicator"
-                      transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                      className="absolute inset-0 bg-primary rounded-full shadow-[0_0_15px_var(--neon-glow)] -z-10"
-                    />
-                  )}
-                  <Icon size={14} className={active ? 'text-black' : ''} />
+                  <Icon size={14} className={active ? 'text-[var(--accent)]' : 'text-[var(--muted)]'} />
                   <span>{n.label}</span>
                 </button>
               );
@@ -115,147 +121,131 @@ export default function Navbar() {
           </nav>
         </div>
 
-        {/* Right Actions */}
-        <div className="flex items-center gap-2">
-          {/* Quick Search Shortcut Pill */}
+        {/* Center: Search Trigger with Ctrl+K */}
+        <div className="hidden sm:flex items-center flex-1 max-w-sm mx-4">
           <button
             onClick={focusSearch}
-            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border border-border/80 bg-muted/30 hover:border-primary/50 text-xs font-semibold text-muted-foreground hover:text-foreground transition-all cursor-pointer"
-            title="Search notes"
+            className="w-full flex items-center justify-between px-3.5 py-1.5 rounded-[var(--radius-md)] bg-[var(--surface-2)] border border-[var(--line)] text-[var(--muted)] hover:text-[var(--ink)] hover:border-[var(--line-strong)] text-xs font-medium transition-all cursor-pointer shadow-[var(--shadow-sm)]"
           >
-            <FiSearch size={13} className="text-primary" />
-            <span className="text-[11px] font-mono opacity-80">Search...</span>
+            <span className="flex items-center gap-2">
+              <Search size={14} className="text-[var(--accent)]" />
+              <span>Search visual notes...</span>
+            </span>
+            <span className="px-1.5 py-0.5 rounded-[var(--radius-sm)] bg-[var(--surface)] text-[10px] font-mono text-[var(--accent)] font-bold border border-[var(--line)]">
+              Ctrl+K
+            </span>
           </button>
+        </div>
 
-          {/* Theme Toggle Button */}
+        {/* Right: Actions & Theme Toggle */}
+        <div className="flex items-center gap-2">
+          {/* Saved Bookmarks Pill */}
+          {bookmarks.length > 0 && (
+            <button
+              onClick={() => {
+                navigate('/');
+                setTimeout(() => {
+                  document.getElementById('notes-section')?.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+              }}
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-md)] bg-[var(--accent-soft)] border border-[var(--accent-soft)] text-[var(--accent)] text-xs font-semibold hover:bg-[var(--accent)] hover:text-[var(--accent-on)] transition-all cursor-pointer"
+              title="View Saved Notes"
+            >
+              <Bookmark size={13} className="fill-current" />
+              <span>Saved ({bookmarks.length})</span>
+            </button>
+          )}
+
+          {/* Dark Theme Toggle */}
           <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
-            className="w-8 h-8 rounded-full border border-border/80 bg-card flex items-center justify-center hover:border-primary/50 hover:shadow-[0_0_10px_var(--neon-glow)] transition-all cursor-pointer text-primary shadow-xs"
-            title="Toggle theme"
+            className="w-9 h-9 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-2)] flex items-center justify-center text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all cursor-pointer"
+            title="Toggle Light / Dark Theme"
           >
-            {isDark ? <FiSun size={15} /> : <FiMoon size={15} />}
+            {isDark ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} className="text-[var(--ink-2)]" />}
           </button>
 
+          {/* Auth Button (Primary = Accent bg + Dark text --accent-on) */}
           {isAuthenticated ? (
-            <div className="hidden md:flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-1.5">
               <Button
-                variant="neon"
                 size="sm"
-                className="gap-1.5 rounded-full text-xs font-extrabold px-4 py-1.5 shadow-md shadow-primary/20"
+                variant="outline"
+                className="rounded-[var(--radius-md)] text-xs font-semibold gap-1.5 px-3.5 cursor-pointer border-[var(--line)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] bg-[var(--surface)]"
                 onClick={() => navigate('/editor')}
               >
-                <FiEdit3 size={13} /> New Note
+                <Edit3 size={13} className="text-[var(--accent)]" /> Create Note
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
                 onClick={handleSignOut}
-                className="gap-1 rounded-full text-xs text-red-400 hover:bg-red-500/10 px-3"
+                className="p-2 rounded-[var(--radius-md)] text-[var(--muted)] hover:text-[var(--err)] hover:bg-[var(--err-soft)] transition-colors cursor-pointer"
+                title="Sign Out"
               >
-                <FiLogOut size={13} /> Sign Out
-              </Button>
+                <LogOut size={15} />
+              </button>
             </div>
           ) : (
             <Button
-              variant="outline"
               size="sm"
+              className="rounded-[var(--radius-md)] text-xs font-semibold gap-1.5 px-4 cursor-pointer bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] hover:bg-[var(--accent-strong)] transition-colors"
               onClick={() => navigate('/signin')}
-              className="hidden md:flex rounded-full text-xs font-extrabold gap-1.5 px-4 hover:border-primary/50"
             >
-              <FiLogIn size={13} className="text-primary" /> Sign In
+              <LogIn size={13} /> Sign In
             </Button>
           )}
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Toggle */}
           <button
-            onClick={() => setMobileOpen((o) => !o)}
-            className="md:hidden w-8 h-8 rounded-full border border-border/80 bg-card flex items-center justify-center cursor-pointer hover:border-primary/50 transition-all text-foreground"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="lg:hidden p-2 rounded-[var(--radius-md)] text-[var(--ink)] hover:text-[var(--accent)] transition-colors cursor-pointer"
           >
-            {mobileOpen ? <FiX size={16} /> : <FiMenu size={16} />}
+            {mobileOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
-      </motion.header>
+      </div>
 
       {/* Mobile Drawer */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="md:hidden overflow-hidden border border-border/80 bg-card/95 backdrop-blur-2xl rounded-2xl mt-2 p-4 shadow-2xl"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="lg:hidden border-t border-[var(--line)] bg-[var(--surface)] p-4 space-y-3"
           >
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1">
               {navLinks.map((n) => {
-                const active = location.pathname === n.to;
                 const Icon = n.icon;
                 return (
                   <button
                     key={n.to}
                     onClick={() => handleNavClick(n.to)}
-                    className={`p-3 rounded-xl text-xs font-extrabold flex items-center gap-2.5 transition-all text-left cursor-pointer ${
-                      active
-                        ? 'bg-primary text-black shadow-xs'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                    }`}
+                    className="w-full p-2.5 rounded-[var(--radius-md)] text-left text-xs font-semibold flex items-center gap-2.5 hover:bg-[var(--surface-2)] text-[var(--ink)] transition-colors"
                   >
-                    <Icon size={16} /> {n.label}
+                    <Icon size={15} className="text-[var(--accent)]" />
+                    <span>{n.label}</span>
                   </button>
                 );
               })}
-
-              <button
-                onClick={() => {
-                  focusSearch();
-                  setMobileOpen(false);
-                }}
-                className="p-3 rounded-xl text-xs font-extrabold flex items-center gap-2.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-              >
-                <FiSearch size={16} className="text-primary" /> Search Library
-              </button>
-
-              <div className="pt-3 mt-1 border-t border-border/60 flex flex-col gap-2">
-                {isAuthenticated ? (
-                  <>
-                    <Button
-                      variant="neon"
-                      size="sm"
-                      className="rounded-xl gap-2 justify-center py-2.5 font-extrabold"
-                      onClick={() => {
-                        navigate('/editor');
-                        setMobileOpen(false);
-                      }}
-                    >
-                      <FiEdit3 size={14} /> New Note
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleSignOut}
-                      className="rounded-xl gap-2 text-red-400 justify-center"
-                    >
-                      <FiLogOut size={14} /> Sign Out
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      navigate('/signin');
-                      setMobileOpen(false);
-                    }}
-                    className="rounded-xl gap-2 justify-center py-2.5 font-extrabold"
-                  >
-                    <FiLogIn size={14} className="text-primary" /> Sign In
-                  </Button>
-                )}
-              </div>
             </div>
+
+            {isAuthenticated && (
+              <div className="pt-2 border-t border-[var(--line)]">
+                <Button
+                  size="sm"
+                  className="w-full rounded-[var(--radius-md)] text-xs font-semibold gap-2 bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] hover:bg-[var(--accent-strong)]"
+                  onClick={() => {
+                    navigate('/editor');
+                    setMobileOpen(false);
+                  }}
+                >
+                  <Edit3 size={14} /> New Visual Note
+                </Button>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </header>
   );
 }

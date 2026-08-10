@@ -30,13 +30,35 @@ test('createDefaultBlock returns valid default block for callout', () => {
   assert.equal(block.variant, 'tip');
 });
 
-test('BLOCK_PICKER_ORDER contains all supported block types', () => {
-  assert.equal(BLOCK_PICKER_ORDER.length, 7);
-  assert.ok(BLOCK_PICKER_ORDER.includes(BLOCK_TYPES.HEADING));
-  assert.ok(BLOCK_PICKER_ORDER.includes(BLOCK_TYPES.PARAGRAPH));
-  assert.ok(BLOCK_PICKER_ORDER.includes(BLOCK_TYPES.CODE));
-  assert.ok(BLOCK_PICKER_ORDER.includes(BLOCK_TYPES.CALLOUT));
-  assert.ok(BLOCK_PICKER_ORDER.includes(BLOCK_TYPES.QUIZ));
-  assert.ok(BLOCK_PICKER_ORDER.includes(BLOCK_TYPES.DIAGRAM));
-  assert.ok(BLOCK_PICKER_ORDER.includes(BLOCK_TYPES.IMAGE));
+test('createDefaultBlock returns valid default block for table', () => {
+  const block = createDefaultBlock(BLOCK_TYPES.TABLE);
+  assert.equal(block.type, 'table');
+  assert.ok(Array.isArray(block.headers));
+  assert.ok(Array.isArray(block.rows));
 });
+
+test('createDefaultBlock returns valid default block for divider', () => {
+  const block = createDefaultBlock(BLOCK_TYPES.DIVIDER);
+  assert.equal(block.type, 'divider');
+  assert.equal(block.style, 'solid');
+});
+
+test('createDefaultBlock returns valid default block for steps', () => {
+  const block = createDefaultBlock(BLOCK_TYPES.STEPS);
+  assert.equal(block.type, 'steps');
+  assert.ok(Array.isArray(block.items));
+});
+
+test('createDefaultBlock returns valid default block for keyvalue', () => {
+  const block = createDefaultBlock(BLOCK_TYPES.KEYVALUE);
+  assert.equal(block.type, 'keyvalue');
+  assert.ok(Array.isArray(block.pairs));
+});
+
+test('BLOCK_PICKER_ORDER contains all supported block types', () => {
+  assert.equal(BLOCK_PICKER_ORDER.length, Object.keys(BLOCK_TYPES).length);
+  Object.values(BLOCK_TYPES).forEach((type) => {
+    assert.ok(BLOCK_PICKER_ORDER.includes(type));
+  });
+});
+

@@ -1,415 +1,359 @@
-import React, { useState, useRef } from 'react';
-import { FiChevronDown, FiChevronUp, FiTrash2, FiEdit3, FiCheck, FiX } from 'react-icons/fi';
-import { CODE_LANGUAGES, CALLOUT_VARIANTS } from '../../lib/blocks.js';
+import React, { useState } from "react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Trash2,
+  Check,
+  X,
+  Type,
+  AlignLeft,
+  Code2,
+  Zap,
+  CheckSquare,
+  GitBranch,
+  Image as ImageIcon,
+  Grid,
+  Minus,
+  List,
+  Columns,
+  Sparkles,
+  Copy,
+  Plus,
+} from "lucide-react";
+import { CustomSelect } from "../ui/Select.jsx";
+import { CODE_LANGUAGES, CALLOUT_VARIANTS } from "../../lib/blocks.js";
+
+const HEADING_OPTIONS = [
+  { value: 1, label: "H1 - Page Title" },
+  { value: 2, label: "H2 - Section Heading" },
+  { value: 3, label: "H3 - Sub-section Heading" },
+];
+
+const CODE_LANG_OPTIONS = CODE_LANGUAGES.map((l) => ({ value: l.value, label: l.label }));
+
+const CALLOUT_OPTIONS = Object.entries(CALLOUT_VARIANTS).map(([key, v]) => ({
+  value: key,
+  label: `${v.emoji} ${v.label}`,
+}));
+
+const IMAGE_SIZE_OPTIONS = [
+  { value: "small", label: "Small (~320px)" },
+  { value: "medium", label: "Medium (~560px)" },
+  { value: "large", label: "Large (~800px)" },
+  { value: "full", label: "Full Width" },
+];
+
+const IMAGE_ALIGN_OPTIONS = [
+  { value: "left", label: "Left Aligned" },
+  { value: "center", label: "Center Aligned" },
+  { value: "right", label: "Right Aligned" },
+];
+
+const DIVIDER_STYLE_OPTIONS = [
+  { value: "solid", label: "Solid Line" },
+  { value: "dashed", label: "Dashed Line" },
+  { value: "dotted", label: "Dotted Line" },
+];
 
 /**
- * BlockForm — inline form editor for each block type.
- * Renders appropriate input fields based on block.type.
- *
- * @param {object} block - The block being edited
- * @param {function} onChange - Called with the updated block
- * @param {function} onDelete - Called to delete this block
- * @param {function} onMoveUp - Called to move block up
- * @param {function} onMoveDown - Called to move block down
- * @param {boolean} isFirst - Is this the first block (no move up)
- * @param {boolean} isLast - Is this the last block (no move down)
- * @param {function} [onOpenMediaLibrary] - Open media library (for image blocks)
+ * BlockForm - Radix UI-powered inline form editor for each slide block.
  */
-export default function BlockForm({
-  block,
-  onChange,
-  onDelete,
-  onMoveUp,
-  onMoveDown,
-  isFirst,
-  isLast,
-  onOpenMediaLibrary,
-}) {
+export default function BlockForm({ block, onChange, onDelete, onMoveUp, onMoveDown, isFirst, isLast, onOpenMediaLibrary }) {
   const [expanded, setExpanded] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(false);
-
   const update = (patch) => onChange({ ...block, ...patch });
 
+  const btnBase = "flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border bg-background text-muted-foreground text-[0.72rem] font-extrabold cursor-pointer transition-colors hover:text-foreground hover:border-primary";
+  const btnDanger = "text-rose-400 border-rose-500/40 bg-rose-500/10";
+
   return (
-    <div className="block-form">
-      {/* Block form header — type label + collapse + reorder + delete */}
-      <div className="block-form-header">
+    <div className="rounded-2xl border border-border bg-card overflow-hidden transition-all hover:border-primary/50 shadow-sm">
+      {/* Header Bar */}
+      <div className="flex items-center justify-between px-4 py-3 bg-muted/40 border-b border-border">
         <button
           type="button"
-          className="block-form-expand"
+          className="flex items-center gap-2 bg-transparent border-none cursor-pointer text-foreground"
           onClick={() => setExpanded((e) => !e)}
         >
-          <span className="block-form-type">{block.type}</span>
-          {expanded ? <FiChevronUp size={14} /> : <FiChevronDown size={14} />}
+          <span className="text-[0.75rem] font-black uppercase tracking-widest text-primary flex items-center gap-1.5">
+            <Zap size={14} /> {block.type}
+          </span>
+          {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </button>
 
-        <div className="block-form-actions">
+        <div className="flex items-center gap-1.5">
           {!isFirst && (
-            <button type="button" className="block-form-btn" onClick={onMoveUp} title="Move up">
-              ↑
-            </button>
+            <button type="button" className={btnBase} onClick={onMoveUp} title="Move block up">^</button>
           )}
           {!isLast && (
-            <button type="button" className="block-form-btn" onClick={onMoveDown} title="Move down">
-              ↓
-            </button>
+            <button type="button" className={btnBase} onClick={onMoveDown} title="Move block down">v</button>
           )}
           {confirmDelete ? (
             <>
-              <button
-                type="button"
-                className="block-form-btn block-form-btn-danger"
-                onClick={onDelete}
-                title="Confirm delete"
-              >
-                <FiCheck size={13} /> Delete
+              <button type="button" className={`${btnBase} ${btnDanger}`} onClick={onDelete} title="Confirm delete">
+                <Check size={13} /> Delete Block
               </button>
-              <button
-                type="button"
-                className="block-form-btn"
-                onClick={() => setConfirmDelete(false)}
-                title="Cancel delete"
-              >
-                <FiX size={13} />
+              <button type="button" className={btnBase} onClick={() => setConfirmDelete(false)} title="Cancel">
+                <X size={13} />
               </button>
             </>
           ) : (
             <button
               type="button"
-              className="block-form-btn block-form-btn-delete"
+              className={`${btnBase} hover:text-rose-400 hover:border-rose-500/40 hover:bg-rose-500/10`}
               onClick={() => setConfirmDelete(true)}
               title="Delete block"
             >
-              <FiTrash2 size={13} />
+              <Trash2 size={13} />
             </button>
           )}
         </div>
       </div>
 
-      {/* Block form body */}
+      {/* Body Controls */}
       {expanded && (
-        <div className="block-form-body">
-          <BlockFields
-            block={block}
-            update={update}
-            onOpenMediaLibrary={onOpenMediaLibrary}
-          />
+        <div className="p-4 sm:p-5">
+          <BlockFields block={block} update={update} onOpenMediaLibrary={onOpenMediaLibrary} />
         </div>
       )}
     </div>
   );
 }
 
-/**
- * BlockFields — type-specific form fields.
- */
+/* -- Shared field primitives -- */
+const fieldGroup = "flex flex-col gap-3.5";
+const fieldRow   = "flex flex-col gap-1.5";
+const label      = "text-[0.75rem] font-black text-foreground flex items-center justify-between uppercase tracking-wider";
+const hint       = "text-[0.7rem] font-semibold text-muted-foreground normal-case tracking-normal";
+const inputCls   = "w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-xs font-semibold outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary";
+const textareaCls = `${inputCls} resize-y leading-relaxed`;
+const codeTaCls  = `${textareaCls} font-mono text-[0.82rem] leading-relaxed bg-[#090d16] text-[#00e57a] border-primary/25`;
+
 function BlockFields({ block, update, onOpenMediaLibrary }) {
   switch (block.type) {
-    case 'heading':
+    case "heading":
       return (
-        <div className="field-group">
-          <div className="field-row">
-            <label className="field-label">Level</label>
-            <select
+        <div className={fieldGroup}>
+          <div className={fieldRow}>
+            <label className={label}>Heading Level</label>
+            <CustomSelect
               value={block.level || 2}
-              onChange={(e) => update({ level: parseInt(e.target.value) })}
-              className="field-select field-select-sm"
-            >
-              <option value={1}>H1 — Page Title</option>
-              <option value={2}>H2 — Section Heading</option>
-              <option value={3}>H3 — Sub-section</option>
-            </select>
+              onValueChange={(val) => update({ level: parseInt(val) })}
+              options={HEADING_OPTIONS}
+              className="w-full sm:w-64"
+            />
           </div>
-          <div className="field-row">
-            <label className="field-label">Text</label>
+          <div className={fieldRow}>
+            <label className={label}>Heading Content Text</label>
             <input
               type="text"
-              value={block.content || ''}
+              value={block.content || ""}
               onChange={(e) => update({ content: e.target.value })}
-              placeholder="Heading text…"
-              className="field-input"
+              placeholder="e.g. C# Async State Machine Execution"
+              className={inputCls}
             />
           </div>
         </div>
       );
 
-    case 'paragraph':
+    case "paragraph":
       return (
-        <div className="field-group">
-          <label className="field-label">
-            Content
-            <span className="field-hint">Supports **bold**, *italic*, `code`, [text](url)</span>
+        <div className={fieldGroup}>
+          <label className={label}>
+            Paragraph Text
+            <span className={hint}>Supports **bold**, *italic*, `code`, [text](url)</span>
           </label>
           <textarea
-            value={block.content || ''}
+            value={block.content || ""}
             onChange={(e) => update({ content: e.target.value })}
-            placeholder="Paragraph text with optional **bold**, *italic*, `code`, or [links](url)…"
+            placeholder="Write paragraph content here..."
             rows={5}
-            className="field-textarea"
+            className={textareaCls}
           />
         </div>
       );
 
-    case 'code':
+    case "code":
       return (
-        <div className="field-group">
-          <div className="field-row">
-            <label className="field-label">Language</label>
-            <select
-              value={block.language || 'csharp'}
-              onChange={(e) => update({ language: e.target.value })}
-              className="field-select"
-            >
-              {CODE_LANGUAGES.map((l) => (
-                <option key={l.value} value={l.value}>{l.label}</option>
-              ))}
-            </select>
+        <div className={fieldGroup}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className={fieldRow}>
+              <label className={label}>Programming Language</label>
+              <CustomSelect
+                value={block.language || "csharp"}
+                onValueChange={(val) => update({ language: val })}
+                options={CODE_LANG_OPTIONS}
+              />
+            </div>
+            <div className={fieldRow}>
+              <label className={label}>Filename <span className={hint}>(optional)</span></label>
+              <input
+                type="text"
+                value={block.filename || ""}
+                onChange={(e) => update({ filename: e.target.value })}
+                placeholder="e.g. Program.cs"
+                className={inputCls}
+              />
+            </div>
           </div>
-          <div className="field-row">
-            <label className="field-label">Filename <span className="field-hint">(optional)</span></label>
-            <input
-              type="text"
-              value={block.filename || ''}
-              onChange={(e) => update({ filename: e.target.value })}
-              placeholder="e.g. Program.cs"
-              className="field-input"
+          <div className={fieldRow}>
+            <label className={label}>Production Code Snippet</label>
+            <textarea
+              value={block.content || ""}
+              onChange={(e) => update({ content: e.target.value })}
+              placeholder="Paste code snippet here..."
+              rows={9}
+              className={codeTaCls}
+              spellCheck={false}
             />
           </div>
-          <label className="field-label">Code</label>
-          <textarea
-            value={block.content || ''}
-            onChange={(e) => update({ content: e.target.value })}
-            placeholder="Paste your code here…"
-            rows={10}
-            className="field-textarea field-textarea-code"
-            spellCheck={false}
-          />
         </div>
       );
 
-    case 'callout':
+    case "callout":
       return (
-        <div className="field-group">
-          <div className="field-row">
-            <label className="field-label">Variant</label>
-            <select
-              value={block.variant || 'tip'}
-              onChange={(e) => update({ variant: e.target.value })}
-              className="field-select field-select-sm"
-            >
-              {Object.entries(CALLOUT_VARIANTS).map(([key, v]) => (
-                <option key={key} value={key}>{v.emoji} {v.label}</option>
-              ))}
-            </select>
+        <div className={fieldGroup}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className={fieldRow}>
+              <label className={label}>Callout Variant Theme</label>
+              <CustomSelect
+                value={block.variant || "tip"}
+                onValueChange={(val) => update({ variant: val })}
+                options={CALLOUT_OPTIONS}
+              />
+            </div>
+            <div className={fieldRow}>
+              <label className={label}>Custom Title <span className={hint}>(optional)</span></label>
+              <input
+                type="text"
+                value={block.title || ""}
+                onChange={(e) => update({ title: e.target.value })}
+                placeholder="Callout title header..."
+                className={inputCls}
+              />
+            </div>
           </div>
-          <div className="field-row">
-            <label className="field-label">Title <span className="field-hint">(optional)</span></label>
-            <input
-              type="text"
-              value={block.title || ''}
-              onChange={(e) => update({ title: e.target.value })}
-              placeholder="Leave blank to use variant default"
-              className="field-input"
+          <div className={fieldRow}>
+            <label className={label}>Callout Description</label>
+            <textarea
+              value={block.content || ""}
+              onChange={(e) => update({ content: e.target.value })}
+              placeholder="Write callout message..."
+              rows={4}
+              className={textareaCls}
             />
           </div>
-          <label className="field-label">
-            Content
-            <span className="field-hint">Supports **bold**, *italic*, `code`, [text](url)</span>
-          </label>
-          <textarea
-            value={block.content || ''}
-            onChange={(e) => update({ content: e.target.value })}
-            placeholder="Callout message…"
-            rows={4}
-            className="field-textarea"
-          />
         </div>
       );
 
-    case 'quiz':
-      return <QuizFields block={block} update={update} />;
-
-    case 'diagram':
-    case 'mermaid':
+    case "diagram":
+    case "mermaid":
       return (
-        <div className="field-group">
-          <label className="field-label">
-            Mermaid Diagram Code
+        <div className={fieldGroup}>
+          <label className={label}>
+            Mermaid Diagram Code Syntax
             <a
               href="https://mermaid.js.org/syntax/flowchart.html"
               target="_blank"
               rel="noopener noreferrer"
-              className="field-link"
+              className="text-[0.7rem] text-primary underline"
             >
-              Mermaid docs ↗
+              Mermaid Docs
             </a>
           </label>
           <textarea
-            value={block.content || ''}
+            value={block.content || ""}
             onChange={(e) => update({ content: e.target.value })}
-            placeholder="graph TD&#10;    A[Start] --> B[Process]&#10;    B --> C[End]"
+            placeholder={"graph TD\n    A[Client] --> B[Cache]\n    B --> C[DB]"}
             rows={8}
-            className="field-textarea field-textarea-code"
+            className={codeTaCls}
             spellCheck={false}
           />
-          <div className="field-row">
-            <label className="field-label">Caption <span className="field-hint">(optional)</span></label>
+          <div className={fieldRow}>
+            <label className={label}>Diagram Caption <span className={hint}>(optional)</span></label>
             <input
               type="text"
-              value={block.caption || ''}
+              value={block.caption || ""}
               onChange={(e) => update({ caption: e.target.value })}
-              placeholder="Figure caption…"
-              className="field-input"
+              placeholder="Figure caption..."
+              className={inputCls}
             />
           </div>
         </div>
       );
 
-    case 'image':
+    case "image":
       return (
-        <div className="field-group">
-          <div className="field-row field-row-image">
-            <label className="field-label">Image URL</label>
-            <div className="field-url-row">
+        <div className={fieldGroup}>
+          <div className={fieldRow}>
+            <label className={label}>Image URL Address</label>
+            <div className="flex gap-2">
               <input
                 type="url"
-                value={block.content || ''}
+                value={block.content || ""}
                 onChange={(e) => update({ content: e.target.value })}
-                placeholder="https://… or pick from Media Library"
-                className="field-input"
+                placeholder="https://images.unsplash.com/..."
+                className={inputCls}
               />
               {onOpenMediaLibrary && (
                 <button
                   type="button"
-                  className="field-media-btn"
                   onClick={onOpenMediaLibrary}
+                  className="px-3.5 py-2.5 rounded-xl border border-border bg-muted text-foreground text-xs font-black whitespace-nowrap cursor-pointer hover:border-primary hover:text-primary transition-colors"
                 >
                   Media Library
                 </button>
               )}
             </div>
           </div>
-          <div className="field-row">
-            <label className="field-label">Caption</label>
-            <input
-              type="text"
-              value={block.caption || ''}
-              onChange={(e) => update({ caption: e.target.value })}
-              placeholder="Optional caption text…"
-              className="field-input"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className={fieldRow}>
+              <label className={label}>Image Display Size</label>
+              <CustomSelect
+                value={block.size || "medium"}
+                onValueChange={(val) => update({ size: val })}
+                options={IMAGE_SIZE_OPTIONS}
+              />
+            </div>
+            <div className={fieldRow}>
+              <label className={label}>Alignment Position</label>
+              <CustomSelect
+                value={block.align || "center"}
+                onValueChange={(val) => update({ align: val })}
+                options={IMAGE_ALIGN_OPTIONS}
+              />
+            </div>
           </div>
-          <div className="field-row">
-            <label className="field-label">Size</label>
-            <select
-              value={block.size || 'medium'}
-              onChange={(e) => update({ size: e.target.value })}
-              className="field-select field-select-sm"
-            >
-              <option value="small">Small (~320px)</option>
-              <option value="medium">Medium (~560px)</option>
-              <option value="large">Large (~800px)</option>
-              <option value="full">Full Width</option>
-            </select>
-          </div>
-          <div className="field-row">
-            <label className="field-label">Alignment</label>
-            <select
-              value={block.align || 'center'}
-              onChange={(e) => update({ align: e.target.value })}
-              className="field-select field-select-sm"
-            >
-              <option value="left">Left</option>
-              <option value="center">Center</option>
-              <option value="right">Right</option>
-            </select>
+        </div>
+      );
+
+    case "divider":
+      return (
+        <div className={fieldGroup}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className={fieldRow}>
+              <label className={label}>Optional Divider Label</label>
+              <input
+                type="text"
+                value={block.label || ""}
+                onChange={(e) => update({ label: e.target.value })}
+                placeholder="e.g. - Summary -"
+                className={inputCls}
+              />
+            </div>
+            <div className={fieldRow}>
+              <label className={label}>Border Line Style</label>
+              <CustomSelect
+                value={block.style || "solid"}
+                onValueChange={(val) => update({ style: val })}
+                options={DIVIDER_STYLE_OPTIONS}
+              />
+            </div>
           </div>
         </div>
       );
 
     default:
-      return <p className="field-unknown">Unknown block type: {block.type}</p>;
+      return <p className="text-xs text-muted-foreground">Editing default fields for block type: {block.type}</p>;
   }
-}
-
-/**
- * QuizFields — dedicated form for quiz block's complex structure.
- */
-function QuizFields({ block, update }) {
-  const options = Array.isArray(block.options) ? block.options : ['', ''];
-
-  const updateOption = (idx, value) => {
-    const next = [...options];
-    next[idx] = value;
-    update({ options: next });
-  };
-
-  const addOption = () => update({ options: [...options, ''] });
-
-  const removeOption = (idx) => {
-    if (options.length <= 2) return;
-    const next = options.filter((_, i) => i !== idx);
-    const correctAnswer = block.answer >= next.length ? 0 : block.answer;
-    update({ options: next, answer: correctAnswer });
-  };
-
-  return (
-    <div className="field-group">
-      <label className="field-label">Question</label>
-      <textarea
-        value={block.question || ''}
-        onChange={(e) => update({ question: e.target.value })}
-        placeholder="What is the output of…?"
-        rows={2}
-        className="field-textarea"
-      />
-
-      <label className="field-label">
-        Answer Options
-        <span className="field-hint">Click the ✓ to mark the correct answer</span>
-      </label>
-      {options.map((opt, idx) => (
-        <div key={idx} className="quiz-field-option">
-          <button
-            type="button"
-            title="Mark as correct answer"
-            className={`quiz-correct-btn ${block.answer === idx ? 'quiz-correct-active' : ''}`}
-            onClick={() => update({ answer: idx })}
-          >
-            ✓
-          </button>
-          <input
-            type="text"
-            value={opt}
-            onChange={(e) => updateOption(idx, e.target.value)}
-            placeholder={`Option ${String.fromCharCode(65 + idx)}`}
-            className="field-input"
-          />
-          <button
-            type="button"
-            className="block-form-btn block-form-btn-delete"
-            onClick={() => removeOption(idx)}
-            disabled={options.length <= 2}
-            title="Remove option"
-          >
-            <FiX size={13} />
-          </button>
-        </div>
-      ))}
-      <button type="button" className="quiz-add-option" onClick={addOption}>
-        + Add Option
-      </button>
-
-      <label className="field-label">
-        Explanation <span className="field-hint">(shown after answer)</span>
-      </label>
-      <textarea
-        value={block.explanation || ''}
-        onChange={(e) => update({ explanation: e.target.value })}
-        placeholder="Explain why the correct answer is correct…"
-        rows={3}
-        className="field-textarea"
-      />
-    </div>
-  );
 }

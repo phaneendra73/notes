@@ -1,34 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FiChevronLeft, FiChevronRight, FiHome, FiEdit2, FiPrinter } from 'react-icons/fi';
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { ChevronLeft, ChevronRight, Home, Edit2, Printer, Bookmark, HelpCircle } from "lucide-react";
+import useBookmarks from "../../hooks/useBookmarks.js";
 
-/**
- * ReaderDock — floating bottom navigation dock for the lesson reader.
- *
- * Shows: Home | Prev | Slide counter | Next | (Edit if auth) | Print
- * Auto-hides on scroll down, reappears on scroll up.
- *
- * @param {number} currentSlideIndex
- * @param {number} totalSlides
- * @param {function} onNext
- * @param {function} onPrev
- * @param {function} onGoToSlide
- * @param {string} lessonId
- * @param {boolean} isAuthenticated
- */
 export default function ReaderDock({
   currentSlideIndex,
   totalSlides,
   onNext,
   onPrev,
   onGoToSlide,
+  onOpenHelp,
   lessonId,
   isAuthenticated = false,
 }) {
   const navigate = useNavigate();
   const [visible, setVisible] = useState(true);
   const lastScrollY = useRef(0);
+  const { isBookmarked, toggleBookmark } = useBookmarks();
+  const bookmarked = lessonId ? isBookmarked(parseInt(lessonId)) : false;
 
   useEffect(() => {
     const onScroll = () => {
@@ -37,73 +27,69 @@ export default function ReaderDock({
       else if (y < lastScrollY.current - 10 || y < 30) setVisible(true);
       lastScrollY.current = y;
     };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   const isFirst = currentSlideIndex === 0;
-  const isLast = currentSlideIndex >= totalSlides - 1;
+  const isLast  = currentSlideIndex >= totalSlides - 1;
+
+  const btnBase = "p-2 sm:px-3.5 sm:py-2 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] text-[var(--ink)] text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-all hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:opacity-30 disabled:cursor-not-allowed shadow-[var(--shadow-sm)]";
 
   return (
-    <div className="reader-dock-wrap">
+    <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center pointer-events-none px-4">
       <motion.div
         animate={{ y: visible ? 0 : 80, opacity: visible ? 1 : 0 }}
-        transition={{ duration: 0.22 }}
-        className="reader-dock"
+        transition={{ duration: 0.2 }}
+        className="pointer-events-auto flex items-center gap-2 p-2.5 rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-lg)]"
       >
-        <button
-          className="reader-dock-btn"
-          onClick={() => navigate('/')}
-          title="Back to catalog"
-        >
-          <FiHome size={15} />
+        <button className={btnBase} onClick={() => navigate("/")} title="Back to Catalog">
+          <Home size={16} />
         </button>
 
-        <div className="reader-dock-divider" />
+        <div className="w-[1px] h-5 bg-[var(--line)]" />
 
-        <button
-          className="reader-dock-btn reader-dock-nav"
-          disabled={isFirst}
-          onClick={onPrev}
-          title="Previous slide (←)"
-        >
-          <FiChevronLeft size={18} />
+        <button className={btnBase} disabled={isFirst} onClick={onPrev} title="Previous slide (←)">
+          <ChevronLeft size={18} />
+          <span className="hidden sm:inline">Prev</span>
         </button>
 
-        <span className="reader-dock-counter">
-          {currentSlideIndex + 1} <span>/</span> {totalSlides}
-        </span>
+        {/* Counter */}
+        <div className="px-3 text-xs font-mono font-bold text-[var(--ink)] flex items-center gap-1">
+          <span className="text-[var(--accent)] font-bold text-sm">{currentSlideIndex + 1}</span>
+          <span className="text-[var(--muted)]">/</span>
+          <span>{totalSlides}</span>
+        </div>
 
-        <button
-          className="reader-dock-btn reader-dock-nav"
-          disabled={isLast}
-          onClick={onNext}
-          title="Next slide (→)"
-        >
-          <FiChevronRight size={18} />
+        <button className={btnBase} disabled={isLast} onClick={onNext} title="Next slide (→)">
+          <span className="hidden sm:inline">Next</span>
+          <ChevronRight size={18} />
+        </button>
+
+        <div className="w-[1px] h-5 bg-[var(--line)]" />
+
+        {lessonId && (
+          <button
+            className={`${btnBase} ${bookmarked ? "border-[var(--accent-strong)] bg-[var(--accent)] text-[var(--accent-on)]" : ""}`}
+            onClick={() => toggleBookmark(parseInt(lessonId))}
+            title={bookmarked ? "Remove Bookmark" : "Save Bookmark"}
+          >
+            <Bookmark size={16} className={bookmarked ? "fill-current" : ""} />
+          </button>
+        )}
+
+        <button className={btnBase} onClick={onOpenHelp} title="Keyboard Shortcuts (?)">
+          <HelpCircle size={16} className="text-[var(--accent)]" />
         </button>
 
         {isAuthenticated && lessonId && (
-          <>
-            <div className="reader-dock-divider" />
-            <button
-              className="reader-dock-btn"
-              onClick={() => navigate(`/editor?id=${lessonId}`)}
-              title="Edit this lesson"
-            >
-              <FiEdit2 size={15} />
-            </button>
-          </>
+          <button className={btnBase} onClick={() => navigate(`/editor?id=${lessonId}`)} title="Edit Lesson">
+            <Edit2 size={16} />
+          </button>
         )}
 
-        <div className="reader-dock-divider" />
-
-        <button
-          className="reader-dock-btn"
-          onClick={() => window.print()}
-          title="Print / Export PDF"
-        >
-          <FiPrinter size={15} />
+        <button className={btnBase} onClick={() => window.print()} title="Print / Export PDF">
+          <Printer size={16} />
         </button>
       </motion.div>
     </div>

@@ -4,48 +4,42 @@ import { cva } from "class-variance-authority";
 import { cn } from "../../lib/utils.js";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 cursor-pointer active:scale-[0.98] duration-200 will-change-transform",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[var(--radius-md)] text-sm font-semibold transition-all duration-[var(--dur)] ease-[var(--ease)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] disabled:pointer-events-none disabled:opacity-50 cursor-pointer active:scale-[0.98]",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-sm hover:opacity-90 hover:shadow-md font-bold",
+          "bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] shadow-[var(--shadow-sm)] hover:bg-[var(--accent-strong)] font-bold",
         primary:
-          "bg-primary text-primary-foreground shadow-sm hover:opacity-90 hover:shadow-md font-bold",
+          "bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] shadow-[var(--shadow-sm)] hover:bg-[var(--accent-strong)] font-bold",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:opacity-90 font-bold",
+          "bg-[var(--err)] text-white shadow-[var(--shadow-sm)] hover:opacity-90 font-bold",
         outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground hover:border-primary/50 hover:shadow-md font-bold",
+          "border border-[var(--line)] bg-[var(--surface)] text-[var(--ink)] shadow-[var(--shadow-sm)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-2)] font-semibold",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 font-bold",
+          "bg-[var(--surface-2)] text-[var(--ink)] border border-[var(--line)] hover:bg-[var(--line)] font-semibold",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground font-bold",
+          "bg-transparent text-[var(--ink)] hover:bg-[var(--surface-2)] hover:text-[var(--ink)] font-semibold",
         link:
-          "text-primary underline-offset-4 hover:underline font-bold",
+          "text-[var(--accent)] underline-offset-4 hover:underline font-semibold",
         neon:
-          "border border-primary/40 text-primary bg-primary/10 hover:bg-primary/20 shadow-[0_0_12px_rgba(0,229,122,0.15)] font-bold",
-        info:
-          "bg-blue-500/15 text-blue-400 border border-blue-500/30 hover:bg-blue-500/25 font-bold",
-        success:
-          "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 font-bold",
-        purple:
-          "bg-purple-500/15 text-purple-400 border border-purple-500/30 hover:bg-purple-500/25 font-bold",
+          "border border-[var(--accent-soft)] text-[var(--accent)] bg-[var(--accent-soft)] hover:bg-[var(--accent)] hover:text-[var(--accent-on)] font-semibold",
         view:
-          "bg-sky-500/15 text-sky-400 border border-sky-500/35 hover:bg-sky-500/25 font-extrabold",
+          "bg-[var(--surface-2)] text-[var(--ink)] border border-[var(--line)] hover:border-[var(--accent)] hover:text-[var(--accent)] font-semibold",
         edit:
-          "bg-indigo-500/15 text-indigo-400 border border-indigo-500/35 hover:bg-indigo-500/25 font-extrabold",
+          "bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent-soft)] hover:bg-[var(--accent)] hover:text-[var(--accent-on)] font-semibold",
         publish:
-          "bg-emerald-500/15 text-emerald-400 border border-emerald-500/35 hover:bg-emerald-500/25 font-extrabold",
+          "bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent-soft)] hover:bg-[var(--accent)] hover:text-[var(--accent-on)] font-semibold",
         unpublish:
-          "bg-amber-500/15 text-amber-400 border border-amber-500/35 hover:bg-amber-500/25 font-extrabold",
+          "bg-[var(--surface-2)] text-[var(--ink-2)] border border-[var(--line)] hover:border-[var(--line-strong)] hover:text-[var(--ink)] font-semibold",
         delete:
-          "bg-red-500/15 text-red-400 border border-red-500/35 hover:bg-red-500 hover:text-white font-extrabold",
+          "bg-[var(--err-soft)] text-[var(--err)] border border-[var(--err-soft)] hover:bg-[var(--err)] hover:text-white font-semibold",
       },
       size: {
         default: "h-9 px-4 py-2 text-sm",
-        xs: "h-7 px-2.5 text-[11px] rounded-lg gap-1",
-        sm: "h-8 px-3 text-xs rounded-xl gap-1.5",
-        lg: "h-10 px-8 text-base rounded-xl gap-2",
+        xs: "h-7 px-2.5 text-[11px] rounded-[var(--radius-sm)] gap-1",
+        sm: "h-8 px-3 text-xs rounded-[var(--radius-md)] gap-1.5",
+        lg: "h-10 px-8 text-base rounded-[var(--radius-md)] gap-2",
         icon: "h-9 w-9",
       },
     },

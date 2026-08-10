@@ -9,21 +9,18 @@ import useSearch from '../../hooks/useSearch.js';
 import LessonCard from './LessonCard.jsx';
 import { Pagination } from './Pagination.jsx';
 import { Skeleton } from './Skeleton.jsx';
-import { Badge } from './Badge.jsx';
 import {
-  FiBookOpen, FiTag, FiRefreshCw, FiAlertCircle, FiBookmark,
-  FiSearch, FiArrowRight, FiLoader, FiX, FiZap, FiEye, FiLayers,
-  FiCode, FiCpu, FiDatabase
-} from 'react-icons/fi';
+  BookOpen, RefreshCw, AlertCircle, Bookmark, Search,
+  ArrowRight, Loader2, X, Zap, Eye, Tag, Sliders
+} from 'lucide-react';
 
 const PLACEHOLDERS = [
-  "Search C# Task.WhenAll & Async/Await…",
-  "Search Binary Trees, Graph BFS & Algorithms…",
-  "Search Cache-Aside & System Design…",
-  "Search B-Tree Indexing & SQL Queries…",
+  "Search C# Task.WhenAll & Async/Await...",
+  "Search Binary Trees, Graph BFS & Algorithms...",
+  "Search Cache-Aside & System Design...",
+  "Search B-Tree Indexing & SQL Queries...",
 ];
 
-/* Animated Counter for stats */
 function AnimatedCounter({ target, suffix = '' }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true });
@@ -40,7 +37,7 @@ function AnimatedCounter({ target, suffix = '' }) {
   }, [inView, target]);
 
   return (
-    <span ref={ref} className="text-foreground font-black text-sm md:text-base leading-tight tabular-nums">
+    <span ref={ref} className="text-[var(--ink)] font-bold text-sm md:text-base leading-tight tabular-nums font-mono">
       {display}{suffix}
     </span>
   );
@@ -48,6 +45,8 @@ function AnimatedCounter({ target, suffix = '' }) {
 
 export default function LessonCatalog({ isBookmarkedOnly = false, bookmarkedIds = [] }) {
   const navigate = useNavigate();
+  const searchInputRef = useRef(null);
+
   const [selectedTagId, setSelectedTagId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
@@ -57,9 +56,9 @@ export default function LessonCatalog({ isBookmarkedOnly = false, bookmarkedIds 
   const [stats, setStats] = useState({ totalLessons: 0, totalViews: 0, totalTags: 0 });
 
   const { bookmarks } = useBookmarks();
-  const { tags, loading: tagsLoading } = useTags();
+  const { tags: backendTags } = useTags();
   const { results: searchDropdownResults, loading: searchDropdownLoading } = useSearch(searchQuery);
-  const { lessons, loading, error, pagination, refetch } = useLessons(selectedTagId, searchQuery, currentPage, 9);
+  const { lessons, loading, isFetching, error, pagination, refetch } = useLessons(selectedTagId, searchQuery, currentPage, 9);
 
   // Fetch platform stats
   useEffect(() => {
@@ -85,9 +84,13 @@ export default function LessonCatalog({ isBookmarkedOnly = false, bookmarkedIds 
     return () => clearInterval(timer);
   }, []);
 
-  // Escape key listener to clear search
+  // Keyboard listener for Ctrl+K and Escape
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
       if (e.key === 'Escape') setSearchQuery('');
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -100,325 +103,221 @@ export default function LessonCatalog({ isBookmarkedOnly = false, bookmarkedIds 
     filteredLessons = lessons.filter((l) => activeIds.includes(l.id));
   }
 
-  const handleTagClick = (tagId) => {
-    setSelectedTagId(selectedTagId === tagId ? null : tagId);
-    setShowSavedOnly(false);
-    setCurrentPage(1);
-  };
-
-  const handleClearFilters = () => {
+  const clearAllFilters = () => {
     setSelectedTagId(null);
-    setShowSavedOnly(false);
     setSearchQuery('');
+    setShowSavedOnly(false);
     setCurrentPage(1);
   };
-
-  const activeTagName = tags.find((t) => t.id === selectedTagId)?.name;
-  const isFiltered = Boolean(selectedTagId || showSavedOnly || searchQuery.trim());
 
   return (
-    <div id="notes-section" className="w-full flex flex-col gap-8 scroll-mt-20">
-
-      {/* ── UNIFIED MASTER CONTROL DECK ── */}
-      <div className="relative p-5 sm:p-7 rounded-3xl bg-card/95 backdrop-blur-2xl border border-border/90 shadow-[0_16px_45px_rgba(0,0,0,0.35)] flex flex-col gap-6 overflow-hidden">
-        
-        {/* Top Glow Edge Line */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent" />
-
-        {/* 1. Header & Live Platform Stats Strip */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border/70">
+    <div id="notes-section" className="w-full space-y-8 py-8 max-w-[var(--maxw)] mx-auto px-4 sm:px-6">
+      {/* Clean Editorial Catalog Header */}
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-[var(--line)]">
           <div>
-            <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-foreground tracking-tight flex items-center gap-2.5">
-              <FiLayers className="text-primary" size={24} />
-              <span>Notes Library</span>
+            <span className="text-xs font-semibold uppercase tracking-widest text-[var(--accent)] flex items-center gap-1.5 mb-1.5 font-sans">
+              <Zap size={13} className="text-[var(--accent)]" /> Interactive Catalog
+            </span>
+            <h2 className="font-serif font-bold text-3xl sm:text-4xl text-[var(--ink)]">
+              Master Technical Notes
             </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-              Slide-by-slide engineering guides &amp; visual tech notes
-            </p>
           </div>
 
-          {/* Live Platform Stats Pill */}
-          <div className="flex items-center gap-4 sm:gap-6 bg-muted/40 p-2.5 px-4 rounded-2xl border border-border/60 shrink-0">
+          {/* Minimal Telemetry Counters */}
+          <div className="flex items-center gap-5 text-xs font-semibold font-sans text-[var(--ink-2)]">
             <div className="flex items-center gap-2">
-              <FiBookOpen size={15} className="text-primary" />
-              <div className="flex flex-col text-left">
-                <AnimatedCounter target={stats.totalLessons || 12} suffix="+" />
-                <span className="text-[10px] font-bold text-muted-foreground uppercase">Notes</span>
-              </div>
+              <BookOpen size={15} className="text-[var(--accent)]" />
+              <span><AnimatedCounter target={stats.totalLessons || 12} /> Notes</span>
             </div>
-
-            <div className="w-[1px] h-6 bg-border/80" />
-
+            <span className="text-[var(--line-strong)]">•</span>
             <div className="flex items-center gap-2">
-              <FiTag size={15} className="text-primary" />
-              <div className="flex flex-col text-left">
-                <AnimatedCounter target={stats.totalTags || 8} suffix="+" />
-                <span className="text-[10px] font-bold text-muted-foreground uppercase">Topics</span>
-              </div>
-            </div>
-
-            <div className="w-[1px] h-6 bg-border/80" />
-
-            <div className="flex items-center gap-2">
-              <FiEye size={15} className="text-primary" />
-              <div className="flex flex-col text-left">
-                <AnimatedCounter target={stats.totalViews || 150} suffix="+" />
-                <span className="text-[10px] font-bold text-muted-foreground uppercase">Reads</span>
-              </div>
+              <Eye size={15} className="text-[var(--accent)]" />
+              <span><AnimatedCounter target={stats.totalViews || 1420} suffix="+" /> Views</span>
             </div>
           </div>
         </div>
 
-        {/* 2. Spotlight Search Input Bar */}
-        <div className="relative">
-          <motion.div
-            animate={{
-              borderColor: searchFocused ? 'var(--primary)' : 'rgba(255,255,255,0.12)',
-              boxShadow: searchFocused ? '0 0 25px var(--neon-glow)' : 'none',
-            }}
-            transition={{ duration: 0.2 }}
-            className="relative flex items-center rounded-2xl bg-muted/30 border transition-all"
-          >
-            <FiSearch size={18} className="absolute left-4 text-primary pointer-events-none" />
-            
+        {/* Clean Minimal Search Input */}
+        <div className="relative w-full">
+          <div className={`relative flex items-center rounded-[var(--radius-md)] border transition-colors duration-[var(--dur)] ${
+            searchFocused ? 'border-[var(--accent)] bg-[var(--surface)]' : 'border-[var(--line)] bg-[var(--surface)]'
+          }`}>
+            <Search size={18} className="ml-4 text-[var(--accent)] shrink-0" />
             <input
+              ref={searchInputRef}
               type="text"
-              placeholder={PLACEHOLDERS[placeholderIndex]}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              className="w-full pl-12 pr-20 h-13 sm:h-14 rounded-2xl bg-transparent text-foreground placeholder:text-muted-foreground/60 text-sm md:text-base font-extrabold focus:outline-none"
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+              placeholder={PLACEHOLDERS[placeholderIndex]}
+              className="w-full py-3.5 px-3.5 bg-transparent text-sm text-[var(--ink)] focus:outline-none placeholder:text-[var(--muted)] font-sans font-normal"
             />
-
-            <div className="absolute right-3 flex items-center gap-2">
-              {!searchQuery && (
-                <kbd className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl border border-border/80 bg-muted/80 text-[10px] font-mono font-extrabold text-muted-foreground shadow-xs">
-                  Esc
-                </kbd>
-              )}
-              {searchDropdownLoading ? (
-                <FiLoader size={18} className="text-primary animate-spin" />
-              ) : searchQuery ? (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="pointer-events-auto text-muted-foreground hover:text-foreground p-1.5 rounded-xl bg-muted cursor-pointer transition-colors"
-                  title="Clear search"
-                >
-                  <FiX size={15} />
-                </button>
-              ) : null}
-            </div>
-          </motion.div>
-
-          {/* Instant Dropdown Preview for Search */}
-          <AnimatePresence>
-            {searchQuery.trim().length > 0 && (
-              <motion.div
-                key="results"
-                initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.98 }}
-                transition={{ duration: 0.15 }}
-                className="absolute top-[calc(100%+8px)] left-0 right-0 bg-card/95 backdrop-blur-2xl border border-border/90 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] max-h-80 overflow-y-auto p-2 flex flex-col gap-1 z-50"
+            {searchQuery ? (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="mr-3 p-1.5 rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)] cursor-pointer transition-colors"
               >
-                {searchDropdownResults.length === 0 && !searchDropdownLoading ? (
-                  <div className="py-6 text-center text-xs text-muted-foreground font-bold">
-                    No matching notes found for "{searchQuery}".
+                <X size={16} />
+              </button>
+            ) : (
+              <span className="mr-3.5 px-2 py-0.5 rounded-[var(--radius-sm)] bg-[var(--surface-2)] text-[10px] font-mono text-[var(--accent)] font-bold border border-[var(--line)] hidden sm:inline-block">
+                Ctrl+K
+              </span>
+            )}
+          </div>
+
+          {/* Autocomplete Dropdown */}
+          <AnimatePresence>
+            {searchFocused && searchQuery.length >= 2 && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                className="absolute top-full left-0 right-0 z-40 mt-2 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-md)] overflow-hidden p-2"
+              >
+                {searchDropdownLoading ? (
+                  <div className="p-4 flex items-center justify-center gap-2 text-xs text-[var(--muted)] font-sans">
+                    <Loader2 size={16} className="animate-spin text-[var(--accent)]" /> Searching notes...
+                  </div>
+                ) : searchDropdownResults.length > 0 ? (
+                  <div className="space-y-1">
+                    {searchDropdownResults.slice(0, 5).map((res) => (
+                      <button
+                        key={res.id}
+                        onClick={() => navigate(`/read?id=${res.id}`)}
+                        className="w-full text-left p-3 rounded-[var(--radius-sm)] hover:bg-[var(--surface-2)] hover:text-[var(--accent)] transition-colors flex items-center justify-between text-xs font-semibold cursor-pointer text-[var(--ink)] font-sans"
+                      >
+                        <span className="truncate">{res.title}</span>
+                        <ArrowRight size={14} className="shrink-0 text-[var(--accent)]" />
+                      </button>
+                    ))}
                   </div>
                 ) : (
-                  searchDropdownResults.map((blog) => (
-                    <button
-                      key={blog.id}
-                      onClick={() => {
-                        navigate(`/read?id=${blog.id}`);
-                        setSearchQuery('');
-                      }}
-                      className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all text-left group cursor-pointer"
-                    >
-                      <div className="flex flex-col gap-1 min-w-0 flex-1 pr-3">
-                        <p className="font-extrabold text-xs sm:text-sm text-foreground truncate group-hover:text-primary transition-colors">
-                          {blog.title}
-                        </p>
-                        <div className="flex gap-1.5 flex-wrap">
-                          {blog.tags?.slice(0, 3).map((t) => (
-                            <Badge key={t} className="text-[10px] py-0 font-bold bg-primary/10 text-primary border-primary/20">
-                              {t}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                      <FiArrowRight size={15} className="text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                    </button>
-                  ))
+                  <div className="p-4 text-center text-xs text-[var(--muted)] font-sans">
+                    No matching visual notes found.
+                  </div>
                 )}
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* 3. Raycast-style Sliding Track Pills */}
-        <div className="flex flex-col gap-2.5">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-              <FiTag size={13} className="text-primary" /> Select Study Track:
-            </span>
+        {/* Dynamic Backend Topic Pills */}
+        <div className="flex flex-wrap items-center gap-2 font-sans">
+          <button
+            onClick={() => { setSelectedTagId(null); setCurrentPage(1); }}
+            className={`px-3.5 py-1.5 rounded-[var(--radius-md)] text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer border ${
+              selectedTagId === null
+                ? 'bg-[var(--accent)] text-[var(--accent-on)] border-[var(--accent-strong)] font-bold'
+                : 'bg-[var(--surface)] border-[var(--line)] text-[var(--ink-2)] hover:text-[var(--ink)] hover:border-[var(--line-strong)]'
+            }`}
+          >
+            <Sliders size={14} className={selectedTagId === null ? 'text-[var(--accent-on)]' : 'text-[var(--accent)]'} />
+            <span>All Topics</span>
+          </button>
 
-            {/* Filter status / Clear Filter Pill */}
-            {isFiltered && (
+          {backendTags.map((tag) => {
+            const isActive = selectedTagId === tag.id;
+            return (
               <button
-                onClick={handleClearFilters}
-                className="px-3 py-1 rounded-full text-xs font-extrabold bg-primary/10 text-primary border border-primary/30 hover:bg-primary hover:text-black transition-all cursor-pointer shadow-xs flex items-center gap-1"
-              >
-                <span>Clear Filter</span>
-                <FiX size={13} />
-              </button>
-            )}
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {/* All Tracks Pill */}
-            <button
-              onClick={() => { setSelectedTagId(null); setShowSavedOnly(false); }}
-              className={`relative px-4 py-2 rounded-full text-xs font-extrabold transition-all cursor-pointer z-10 ${
-                selectedTagId === null && !showSavedOnly
-                  ? 'text-black font-black'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
-              }`}
-            >
-              {selectedTagId === null && !showSavedOnly && (
-                <motion.div
-                  layoutId="activeTagBg"
-                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                  className="absolute inset-0 bg-primary rounded-full shadow-[0_0_15px_var(--neon-glow)] -z-10"
-                />
-              )}
-              All Tracks
-            </button>
-
-            {/* Saved Bookmarks Pill */}
-            {bookmarks.length > 0 && (
-              <button
-                onClick={() => { setShowSavedOnly((s) => !s); setSelectedTagId(null); }}
-                className={`relative px-4 py-2 rounded-full text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 z-10 ${
-                  showSavedOnly
-                    ? 'text-black font-black'
-                    : 'text-primary hover:bg-primary/10'
+                key={tag.id}
+                onClick={() => { setSelectedTagId(isActive ? null : tag.id); setCurrentPage(1); }}
+                className={`px-3.5 py-1.5 rounded-[var(--radius-md)] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border ${
+                  isActive
+                    ? 'bg-[var(--accent)] text-[var(--accent-on)] border-[var(--accent-strong)] font-bold'
+                    : 'bg-[var(--surface)] border-[var(--line)] text-[var(--ink-2)] hover:text-[var(--ink)] hover:border-[var(--line-strong)]'
                 }`}
               >
-                {showSavedOnly && (
-                  <motion.div
-                    layoutId="activeTagBg"
-                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                    className="absolute inset-0 bg-primary rounded-full shadow-[0_0_15px_var(--neon-glow)] -z-10"
-                  />
-                )}
-                <FiBookmark size={13} /> Saved Bookmarks ({bookmarks.length})
+                <Tag size={13} className={isActive ? 'text-[var(--accent-on)]' : 'text-[var(--accent)]'} />
+                <span>{tag.name}</span>
               </button>
-            )}
+            );
+          })}
 
-            {/* Dynamic Subject Tag Pills */}
-            {tagsLoading
-              ? Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-8 w-24 rounded-full" />
-                ))
-              : tags.map((t) => {
-                  const isActive = selectedTagId === t.id;
-                  return (
-                    <button
-                      key={t.id}
-                      onClick={() => handleTagClick(t.id)}
-                      className={`relative px-4 py-2 rounded-full text-xs font-extrabold transition-all cursor-pointer z-10 ${
-                        isActive
-                          ? 'text-black font-black'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
-                      }`}
-                    >
-                      {isActive && (
-                        <motion.div
-                          layoutId="activeTagBg"
-                          transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                          className="absolute inset-0 bg-primary rounded-full shadow-[0_0_15px_var(--neon-glow)] -z-10"
-                        />
-                      )}
-                      {t.name}
-                    </button>
-                  );
-                })}
-          </div>
+          {bookmarks.length > 0 && (
+            <button
+              onClick={() => setShowSavedOnly(!showSavedOnly)}
+              className={`px-3.5 py-1.5 rounded-[var(--radius-md)] text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer border ml-auto ${
+                showSavedOnly
+                  ? 'bg-[var(--accent)] text-[var(--accent-on)] border-[var(--accent-strong)] font-bold'
+                  : 'bg-[var(--surface)] border-[var(--line)] text-[var(--ink-2)] hover:text-[var(--ink)] hover:border-[var(--line-strong)]'
+              }`}
+            >
+              <Bookmark size={14} className={showSavedOnly ? 'fill-current' : 'text-[var(--accent)]'} />
+              <span>Saved ({bookmarks.length})</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* ── LESSON CARDS GRID ── */}
+      {/* Main Grid Content with Smooth AnimatePresence & Stable Min-Height */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[360px]">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-80 rounded-2xl border border-border bg-card p-4 flex flex-col gap-4">
-              <Skeleton className="h-44 w-full rounded-xl" />
-              <Skeleton className="h-6 w-3/4" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-1/2 mt-auto" />
+            <div key={i} className="rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] p-6 space-y-4">
+              <Skeleton className="aspect-video w-full rounded-[var(--radius-sm)]" />
+              <Skeleton className="h-6 w-3/4 rounded-[var(--radius-sm)]" />
+              <Skeleton className="h-4 w-full rounded-[var(--radius-sm)]" />
+              <Skeleton className="h-4 w-1/2 rounded-[var(--radius-sm)]" />
             </div>
           ))}
         </div>
       ) : error ? (
-        <div className="p-8 rounded-2xl border border-rose-500/30 bg-rose-500/10 text-center flex flex-col items-center gap-3">
-          <FiAlertCircle size={32} className="text-rose-400" />
-          <h3 className="font-heading font-extrabold text-lg text-rose-300">Failed to Load Lessons</h3>
-          <p className="text-xs text-rose-300/80">{error}</p>
+        <div className="rounded-[var(--radius-md)] border border-[var(--err)] bg-[var(--err-soft)] p-8 text-center space-y-4 min-h-[360px] flex flex-col items-center justify-center">
+          <AlertCircle size={40} className="mx-auto text-[var(--err)]" />
+          <h3 className="font-serif font-bold text-lg text-[var(--err)]">{error}</h3>
           <button
-            onClick={() => refetch(currentPage)}
-            className="mt-2 px-4 py-2 rounded-xl bg-rose-500 text-white font-bold text-xs flex items-center gap-2 hover:bg-rose-600 transition-colors cursor-pointer"
+            onClick={refetch}
+            className="inline-flex items-center gap-2 px-5 py-2 rounded-[var(--radius-md)] bg-[var(--accent)] text-[var(--accent-on)] font-bold text-xs cursor-pointer shadow-[var(--shadow-sm)] hover:bg-[var(--accent-strong)] transition-colors font-sans"
           >
-            <FiRefreshCw size={13} /> Retry Loading
+            <RefreshCw size={14} /> Retry Loading
           </button>
         </div>
-      ) : filteredLessons.length === 0 ? (
-        <div className="p-12 rounded-3xl border border-border/80 bg-gradient-to-br from-card to-muted/20 text-center flex flex-col items-center gap-4 my-4">
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shadow-xs">
-            <FiBookOpen size={32} />
-          </div>
-          <div>
-            <h3 className="font-heading font-extrabold text-xl text-foreground mb-1">
-              {searchQuery || selectedTagId ? 'No Notes Found for this Filter' : 'No Notes Available'}
-            </h3>
-            <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-              Try selecting another study track or clearing your search term.
-            </p>
-          </div>
-        </div>
-      ) : (
-        <>
-          <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <AnimatePresence>
-              {filteredLessons.map((l) => (
-                <motion.div
-                  key={l.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.96 }}
-                  transition={{ duration: 0.25 }}
-                >
-                  <LessonCard lesson={l} />
-                </motion.div>
-              ))}
-            </AnimatePresence>
+      ) : filteredLessons.length > 0 ? (
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`page-${currentPage}-tag-${selectedTagId}-query-${searchQuery}`}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[360px]"
+          >
+            {filteredLessons.map((lesson) => (
+              <LessonCard key={lesson.id} lesson={lesson} />
+            ))}
           </motion.div>
+        </AnimatePresence>
+      ) : (
+        <div className="rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] p-12 text-center space-y-3 min-h-[360px] flex flex-col items-center justify-center">
+          <BookOpen size={44} className="mx-auto text-[var(--muted)] opacity-60" />
+          <h3 className="font-serif font-bold text-xl text-[var(--ink)]">No Notes Found</h3>
+          <p className="text-xs text-[var(--ink-2)] max-w-md mx-auto leading-relaxed font-normal font-sans">
+            We couldn't find any visual study notes matching your filter criteria. Try adjusting your query or clear filters.
+          </p>
+          <button
+            onClick={clearAllFilters}
+            className="px-5 py-2.5 rounded-[var(--radius-md)] bg-[var(--accent)] text-[var(--accent-on)] font-bold text-xs cursor-pointer hover:bg-[var(--accent-strong)] transition-colors inline-block font-sans"
+          >
+            Reset Catalog
+          </button>
+        </div>
+      )}
 
-          {pagination.totalPages > 1 && (
-            <div className="mt-4 flex justify-center">
-              <Pagination
-                currentPage={pagination.page || pagination.currentPage || 1}
-                totalPages={pagination.totalPages}
-                onPageChange={(p) => setCurrentPage(p)}
-              />
-            </div>
-          )}
-        </>
+      {/* Pagination Controls */}
+      {pagination && pagination.totalPages > 1 && (
+        <div className="pt-4 flex justify-center">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={(page) => setCurrentPage(page)}
+          />
+        </div>
       )}
     </div>
   );

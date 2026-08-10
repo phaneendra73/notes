@@ -1,6 +1,5 @@
 import React from 'react';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
-import { motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export function Pagination({ page, currentPage, totalPages, totalCount, onPageChange, className = '' }) {
   // Accept both `page` and `currentPage` for backward compatibility across callers.
@@ -32,55 +31,53 @@ export function Pagination({ page, currentPage, totalPages, totalCount, onPageCh
   const pages = getPageNumbers();
 
   return (
-    <div className={`flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 py-4 sm:py-5 px-3.5 sm:px-5 rounded-2xl border border-border/80 bg-card/60 backdrop-blur-xl shadow-md ${className}`}>
+    <div className={`flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 py-3 px-4 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] font-sans ${className}`}>
       {/* Total Items Info */}
-      <div className="text-[11px] sm:text-xs font-bold text-muted-foreground flex items-center gap-1.5 text-center">
-        <span className="w-2 h-2 rounded-full bg-primary animate-pulse shrink-0" />
+      <div className="text-xs font-semibold text-[var(--muted)] flex items-center gap-1.5 text-center">
+        <span className="w-2 h-2 rounded-full bg-[var(--accent)] shrink-0" />
         <span>
-          Showing <span className="text-foreground font-extrabold">{totalCount > 0 ? activePage : 0}</span> of{' '}
-          <span className="text-foreground font-extrabold">{totalPages}</span> pages
+          Page <strong className="text-[var(--ink)]">{activePage}</strong> of{' '}
+          <strong className="text-[var(--ink)]">{totalPages}</strong>
           {totalCount ? ` (${totalCount} notes)` : ''}
         </span>
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap justify-center max-w-full">
+      <div className="flex items-center gap-1.5 flex-wrap justify-center">
         {/* Previous Button */}
         <button
           disabled={activePage <= 1}
           onClick={() => onPageChange(activePage - 1)}
-          className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl border border-border/80 bg-background/80 hover:bg-muted/80 text-foreground disabled:opacity-40 disabled:cursor-not-allowed text-xs font-extrabold flex items-center gap-1 cursor-pointer transition-all duration-200 shadow-xs hover:border-primary/50 disabled:hover:border-border/80"
+          className="h-8 px-3 rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink)] hover:border-[var(--line-strong)] hover:text-[var(--accent)] disabled:opacity-30 disabled:cursor-not-allowed text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
           title="Previous Page"
         >
-          <FiChevronLeft size={15} />
+          <ChevronLeft size={14} />
           <span className="hidden sm:inline">Prev</span>
         </button>
 
-        {/* Number Pills */}
-        <div className="flex items-center gap-1 px-0.5 overflow-x-auto max-w-full no-scrollbar">
+        {/* Number Pills - Fixed width to prevent hover layout shifts */}
+        <div className="flex items-center gap-1">
           {pages.map((p, idx) => {
             if (p === '...') {
               return (
-                <span key={`ellipsis-${idx}`} className="px-2 text-xs font-bold text-muted-foreground select-none">
+                <span key={`ellipsis-${idx}`} className="w-8 text-center text-xs font-semibold text-[var(--muted)] select-none">
                   ...
                 </span>
               );
             }
             const isCurrent = p === activePage;
             return (
-              <motion.button
+              <button
                 key={p}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
                 onClick={() => onPageChange(p)}
-                className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl text-xs font-black flex items-center justify-center cursor-pointer transition-all duration-200 ${
+                className={`w-8 h-8 rounded-[var(--radius-sm)] text-xs font-semibold flex items-center justify-center cursor-pointer transition-colors border ${
                   isCurrent
-                    ? 'bg-primary text-primary-foreground shadow-[0_0_12px_rgba(0,229,122,0.35)] border border-primary/50'
-                    : 'bg-background/60 text-muted-foreground hover:text-foreground hover:bg-muted/80 border border-border/60'
+                    ? 'bg-[var(--accent)] text-[var(--accent-on)] border-[var(--accent-strong)] font-bold'
+                    : 'bg-[var(--surface-2)] text-[var(--ink-2)] border-[var(--line)] hover:border-[var(--line-strong)] hover:text-[var(--ink)]'
                 }`}
               >
                 {p}
-              </motion.button>
+              </button>
             );
           })}
         </div>
@@ -89,11 +86,11 @@ export function Pagination({ page, currentPage, totalPages, totalCount, onPageCh
         <button
           disabled={activePage >= totalPages}
           onClick={() => onPageChange(activePage + 1)}
-          className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl border border-border/80 bg-background/80 hover:bg-muted/80 text-foreground disabled:opacity-40 disabled:cursor-not-allowed text-xs font-extrabold flex items-center gap-1 cursor-pointer transition-all duration-200 shadow-xs hover:border-primary/50 disabled:hover:border-border/80"
+          className="h-8 px-3 rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink)] hover:border-[var(--line-strong)] hover:text-[var(--accent)] disabled:opacity-30 disabled:cursor-not-allowed text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
           title="Next Page"
         >
           <span className="hidden sm:inline">Next</span>
-          <FiChevronRight size={15} />
+          <ChevronRight size={14} />
         </button>
       </div>
     </div>

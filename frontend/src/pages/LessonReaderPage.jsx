@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import client from '../api/client.js';
 import { Skeleton } from '../components/ui/Skeleton.jsx';
@@ -6,20 +6,13 @@ import SEO from '../components/SEO.jsx';
 import ReaderNavbar from '../components/reader/ReaderNavbar.jsx';
 import SlideCanvas from '../components/reader/SlideCanvas.jsx';
 import ReaderDock from '../components/reader/ReaderDock.jsx';
-import { FiAlertCircle } from 'react-icons/fi';
+import KeyboardHelpModal from '../components/reader/KeyboardHelpModal.jsx';
+import { AlertCircle, ArrowLeft } from 'lucide-react';
 
 const BATCH_SIZE = 5;
 
 /**
  * LessonReaderPage — the slide-by-slide lesson reading experience.
- *
- * Features:
- * - Lazy batched slide fetching (loads 5 slides at a time as user navigates)
- * - Keyboard navigation (ArrowRight/Space = next, ArrowLeft = prev)
- * - Touch swipe navigation (handled in SlideCanvas)
- * - Visited slide tracking (persisted to sessionStorage)
- * - Slide outline in ReaderNavbar
- * - Print/PDF via window.print()
  */
 export default function LessonReaderPage() {
   const location = useLocation();
@@ -33,6 +26,9 @@ export default function LessonReaderPage() {
   const [loading, setLoading] = useState(true);
   const [fetchingBatch, setFetchingBatch] = useState(false);
   const [error, setError] = useState(null);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const readerRef = useRef(null);
 
   // Restore visited slides from sessionStorage
   const [visitedSlides, setVisitedSlides] = useState(() => {
@@ -102,7 +98,7 @@ export default function LessonReaderPage() {
       } catch (err) {
         if (!cancelled) {
           console.error('LessonReaderPage fetch error:', err);
-          setError('Failed to load this lesson. Please try again.');
+          setError(err.response?.data?.error || 'Failed to load visual note');
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -113,79 +109,94 @@ export default function LessonReaderPage() {
     return () => { cancelled = true; };
   }, [lessonId, mergeSlides]);
 
-  // Lazy-fetch next batch when approaching unloaded slides
-  const fetchBatch = useCallback(async (offset) => {
-    if (fetchingBatch || !lessonId) return;
+  // Lazy-fetch additional batches when navigating near unfetched slides
+  const fetchBatchIfNeeded = useCallback(async (targetIndex) => {
+    if (slidesMap[targetIndex] || fetchingBatch) return;
+
+    const batchOffset = Math.floor(targetIndex / BATCH_SIZE) * BATCH_SIZE;
     setFetchingBatch(true);
+
     try {
-      const res = await client.get(`/api/lessons/${lessonId}`, {
-        params: { offset, limit: BATCH_SIZE },
+      const res = await client.get(`/api/lessons/${lessonId}/slides`, {
+        params: { offset: batchOffset, limit: BATCH_SIZE },
       });
-      const slides = res.data?.lesson?.slides;
-      if (slides) mergeSlides(slides, offset);
+      if (Array.isArray(res.data.slides)) {
+        mergeSlides(res.data.slides, batchOffset);
+      }
     } catch (err) {
-      console.error(`Batch fetch error at offset ${offset}:`, err);
+      console.error(`Failed to fetch slides batch at offset ${batchOffset}:`, err);
     } finally {
       setFetchingBatch(false);
     }
-  }, [lessonId, fetchingBatch, mergeSlides]);
+  }, [lessonId, slidesMap, fetchingBatch, mergeSlides]);
 
+  // Persist visited slides
   useEffect(() => {
-    if (loading || totalSlidesCount === 0) return;
-    if (!slidesMap[currentSlideIndex]) {
-      const batchStart = Math.floor(currentSlideIndex / BATCH_SIZE) * BATCH_SIZE;
-      fetchBatch(batchStart);
+    if (!lessonId) return;
+    try {
+      sessionStorage.setItem(`kadha_visited_${lessonId}`, JSON.stringify([...visitedSlides]));
+    } catch {
+      // ignore quota errors
     }
-  }, [currentSlideIndex, slidesMap, totalSlidesCount, loading, fetchBatch]);
+  }, [visitedSlides, lessonId]);
 
-  // Build contiguous slides array with loading placeholders for unloaded slides
-  const slides = useMemo(() => {
-    const count = totalSlidesCount || Object.keys(slidesMap).length || 1;
-    return Array.from({ length: count }, (_, i) =>
-      slidesMap[i] || {
-        title: `Slide ${i + 1}`,
-        blocks: [{ type: 'paragraph', content: 'Loading…' }],
-        isPlaceholder: true,
-      }
-    );
-  }, [slidesMap, totalSlidesCount]);
-
-  // Track visited slides
+  // Pre-fetch next batch if user is within 2 slides of un-fetched range
   useEffect(() => {
+    if (totalSlidesCount === 0) return;
+    const nextUnfetchedIndex = currentSlideIndex + 1;
+    if (nextUnfetchedIndex < totalSlidesCount && !slidesMap[nextUnfetchedIndex]) {
+      fetchBatchIfNeeded(nextUnfetchedIndex);
+    }
+  }, [currentSlideIndex, totalSlidesCount, slidesMap, fetchBatchIfNeeded]);
+
+  // Build ordered slides array for navigation
+  const slides = useMemo(() => {
+    const list = [];
+    for (let i = 0; i < totalSlidesCount; i++) {
+      list.push(slidesMap[i] || {
+        id: `skeleton-${i}`,
+        title: `Slide ${i + 1}`,
+        blocks: [{ type: 'paragraph', content: 'Loading slide details...' }],
+      });
+    }
+    return list.length > 0 ? list : [{ title: 'Slide 1', blocks: [] }];
+  }, [totalSlidesCount, slidesMap]);
+
+  const markVisited = (idx) => {
     setVisitedSlides((prev) => {
-      if (prev.has(currentSlideIndex)) return prev;
       const next = new Set(prev);
-      next.add(currentSlideIndex);
-      if (lessonId) {
-        try {
-          sessionStorage.setItem(`kadha_visited_${lessonId}`, JSON.stringify([...next]));
-        } catch {}
-      }
+      next.add(idx);
       return next;
     });
-  }, [currentSlideIndex, lessonId]);
+  };
 
-  // Navigation handlers
+  const goToSlide = useCallback((index) => {
+    if (index < 0 || index >= totalSlidesCount) return;
+    setDirection(index > currentSlideIndex ? 1 : -1);
+    setCurrentSlideIndex(index);
+    markVisited(index);
+    fetchBatchIfNeeded(index);
+  }, [currentSlideIndex, totalSlidesCount, fetchBatchIfNeeded]);
+
   const goNext = useCallback(() => {
-    if (currentSlideIndex < slides.length - 1) {
-      setDirection(1);
-      setCurrentSlideIndex((i) => i + 1);
+    if (currentSlideIndex < totalSlidesCount - 1) {
+      goToSlide(currentSlideIndex + 1);
     }
-  }, [currentSlideIndex, slides.length]);
+  }, [currentSlideIndex, totalSlidesCount, goToSlide]);
 
   const goPrev = useCallback(() => {
     if (currentSlideIndex > 0) {
-      setDirection(-1);
-      setCurrentSlideIndex((i) => i - 1);
+      goToSlide(currentSlideIndex - 1);
     }
-  }, [currentSlideIndex]);
+  }, [currentSlideIndex, goToSlide]);
 
-  const goToSlide = useCallback((index) => {
-    if (index >= 0 && index < slides.length) {
-      setDirection(index > currentSlideIndex ? 1 : -1);
-      setCurrentSlideIndex(index);
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      readerRef.current?.requestFullscreen?.().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      document.exitFullscreen?.().then(() => setIsFullscreen(false)).catch(() => {});
     }
-  }, [currentSlideIndex, slides.length]);
+  }, []);
 
   // Keyboard navigation
   useEffect(() => {
@@ -193,21 +204,50 @@ export default function LessonReaderPage() {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
       if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goNext(); }
       else if (e.key === 'ArrowLeft') { e.preventDefault(); goPrev(); }
+      else if (e.key === '?' || (e.shiftKey && e.key === '/')) { e.preventDefault(); setHelpOpen((o) => !o); }
+      else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggleFullscreen(); }
+      else if (e.key === 'Escape') { setHelpOpen(false); }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [goNext, goPrev]);
+  }, [goNext, goPrev, toggleFullscreen]);
 
   const currentSlide = slides[currentSlideIndex] || slides[0];
 
+  // Exact Slide Canvas Skeleton Loading UI
   if (loading) {
     return (
-      <div className="reader-loading">
-        <Skeleton className="h-14 w-full rounded-none" />
-        <div className="reader-loading-content">
-          <Skeleton className="h-10 w-3/4 rounded-xl" />
-          <Skeleton className="h-56 w-full rounded-2xl" />
-          <Skeleton className="h-5 w-1/2 rounded-lg" />
+      <div className="min-h-screen bg-[var(--bg)] text-[var(--ink)] flex flex-col justify-between select-none">
+        {/* Reader Header Skeleton */}
+        <div className="h-[var(--header-h)] border-b border-[var(--line)] bg-[var(--surface)] px-6 flex items-center justify-between">
+          <Skeleton className="h-6 w-36 rounded-[var(--radius-sm)]" />
+          <Skeleton className="h-6 w-48 rounded-[var(--radius-sm)] hidden sm:block" />
+          <Skeleton className="h-8 w-20 rounded-[var(--radius-md)]" />
+        </div>
+
+        {/* Slide Canvas Skeleton Card */}
+        <main className="flex-1 flex items-center justify-center p-4 sm:p-8 max-w-4xl mx-auto w-full">
+          <div className="w-full rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] p-6 sm:p-10 shadow-[var(--shadow-md)] space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-[var(--line)]">
+              <Skeleton className="h-5 w-28 rounded-[var(--radius-sm)]" />
+              <Skeleton className="h-4 w-36 rounded-[var(--radius-sm)] hidden sm:block" />
+            </div>
+
+            <Skeleton className="h-9 w-3/4 rounded-[var(--radius-sm)] mb-6" />
+
+            <div className="space-y-3 pt-2">
+              <Skeleton className="h-4 w-full rounded-[var(--radius-sm)]" />
+              <Skeleton className="h-4 w-11/12 rounded-[var(--radius-sm)]" />
+              <Skeleton className="h-4 w-4/5 rounded-[var(--radius-sm)]" />
+            </div>
+
+            <Skeleton className="h-40 w-full rounded-[var(--radius-md)] mt-6" />
+          </div>
+        </main>
+
+        {/* Bottom Dock Skeleton */}
+        <div className="pb-6 flex justify-center">
+          <Skeleton className="h-12 w-72 rounded-[var(--radius-lg)]" />
         </div>
       </div>
     );
@@ -215,19 +255,24 @@ export default function LessonReaderPage() {
 
   if (error) {
     return (
-      <div className="reader-error">
-        <FiAlertCircle size={40} className="text-rose-400" />
-        <h2>{error}</h2>
-        <Link to="/" className="reader-error-back">Back to Catalog</Link>
+      <div className="min-h-screen bg-[var(--bg)] text-[var(--ink)] flex flex-col items-center justify-center p-6 text-center">
+        <AlertCircle size={48} className="text-[var(--err)]" />
+        <h2 className="font-serif font-bold text-2xl mt-4 text-[var(--ink)]">{error}</h2>
+        <Link
+          to="/"
+          className="mt-6 inline-flex items-center gap-2 bg-[var(--accent)] text-[var(--accent-on)] font-bold px-6 py-2.5 rounded-[var(--radius-md)] hover:bg-[var(--accent-strong)] transition-colors text-sm"
+        >
+          <ArrowLeft size={16} /> Back to Catalog
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="reader-page">
+    <div ref={readerRef} className="reader-page relative bg-[var(--bg)] min-h-screen flex flex-col justify-between selection:bg-[var(--accent)] selection:text-[var(--accent-on)]">
       <SEO
-        title={lesson ? `${lesson.title} — Notes` : 'Notes — Lesson Reader'}
-        description={lesson?.excerpt || 'Interactive visual notes lesson'}
+        title={lesson ? `${lesson.title} — Notes` : 'Notes — Visual Lesson Reader'}
+        description={lesson?.excerpt || 'Interactive visual engineering study note deck'}
       />
 
       <ReaderNavbar
@@ -236,13 +281,16 @@ export default function LessonReaderPage() {
         totalSlides={totalSlidesCount}
         slides={slides}
         onSelectSlide={goToSlide}
+        onToggleFullscreen={toggleFullscreen}
+        onOpenHelp={() => setHelpOpen(true)}
         visitedSlides={visitedSlides}
       />
 
-      <main className="reader-main">
+      <main className="reader-main flex-1 flex items-center justify-center py-8">
         <SlideCanvas
           slide={currentSlide}
           slideIndex={currentSlideIndex}
+          totalSlides={totalSlidesCount}
           direction={direction}
           onNext={goNext}
           onPrev={goPrev}
@@ -255,8 +303,14 @@ export default function LessonReaderPage() {
         onNext={goNext}
         onPrev={goPrev}
         onGoToSlide={goToSlide}
+        onOpenHelp={() => setHelpOpen(true)}
         lessonId={lessonId}
         isAuthenticated={Boolean(localStorage.getItem('jwt'))}
+      />
+
+      <KeyboardHelpModal
+        isOpen={helpOpen}
+        onClose={() => setHelpOpen(false)}
       />
 
       {/* Print styles for PDF export */}
