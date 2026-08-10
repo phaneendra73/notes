@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import { Button } from "./Button.jsx";
 import {
   Code2,
@@ -94,14 +94,24 @@ WHERE status = 'active' ORDER BY created_at DESC;`,
 
 export default function Hero() {
   const navigate = useNavigate();
-  const [activeTrackId, setActiveTrackId] = useState("csharp");
+  const [activeTrackIdx, setActiveTrackIdx] = useState(0);
   const [copied, setCopied] = useState(false);
   const [selectedQuizIdx, setSelectedQuizIdx] = useState(null);
   const [typedText, setTypedText] = useState("");
+  const showcaseRef = useRef(null);
+  const isInView = useInView(showcaseRef, { once: false, margin: "-50px" });
 
-  const activeTrack = HERO_TRACKS.find((t) => t.id === activeTrackId) || HERO_TRACKS[0];
+  const activeTrack = HERO_TRACKS[activeTrackIdx] || HERO_TRACKS[0];
 
-  // Typewriter effect when activeTrack changes
+  // Auto-rotate track every 8 seconds unless user is interacting
+  useEffect(() => {
+    const autoRotate = setInterval(() => {
+      setActiveTrackIdx((prev) => (prev + 1) % HERO_TRACKS.length);
+    }, 8000);
+    return () => clearInterval(autoRotate);
+  }, []);
+
+  // Typewriter effect triggered whenever track changes or showcase enters view
   useEffect(() => {
     setTypedText("");
     setSelectedQuizIdx(null);
@@ -114,9 +124,9 @@ export default function Hero() {
       } else {
         clearInterval(timer);
       }
-    }, 10);
+    }, 12);
     return () => clearInterval(timer);
-  }, [activeTrackId]);
+  }, [activeTrackIdx, isInView]);
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(activeTrack.snippet);
@@ -131,14 +141,14 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative py-16 md:py-24 px-4 sm:px-6 bg-[var(--bg)] border-b border-[var(--line)] font-sans">
+    <section className="relative py-10 md:py-14 px-4 sm:px-6 bg-[var(--bg)] border-b border-[var(--line)] font-sans">
       <div className="max-w-[var(--maxw)] mx-auto flex flex-col items-center text-center">
         {/* Visual Engineering Notes Badge */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25 }}
-          className="mb-5"
+          transition={{ duration: 0.3 }}
+          className="mb-4"
         >
           <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[var(--radius-sm)] border border-[var(--accent-soft)] bg-[var(--accent-soft)] text-[var(--accent)] text-xs font-semibold uppercase tracking-widest">
             <Zap size={14} className="text-[var(--accent)]" />
@@ -151,8 +161,8 @@ export default function Hero() {
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, delay: 0.05 }}
-          className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.15] text-[var(--ink)] max-w-4xl mb-6"
+          transition={{ duration: 0.3, delay: 0.05 }}
+          className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.15] text-[var(--ink)] max-w-4xl mb-4"
         >
           Master C#, .NET, DSA & SQL with Interactive Notes.
         </motion.h1>
@@ -161,8 +171,8 @@ export default function Hero() {
         <motion.p
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, delay: 0.1 }}
-          className="font-sans text-base sm:text-lg text-[var(--ink-2)] max-w-2xl leading-relaxed mb-8 font-normal"
+          transition={{ duration: 0.3, delay: 0.1 }}
+          className="font-sans text-sm sm:text-base text-[var(--ink-2)] max-w-2xl leading-relaxed mb-6 font-normal"
         >
           A personal study hub with slide-by-slide interactive notes covering C#, .NET Core 8, Data Structures & Algorithms, SQL Indexing, and Distributed System Architecture.
         </motion.p>
@@ -171,45 +181,51 @@ export default function Hero() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, delay: 0.15 }}
-          className="flex flex-wrap items-center justify-center gap-4 mb-14"
+          transition={{ duration: 0.3, delay: 0.15 }}
+          className="flex flex-wrap items-center justify-center gap-3 mb-8"
         >
           <Button
             size="lg"
-            className="rounded-[var(--radius-md)] font-semibold gap-2 px-7 py-3 text-sm cursor-pointer bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] hover:bg-[var(--accent-strong)] transition-colors shadow-[var(--shadow-sm)]"
+            className="rounded-[var(--radius-md)] font-semibold gap-2 px-6 py-2.5 text-sm cursor-pointer bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] hover:bg-[var(--accent-strong)] transition-colors shadow-[var(--shadow-sm)]"
             onClick={handleExploreClick}
           >
-            <BookOpen size={17} />
+            <BookOpen size={16} />
             Explore Notes Library
-            <ArrowRight size={17} />
+            <ArrowRight size={16} />
           </Button>
 
           <Button
             size="lg"
             variant="outline"
-            className="rounded-[var(--radius-md)] font-semibold gap-2 px-6 py-3 border-[var(--line)] bg-[var(--surface)] text-[var(--ink)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-2)] transition-colors text-sm cursor-pointer"
+            className="rounded-[var(--radius-md)] font-semibold gap-2 px-5 py-2.5 border-[var(--line)] bg-[var(--surface)] text-[var(--ink)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-2)] transition-colors text-sm cursor-pointer"
             onClick={() => navigate("/read?id=1")}
           >
-            <Play size={16} className="text-[var(--accent)]" />
+            <Play size={15} className="text-[var(--accent)]" />
             Interactive Reader Demo
           </Button>
         </motion.div>
 
-        {/* EDITORIAL CARD SHOWCASE */}
-        <div className="w-full max-w-5xl rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-md)] text-left p-5 sm:p-7">
+        {/* EDITORIAL CARD SHOWCASE — Animated In-View */}
+        <motion.div
+          ref={showcaseRef}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="w-full max-w-5xl rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-md)] text-left p-4 sm:p-6"
+        >
           {/* Topic Tabs */}
-          <div className="flex flex-wrap items-center gap-2 pb-4 mb-6 border-b border-[var(--line)]">
+          <div className="flex flex-wrap items-center gap-2 pb-3 mb-5 border-b border-[var(--line)]">
             <span className="text-[11px] font-bold uppercase tracking-widest text-[var(--muted)] mr-2 flex items-center gap-1.5">
               <Terminal size={14} className="text-[var(--accent)]" /> Core Topics:
             </span>
-            {HERO_TRACKS.map((t) => {
-              const isActive = activeTrackId === t.id;
+            {HERO_TRACKS.map((t, idx) => {
+              const isActive = activeTrackIdx === idx;
               const Icon = t.icon;
               return (
                 <button
                   key={t.id}
-                  onClick={() => setActiveTrackId(t.id)}
-                  className={`px-3.5 py-1.5 rounded-[var(--radius-md)] text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer border ${
+                  onClick={() => setActiveTrackIdx(idx)}
+                  className={`px-3 py-1.5 rounded-[var(--radius-md)] text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer border ${
                     isActive
                       ? "bg-[var(--accent)] text-[var(--accent-on)] border-[var(--accent-strong)] font-bold"
                       : "bg-[var(--surface-2)] text-[var(--ink-2)] border-[var(--line)] hover:border-[var(--line-strong)] hover:text-[var(--ink)]"
@@ -233,7 +249,7 @@ export default function Hero() {
               className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch"
             >
               {/* Code Box with JetBrains Mono */}
-              <div className="lg:col-span-7 rounded-[var(--radius-md)] bg-[#141311] border border-[var(--line-strong)] p-5 font-mono text-xs text-[#00E57A] flex flex-col justify-between overflow-x-auto min-h-[250px] shadow-[var(--shadow-sm)]">
+              <div className="lg:col-span-7 rounded-[var(--radius-md)] bg-[#141311] border border-[var(--line-strong)] p-5 font-mono text-xs text-[#00E57A] flex flex-col justify-between overflow-x-auto min-h-[240px] shadow-[var(--shadow-sm)]">
                 <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#2E2C27] text-[11px]">
                   <span className="font-bold text-[#00E57A] uppercase tracking-wider flex items-center gap-1.5">
                     <Code2 size={14} /> {activeTrack.tag}
@@ -320,7 +336,7 @@ export default function Hero() {
               </div>
             </motion.div>
           </AnimatePresence>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
