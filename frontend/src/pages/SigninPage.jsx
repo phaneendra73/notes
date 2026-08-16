@@ -4,13 +4,11 @@ import client from '../api/client.js';
 import SEO from '../components/SEO.jsx';
 import Navbar from '../components/layout/Navbar.jsx';
 import Footer from '../components/layout/Footer.jsx';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card.jsx';
-import { Input } from '../components/ui/Input.jsx';
-import { Label } from '../components/ui/Label.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { useToast } from '../components/ui/Toast.jsx';
-import { FiMail, FiLock, FiShield, FiLoader, FiEye, FiEyeOff } from 'react-icons/fi';
+import { Mail, Lock, Shield, Loader2, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
+import kadhaLogo from '../assets/kadha.svg';
 
 export default function SigninPage() {
   const navigate = useNavigate();
@@ -40,76 +38,137 @@ export default function SigninPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--ink)] font-sans">
       <SEO title="Sign In — Notes" />
       <Navbar />
-      <main className="flex-1 flex items-center justify-center px-4 py-20 relative overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[450px] h-[450px] rounded-full bg-primary/10 blur-3xl opacity-60" />
-        </div>
 
+      <main className="flex-1 flex items-center justify-center px-4 py-16">
         <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-          className="relative z-10 w-full max-w-[420px]"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+          className="w-full max-w-sm"
         >
-          <Card className="border border-border bg-card shadow-2xl p-6 rounded-[24px]">
-            <CardHeader className="text-center pb-4 pt-2">
-              <div className="mx-auto mb-4 w-12 h-12 rounded-2xl bg-primary text-black flex items-center justify-center shadow-[0_0_22px_var(--neon-glow)]">
-                <FiShield size={22} />
+          {/* Card */}
+          <div className="rounded-[var(--radius-lg)] border border-[var(--line)]
+            bg-[var(--surface)] shadow-[var(--shadow-md)] p-7">
+
+            {/* Header */}
+            <div className="flex flex-col items-center text-center mb-7">
+              <div className="w-12 h-12 rounded-[var(--radius-md)] bg-[var(--accent-soft)]
+                border border-[var(--accent-soft)] flex items-center justify-center mb-4">
+                <img
+                  src={kadhaLogo}
+                  alt="Notes"
+                  className="w-6 h-6 object-contain"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+                <Shield
+                  size={22}
+                  className="text-[var(--accent)] hidden"
+                  style={{ display: 'none' }}
+                />
               </div>
-              <CardTitle className="text-2xl font-bold">Author Portal</CardTitle>
-              <CardDescription>Sign in to manage your lessons and studio.</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-2">
-              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="email">Email</Label>
-                  <div className="relative">
-                    <FiMail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      className="pl-9 h-10"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      required
-                    />
-                  </div>
+              <h1 className="font-serif font-bold text-2xl text-[var(--ink)]">
+                Author Portal
+              </h1>
+              <p className="text-xs text-[var(--muted)] mt-1 font-normal">
+                Sign in to manage your notes and studio.
+              </p>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
+              {/* Email */}
+              <div className="flex flex-col gap-1.5">
+                <label
+                  htmlFor="email"
+                  className="text-xs font-semibold text-[var(--ink)]"
+                >
+                  Email
+                </label>
+                <div className="flex items-center rounded-[var(--radius-md)]
+                  border border-[var(--line)] bg-[var(--bg)] px-3.5 gap-2.5
+                  focus-within:border-[var(--accent)] transition-colors">
+                  <Mail size={14} className="text-[var(--muted)] shrink-0" />
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    required
+                    className="flex-1 py-2.5 bg-transparent text-sm text-[var(--ink)]
+                      placeholder:text-[var(--muted)] outline-none font-normal"
+                  />
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <FiLock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      className="pl-9 pr-10 h-10"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                    />
-                    <button
-                      type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      onClick={() => setShowPassword((s) => !s)}
-                    >
-                      {showPassword ? <FiEyeOff size={15} /> : <FiEye size={15} />}
-                    </button>
-                  </div>
+              </div>
+
+              {/* Password */}
+              <div className="flex flex-col gap-1.5">
+                <label
+                  htmlFor="password"
+                  className="text-xs font-semibold text-[var(--ink)]"
+                >
+                  Password
+                </label>
+                <div className="flex items-center rounded-[var(--radius-md)]
+                  border border-[var(--line)] bg-[var(--bg)] px-3.5 gap-2.5
+                  focus-within:border-[var(--accent)] transition-colors">
+                  <Lock size={14} className="text-[var(--muted)] shrink-0" />
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    className="flex-1 py-2.5 bg-transparent text-sm text-[var(--ink)]
+                      placeholder:text-[var(--muted)] outline-none font-normal"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((s) => !s)}
+                    className="p-1 text-[var(--muted)] hover:text-[var(--ink)]
+                      transition-colors cursor-pointer"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
                 </div>
-                <Button type="submit" disabled={loading} size="lg" className="mt-3 w-full">
-                  {loading && <FiLoader size={15} className="spin mr-2" />}
-                  Sign In to Studio
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+              </div>
+
+              {/* Submit */}
+              <Button
+                type="submit"
+                disabled={loading}
+                className="mt-2 w-full rounded-[var(--radius-md)] font-bold text-sm gap-2
+                  bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)]
+                  hover:bg-[var(--accent-strong)] transition-colors cursor-pointer
+                  shadow-[var(--shadow-sm)]"
+              >
+                {loading && <Loader2 size={15} className="animate-spin" />}
+                Sign In to Studio
+              </Button>
+            </form>
+          </div>
+
+          {/* Back link */}
+          <p className="mt-4 text-center text-xs text-[var(--muted)]">
+            <button
+              onClick={() => navigate('/')}
+              className="hover:text-[var(--accent)] transition-colors cursor-pointer font-semibold"
+            >
+              ← Back to Notes
+            </button>
+          </p>
         </motion.div>
       </main>
+
       <Footer />
     </div>
   );

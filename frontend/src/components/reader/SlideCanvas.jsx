@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import BlockRenderer from "../blocks/BlockRenderer.jsx";
 import ImageZoomModal from "./ImageZoomModal.jsx";
@@ -17,6 +17,16 @@ const slideVariants = {
 export default function SlideCanvas({ slide, slideIndex, totalSlides = 1, direction = 1, onNext, onPrev }) {
   const [zoomedImage, setZoomedImage] = useState(null);
   const touchStartX = useRef(null);
+  const containerRef = useRef(null);
+
+  // Scroll to top when slide changes
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 0;
+    }
+    // Also scroll window to top as fallback
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [slideIndex]);
 
   const handleTouchStart = (e) => {
     if (e.target.closest("pre") || e.target.closest(".overflow-x-auto")) return;
@@ -35,6 +45,7 @@ export default function SlideCanvas({ slide, slideIndex, totalSlides = 1, direct
 
   return (
     <div
+      ref={containerRef}
       className="w-full max-w-4xl mx-auto relative select-none"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
