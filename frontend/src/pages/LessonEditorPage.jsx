@@ -11,11 +11,13 @@ import { Skeleton } from '../components/ui/Skeleton.jsx';
 import BlockListEditor from '../components/editor/BlockListEditor.jsx';
 import SlideCanvas from '../components/reader/SlideCanvas.jsx';
 import MediaLibraryModal from '../components/MediaLibraryModal.jsx';
+import TemplateSelectorModal from '../components/editor/TemplateSelectorModal.jsx';
 import useTags from '../hooks/useTags.js';
 import {
   ArrowLeft, Save, Plus, Trash2, Tag,
   Eye, EyeOff, Loader2, ChevronDown, ChevronUp, Image as ImageIcon,
-  Sliders, Layers, Check, ArrowUp, ArrowDown, X, Sparkles, Layout, Monitor, Sun, Moon
+  Sliders, Layers, Check, ArrowUp, ArrowDown, X, Sparkles, Layout, Monitor, Sun, Moon,
+  FileCode
 } from 'lucide-react';
 import { createDefaultBlock } from '../lib/blocks.js';
 
@@ -56,6 +58,7 @@ export default function LessonEditorPage() {
   const [showLivePreview, setShowLivePreview] = useState(true); // Split-screen preview
   const [mediaModalOpen, setMediaModalOpen] = useState(false);
   const [mediaTargetMode, setMediaTargetMode] = useState('slide'); // 'slide' | 'cover'
+  const [templateModalOpen, setTemplateModalOpen] = useState(false);
 
   // Auth guard
   useEffect(() => {
@@ -235,6 +238,22 @@ export default function LessonEditorPage() {
     }
   };
 
+  const handleApplyTemplate = (tmpl) => {
+    if (!tmpl) return;
+    if (!title || title === 'Untitled Note' || title.trim() === '') {
+      setTitle(tmpl.defaultTitle);
+    }
+    if (!excerpt) {
+      setExcerpt(tmpl.defaultExcerpt);
+    }
+    if (Array.isArray(tmpl.defaultTagIds) && tmpl.defaultTagIds.length > 0) {
+      setSelectedTagIds((prev) => [...new Set([...prev, ...tmpl.defaultTagIds])]);
+    }
+    setSlides(tmpl.slides);
+    setActiveSlideIdx(0);
+    toast.success(`Template applied: ${tmpl.title}`);
+  };
+
   const activeSlide = slides[activeSlideIdx] || slides[0];
 
   if (loading) {
@@ -249,7 +268,7 @@ export default function LessonEditorPage() {
   return (
     <div className="editor-page min-h-screen flex flex-col bg-[var(--bg)] text-[var(--ink)] selection:bg-[var(--accent)] selection:text-[var(--accent-on)] font-sans">
       <SEO
-        title={lessonId ? `Edit: ${title || 'Note'} — Notes Author Studio` : 'Create Visual Note — Notes Author Studio'}
+        title={lessonId ? `Edit: ${title || 'Note'} — Notes Author Studio` : 'Create Note — Notes Author Studio'}
       />
 
       {/* Editor Header Bar */}
@@ -263,7 +282,7 @@ export default function LessonEditorPage() {
             <ArrowLeft size={16} />
           </button>
           <span className="font-serif font-bold text-sm sm:text-base text-[var(--ink)] truncate max-w-xs">
-            {lessonId ? 'Edit Visual Note' : 'Create New Note'}
+            {lessonId ? 'Edit Note' : 'Create New Note'}
           </span>
         </div>
 
@@ -289,6 +308,16 @@ export default function LessonEditorPage() {
 
         {/* Right Actions */}
         <div className="flex items-center gap-2">
+          {/* Templates Selector Button */}
+          <button
+            onClick={() => setTemplateModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink)] text-xs font-semibold hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors cursor-pointer shadow-xs"
+            title="Choose a pre-built engineering template"
+          >
+            <Sparkles size={13} className="text-[var(--accent)]" />
+            <span>Templates</span>
+          </button>
+
           {/* Theme Toggle Button */}
           <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
@@ -540,6 +569,12 @@ export default function LessonEditorPage() {
         isOpen={mediaModalOpen}
         onClose={() => setMediaModalOpen(false)}
         onSelect={handleSelectMediaImage}
+      />
+
+      <TemplateSelectorModal
+        isOpen={templateModalOpen}
+        onClose={() => setTemplateModalOpen(false)}
+        onSelectTemplate={handleApplyTemplate}
       />
     </div>
   );

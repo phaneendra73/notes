@@ -40,7 +40,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="font-sans text-xs text-[var(--ink-2)] leading-relaxed max-w-sm font-normal">
-              Interactive visual study notes for C#, .NET Core 8, Data Structures, SQL Indexing, and System Design created by <strong className="text-[var(--ink)]">Phaneendra Marri</strong>.
+              Engineering study notes and technical deep dives covering C#, .NET Core 8, Data Structures, SQL Indexing, and System Design created by <strong className="text-[var(--ink)]">Phaneendra Marri</strong>.
             </p>
 
             {/* Author Social Links (GitHub, Twitter/X, YouTube, LinkedIn) */}

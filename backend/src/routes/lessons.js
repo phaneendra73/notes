@@ -92,6 +92,10 @@ lessonRoutes.get('/', async (c) => {
 
     const lessons = await attachTagsToLessons(c.env.DB, lessonsRow.results || []);
 
+    if (!includeUnpublished && !searchQuery) {
+      c.header('Cache-Control', 'public, max-age=60, s-maxage=180');
+    }
+
     return c.json({
       lessons,
       pagination: {
@@ -116,6 +120,7 @@ lessonRoutes.get('/stats', async (c) => {
       c.env.DB.prepare('SELECT COUNT(*) as total FROM tags').first(),
     ]);
 
+    c.header('Cache-Control', 'public, max-age=120, s-maxage=300');
     return c.json({
       totalLessons: lessonsRow?.total || 0,
       totalViews: viewsRow?.total || 0,

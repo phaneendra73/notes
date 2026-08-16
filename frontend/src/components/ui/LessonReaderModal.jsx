@@ -235,7 +235,7 @@ export default function LessonReaderModal({ lesson, isOpen, onClose }) {
                 onClick={handleStart}
                 className="w-full h-11 rounded-xl bg-[var(--accent)] text-[var(--accent-on)] font-bold text-sm flex items-center justify-center gap-2 hover:bg-[var(--accent-strong)] transition-all duration-200 shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)] active:scale-[0.99] cursor-pointer"
               >
-                <span>Start Learning</span>
+                <span>Start Reading</span>
                 <ArrowRight size={16} />
               </button>
             </div>

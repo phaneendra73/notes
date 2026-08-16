@@ -97,18 +97,27 @@ export function parseSlideRow(row, index = 0) {
 
 /**
  * Insert or replace tag-lesson associations.
- * Clears existing associations before inserting new ones.
+ * Uses atomic D1 batching for single-roundtrip execution.
  */
 export async function syncLessonTags(db, lessonId, tagIds) {
-  await db.prepare('DELETE FROM tagsonlessons WHERE lessonId = ?').bind(lessonId).run();
-  if (!Array.isArray(tagIds) || tagIds.length === 0) return;
-  for (const rawId of tagIds) {
-    const tagId = parseInt(rawId, 10);
-    if (!isNaN(tagId)) {
-      await db
-        .prepare('INSERT OR IGNORE INTO tagsonlessons (lessonId, tagId) VALUES (?, ?)')
-        .bind(lessonId, tagId)
-        .run();
+  const statements = [
+    db.prepare('DELETE FROM tagsonlessons WHERE lessonId = ?').bind(lessonId),
+  ];
+  if (Array.isArray(tagIds) && tagIds.length > 0) {
+    for (const rawId of tagIds) {
+      const tagId = parseInt(rawId, 10);
+      if (!isNaN(tagId)) {
+        statements.push(
+          db.prepare('INSERT OR IGNORE INTO tagsonlessons (lessonId, tagId) VALUES (?, ?)').bind(lessonId, tagId)
+        );
+      }
+    }
+  }
+  if (typeof db.batch === 'function') {
+    await db.batch(statements);
+  } else {
+    for (const stmt of statements) {
+      await stmt.run();
     }
   }
 }

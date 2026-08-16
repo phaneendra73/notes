@@ -7,6 +7,7 @@ export const tagRoutes = new Hono();
 tagRoutes.get('/', async (c) => {
   try {
     const result = await c.env.DB.prepare('SELECT id, name FROM tags ORDER BY name ASC').all();
+    c.header('Cache-Control', 'public, max-age=120, s-maxage=600');
     return c.json({ tags: result.results || [] });
   } catch (err) {
     console.error('Tags fetch error:', err);
@@ -22,20 +23,27 @@ tagRoutes.post('/', requireAuth, async (c) => {
       return c.json({ error: 'Tags array is required' }, 400);
     }
 
-    const inserted = [];
-    for (const rawName of tags) {
-      const name = rawName.trim();
-      if (!name) continue;
-      await c.env.DB.prepare('INSERT OR IGNORE INTO tags (name) VALUES (?)')
-        .bind(name)
-        .run();
-      const tag = await c.env.DB.prepare('SELECT id, name FROM tags WHERE name = ?')
-        .bind(name)
-        .first();
-      if (tag) inserted.push(tag);
+    const uniqueNames = [...new Set(tags.map((t) => (typeof t === 'string' ? t.trim() : '')).filter(Boolean))];
+    if (uniqueNames.length === 0) {
+      return c.json({ error: 'No valid tag names provided' }, 400);
     }
 
-    return c.json({ message: `${inserted.length} tag(s) created`, tags: inserted }, 201);
+    const statements = uniqueNames.map((name) =>
+      c.env.DB.prepare('INSERT OR IGNORE INTO tags (name) VALUES (?)').bind(name)
+    );
+
+    if (typeof c.env.DB.batch === 'function') {
+      await c.env.DB.batch(statements);
+    } else {
+      for (const stmt of statements) await stmt.run();
+    }
+
+    const placeholders = uniqueNames.map(() => '?').join(',');
+    const inserted = await c.env.DB.prepare(`SELECT id, name FROM tags WHERE name IN (${placeholders})`)
+      .bind(...uniqueNames)
+      .all();
+
+    return c.json({ message: `${inserted.results?.length || 0} tag(s) processed`, tags: inserted.results || [] }, 201);
   } catch (err) {
     console.error('Create tags error:', err);
     return c.json({ error: 'Failed to create tags' }, 500);
