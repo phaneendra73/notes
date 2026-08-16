@@ -119,8 +119,8 @@ authRoutes.put('/profile', requireAuth, async (c) => {
   }
 });
 
-// ── POST /api/auth/password ───────────────────────────────────────────────────
-authRoutes.post('/password', requireAuth, async (c) => {
+// ── PUT & POST /api/auth/password ─────────────────────────────────────────────
+async function updatePassword(c) {
   try {
     const userId = c.get('userId');
     const { currentPassword, newPassword } = await c.req.json();
@@ -133,11 +133,15 @@ authRoutes.post('/password', requireAuth, async (c) => {
       .bind(parseInt(userId))
       .first();
 
-    if (!user) return c.json({ error: 'User not found' }, 404);
+    if (!user) {
+      return c.json({ error: 'User not found' }, 404);
+    }
 
     if (currentPassword) {
       const valid = await verifyPassword(currentPassword, user.password);
-      if (!valid) return c.json({ error: 'Current password is incorrect' }, 400);
+      if (!valid) {
+        return c.json({ error: 'Current password is incorrect' }, 400);
+      }
     }
 
     const hashed = await hashPassword(newPassword);
@@ -152,10 +156,13 @@ authRoutes.post('/password', requireAuth, async (c) => {
     console.error('Password update error:', err);
     return c.json({ error: 'Failed to update password' }, 500);
   }
-});
+}
 
-// ── POST /api/auth/authors ────────────────────────────────────────────────────
-authRoutes.post('/authors', requireAuth, async (c) => {
+authRoutes.put('/password', requireAuth, updatePassword);
+authRoutes.post('/password', requireAuth, updatePassword);
+
+// ── POST /api/auth/authors & /api/auth/register ───────────────────────────────
+async function createAuthor(c) {
   try {
     const requesterId = c.get('userId');
     const requester = await c.env.DB.prepare('SELECT role FROM userprofiles WHERE id = ?')
@@ -192,4 +199,7 @@ authRoutes.post('/authors', requireAuth, async (c) => {
     console.error('Add author error:', err);
     return c.json({ error: 'Failed to create author account' }, 500);
   }
-});
+}
+
+authRoutes.post('/authors', requireAuth, createAuthor);
+authRoutes.post('/register', requireAuth, createAuthor);

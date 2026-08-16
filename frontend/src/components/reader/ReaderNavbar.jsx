@@ -53,14 +53,6 @@ export default function ReaderNavbar({
 
   return (
     <>
-      {/* Topmost Viewport Reading Progress Line */}
-      <div className="fixed top-0 left-0 right-0 z-[60] h-[3px] bg-[var(--surface-2)]">
-        <div
-          className="h-full bg-gradient-to-r from-[var(--accent)] via-emerald-400 to-[var(--accent)] transition-all duration-300 shadow-[0_0_8px_var(--accent)]"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-
       <motion.header
         animate={{ y: visible ? 0 : -80 }}
         transition={{ duration: 0.2 }}
