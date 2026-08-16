@@ -4,7 +4,7 @@ import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../ui/Button.jsx';
 import SearchCommandModal from '../ui/SearchCommandModal.jsx';
-import phaneendraLogo from '../../assets/phaneendramarri.svg';
+import phaneendraLogo from '../../../assets/phaneendramarri.svg';
 import {
   Edit3, LogOut, Settings, Tag,
   Sun, Moon, Menu, X, User,

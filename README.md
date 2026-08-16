@@ -87,6 +87,8 @@ Notes/
     ├── index.html                        # Root HTML template, favicon & SEO meta tags
     ├── vite.config.js                    # Vite bundler config with base path & code splitting
     ├── package.json                      # Frontend dependencies & deployment scripts
+    ├── assets/
+    │   └── phaneendramarri.svg           # Primary brand vector asset (logo & favicon)
     ├── public/
     │   ├── robots.txt                    # Search crawler directives
     │   └── sitemap.xml                   # Dynamic search engine sitemap
@@ -96,8 +98,6 @@ Notes/
         ├── index.css                     # Custom design tokens, glassmorphism, & theme utilities
         ├── api/
         │   └── client.js                 # Centralized Axios instance with auth interceptor
-        ├── assets/
-        │   └── phaneendramarri.svg       # Brand vector asset (logo & favicon)
         ├── hooks/
         │   ├── useBlogs.js               # Paginated notes query hook
         │   ├── useBookmarks.js           # Local bookmarking hook

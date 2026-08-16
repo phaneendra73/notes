@@ -8,7 +8,7 @@ import { Button } from '../components/ui/Button.jsx';
 import { useToast } from '../components/ui/Toast.jsx';
 import { Mail, Lock, Shield, Loader2, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
-import phaneendraLogo from '../assets/phaneendramarri.svg';
+import phaneendraLogo from '../../assets/phaneendramarri.svg';
 
 export default function SigninPage() {
   const navigate = useNavigate();
