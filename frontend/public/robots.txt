@@ -12,4 +12,4 @@ Disallow: /profile
 Disallow: /signin
 
 # Sitemap location
-Sitemap: https://phaneendra73.github.io/kadha2.0/sitemap.xml
+Sitemap: https://phaneendramarri.github.io/notes/sitemap.xml

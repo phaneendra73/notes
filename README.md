@@ -1,99 +1,128 @@
-# ✍️ Notes – Edge-Powered Modern Interactive Notes Platform
+# ✍️ Notes – Edge-Powered Interactive Visual Notes Platform
 
-**Notes** is an edge-native, serverless educational note-sharing and slide-based learning platform. Built with **React 19**, **Vite**, **Tailwind CSS**, **Framer Motion**, **Hono**, and powered by Cloudflare's serverless edge database service **Cloudflare D1 (SQLite)**.
+[![Live Platform](https://img.shields.io/badge/Live-Demo-00e57a?style=for-the-badge&logo=googlechrome&logoColor=black)](https://phaneendramarri.github.io/notes/)
+[![Cloudflare Workers](https://img.shields.io/badge/Backend-Cloudflare_Workers-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
+[![Cloudflare D1](https://img.shields.io/badge/Database-Cloudflare_D1_SQLite-F38020?style=for-the-badge&logo=sqlite&logoColor=white)](https://developers.cloudflare.com/d1/)
+[![React 19](https://img.shields.io/badge/Frontend-React_19_+_Vite-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Styling-Tailwind_CSS_v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
----
+**Notes** is a modern, edge-native interactive knowledge-base and slide-by-slide learning platform designed for software engineering concepts, deep dives, architectural blueprints, algorithms, and study tracks.
 
-## ✨ Features & Capabilities
-
-* ⚡ **Edge-Native Cloudflare D1 Database**: Built on Cloudflare Workers + Hono API with edge-backed SQLite storage (`c.env.DB`).
-* 🎨 **Modern Glassmorphic UI**: Vibrant dark mode aesthetics, glassmorphism, Framer Motion micro-animations, and responsive layouts.
-* 📖 **Slide-Based Reader Experience**:
-  * Progressive 5-slide batch prefetching with `sessionStorage` caching.
-  * Interactive slide canvas with keyboard navigation (`←` / `→` / `Home` / `End`).
-  * Live Mermaid diagram rendering and Syntax Highlighted code blocks.
-  * One-click PDF Export dialog & Web Share API integration (mobile native share + desktop clipboard fallback).
-* 🔖 **Local Favorites & Bookmarks**: Save notes locally using `useBookmarks` with instant filter pills on the home feed.
-* ✍️ **Visual Slide-Based Markdown Editor**:
-  * Interactive concept slide authoring with drag/order controls.
-  * Rich content blocks (Paragraphs, Code, Callouts, Mermaid Diagrams, Quizzes, Images).
-  * Short description / excerpt editor with live character counter (300 max).
-  * Auto-saving local draft recovery (syncs every 4 seconds).
-* 🏷️ **Instant Search & Topic Management**:
-  * Live debounced search across note titles and content.
-  * Tag filtering pills driven dynamically by the database.
-  * Dedicated Tag Manager screen for subject tag lifecycle management.
-* 👤 **Author Studio & Profile Management**: Author profile settings, initial password reset, multi-author provisioning, and published/draft note toggling.
+Built from the ground up on a serverless edge stack powered by **React 19**, **Vite**, **Tailwind CSS**, **Framer Motion**, **Hono**, and **Cloudflare D1 (Serverless SQLite)**.
 
 ---
 
-## 📂 Complete Architecture & Directory Structure
+## 🌐 Live Application
+
+* **Web App**: [https://phaneendramarri.github.io/notes/](https://phaneendramarri.github.io/notes/)
+* **GitHub Repository**: [https://github.com/phaneendramarri/notes](https://github.com/phaneendramarri/notes)
+
+---
+
+## ✨ What We Are Doing & Key Features
+
+### 1. 📖 Immersive Slide-Based Reader
+* **Slide Canvas & Transitions**: Slide-by-slide learning with smooth Framer Motion direction-aware transitions.
+* **Dual Reading Progress Indicators**:
+  * **In-Navbar Counter**: Displays slide index (`Slide X of Y`), miniature progress bar, and estimated time remaining.
+  * **Below-Navbar Ambient Accent**: Minimalist bottom-edge progress indicator attached to the header.
+* **Table of Contents Outline**: Sliding index drawer to jump directly to any slide chapter with visited status indicators.
+* **Rich Content Rendering**: Native support for:
+  * 📊 **Mermaid.js Diagrams**: Interactive architecture, sequence, class, state, and flow diagrams.
+  * 🧮 **KaTeX Mathematical Equations**: LaTeX mathematical expression formatting.
+  * 💻 **Syntax Highlighted Code**: Multi-language code snippets with one-click copy.
+  * 💡 **Callout Boxes**: Structured Tips, Warnings, Insights, and Notes.
+  * ❓ **Interactive Quizzes**: Multiple-choice self-assessment checks.
+* **Reader Navigation & Shortcuts**:
+  * Keyboard navigation (`←` / `→` / `Space`, `F` fullscreen, `?` shortcuts guide).
+  * One-click PDF / Print Export styling.
+  * Web Share API integration (native mobile share sheet with clipboard fallback).
+
+### 2. ✍️ Full-Featured Author Studio & Editor
+* **Block-Based WYSIWYG Slide Authoring**: Create, edit, reorder, and delete slides with real-time preview.
+* **Media Library Integration**: Embedded base64 image uploader with deduplication hashing (`media` table).
+* **Tag Association**: Attach topics and subject tags directly to notes.
+* **Draft & Published States**: Toggle note visibility with live status badges.
+* **Auto-Saving Draft Engine**: Local draft sync protecting against accidental data loss.
+
+### 3. 🏷️ Discovery & Instant Search
+* **Global Search Modal (`Ctrl+K` / `Cmd+K`)**: Live debounced search across note titles, descriptions, and content.
+* **Topic Pill Filtering**: Database-driven category badges for instant filtering (C#, .NET Core, DSA, SQL, System Design).
+* **Dedicated Tag Manager**: Manage, add, and clean up topic tags.
+
+### 4. ⚡ Edge-Native Architecture & Auth
+* **Zero Cold-Start Backend**: Powered by Cloudflare Workers and Hono routing framework.
+* **Serverless SQLite (Cloudflare D1)**: Low-latency edge database queries across global points of presence.
+* **Author Portal & Security**:
+  * JWT-authenticated session tokens.
+  * Secure PBKDF2 password hashing.
+  * In-portal password update (`PUT /api/auth/password`).
+  * Admin-level multi-author provisioning (`POST /api/auth/authors`).
+  * Rate-limiting middleware with edge IP tracking.
+
+---
+
+## 📂 Project Architecture & Directory Structure
 
 ```
-kadha2.0/
-├── backend/                              # Cloudflare Worker API (Hono Framework + D1 Database)
+Notes/
+├── backend/                              # Cloudflare Worker API (Hono + Cloudflare D1)
 │   ├── schema.sql                        # SQLite D1 Schema (lessons, slides, userprofiles, tags, media)
-│   ├── seed.sql                          # Demo database seed data & sample lessons
-│   ├── wrangler.jsonc                    # Cloudflare Wrangler worker configuration & D1 binding
+│   ├── seed.sql                          # Initial seed data & engineering lesson tracks
+│   ├── wrangler.jsonc                    # Cloudflare Worker configuration & D1 database bindings
+│   ├── package.json                      # Backend dependencies & scripts
 │   └── src/
-│       ├── index.js                      # Hono API entry point, CORS configuration & rate limiting
+│       ├── index.js                      # Hono API entry point, CORS & global error handling
+│       ├── db/
+│       │   └── queries.js                # Prepared SQL queries for D1 database operations
+│       ├── middleware/
+│       │   └── auth.js                   # JWT verification & password hashing utilities
 │       └── routes/
-│           ├── lessons.js                # Core REST API for lessons, slides, tags & search stats
-│           ├── user.js                   # Authentication (/signin), profile management & password reset
-│           ├── media.js                  # Image upload & media library management
-│           ├── middleware.js             # JWT authentication middleware & password hashing
-│           └── rateLimiter.js            # In-memory IP rate limiter middleware
+│           ├── auth.js                   # Auth endpoints (/signin, /profile, /password, /authors)
+│           ├── lessons.js                # Notes & slide endpoints (/lessons, /slides, /stats)
+│           ├── media.js                  # Image uploads & media library management
+│           └── tags.js                   # Topic tags management endpoints
 │
 └── frontend/                             # Single Page Application (React 19 + Vite + Tailwind CSS)
-    ├── index.html                        # Main HTML template & Google Font imports
-    ├── vite.config.js                    # Vite bundler configuration & dev server setup
-    ├── src/
-    │   ├── main.jsx                      # React application root entry point
-    │   ├── App.jsx                       # React Router definitions & lazy-loaded routes
-    │   ├── index.css                     # Design tokens, CSS variables, glassmorphic styles & animations
-    │   ├── assets/                       # SVG icons, logos, and static image assets
-    │   ├── components/                   # Application UI components
-    │   │   ├── SEO.jsx                   # Dynamic head meta tags & OpenGraph SEO manager
-    │   │   ├── ThemeProvider.jsx         # next-themes Dark/Light theme provider wrapper
-    │   │   ├── Toaster.jsx               # Toast notification provider & custom hook
-    │   │   ├── MediaLibraryModal.jsx     # Media upload modal for inserting images into notes
-    │   │   ├── blocks/                   # Visual Editor & Reader Content Block components
-    │   │   │   ├── CalloutBlock.jsx      # Tip, Warning, and Info callout boxes
-    │   │   │   ├── CodeBlock.jsx         # Code snippet block with copy button
-    │   │   │   ├── DiagramBlock.jsx      # Dynamic Mermaid diagram previewer
-    │   │   │   └── QuizBlock.jsx         # Interactive multiple-choice quiz block
-    │   │   ├── editor/                   # Visual Editor components
-    │   │   │   └── VisualSlideEditor.jsx # Split-screen slide authoring & block drag-and-drop
-    │   │   ├── reader/                   # Slide Reader components
-    │   │   │   ├── ImageZoomModal.jsx    # Fullscreen image light-box modal
-    │   │   │   ├── TrackBottomDock.jsx   # Floating slide navigation dock & progress bar
-    │   │   │   ├── TrackCanvas.jsx       # Main slide viewer canvas with Framer Motion slide transitions
-    │   │   │   └── TrackHeader.jsx       # Floating top header with menu, outline drawer, share & PDF export
-    │   │   └── ui/                       # Reusable UI component library
-    │   │       ├── Appbar.jsx            # Sticky glassmorphic top navigation bar
-    │   │       ├── Badge.jsx             # Tag & status badge pill component
-    │   │       ├── BlogCard.jsx          # Interactive note preview card with bookmark toggle
-    │   │       ├── Button.jsx            # Styled button with neon/outline/ghost variants
-    │   │       ├── Card.jsx              # Glassmorphic card container primitives
-    │   │       ├── Footer.jsx            # Platform footer with navigation links
-    │   │       ├── Hero.jsx              # Landing page hero header with live database stats
-    │   │       ├── HomeBlogs.jsx         # Homepage notes feed with sort, search, topic pills & bookmarks
-    │   │       ├── Input.jsx             # Form input field with focus ring styling
-    │   │       ├── Label.jsx             # Form field label component
-    │   │       ├── Pagination.jsx        # Paginated page switcher control
-    │   │       ├── SearchBar.jsx         # Live search modal input dropdown
-    │   │       └── Skeleton.jsx          # Loading skeleton animation placeholder
-    │   ├── hooks/                        # Custom React hooks
-    │   │   ├── useBlogs.js               # Hook for fetching paginated lessons with filters
-    │   │   ├── useBookmarks.js           # LocalStorage persistent bookmarking hook
-    │   │   ├── useSearch.js              # Debounced edge search query hook
-    │   │   └── useTags.js                # Database topic tags fetching hook
-    │   ├── lib/                          # Utility helpers
-    │   │   └── utils.js                  # Tailwind class merger (clsx + tailwind-merge)
-    │   └── utils/                        # Core application utilities
-    │       ├── api.js                    # Centralized Axios instance with JWT interceptor
-    │       ├── getenv.js                 # Environment variable reader (VITE_APIURL)
-    │       └── markdown.js               # Markdown parser, Mermaid wrapper & slide split helper
+    ├── index.html                        # Root HTML template, favicon & SEO meta tags
+    ├── vite.config.js                    # Vite bundler config with base path & code splitting
+    ├── package.json                      # Frontend dependencies & deployment scripts
+    ├── public/
+    │   ├── robots.txt                    # Search crawler directives
+    │   └── sitemap.xml                   # Dynamic search engine sitemap
+    └── src/
+        ├── main.jsx                      # React application bootstrap
+        ├── App.jsx                       # Route registry (public feeds, reader, protected studio)
+        ├── index.css                     # Custom design tokens, glassmorphism, & theme utilities
+        ├── api/
+        │   └── client.js                 # Centralized Axios instance with auth interceptor
+        ├── assets/
+        │   └── phaneendramarri.svg       # Brand vector asset (logo & favicon)
+        ├── hooks/
+        │   ├── useBlogs.js               # Paginated notes query hook
+        │   ├── useBookmarks.js           # Local bookmarking hook
+        │   ├── useSearch.js              # Live debounced search hook
+        │   └── useTags.js                # Topic tag fetching hook
+        ├── pages/
+        │   ├── HomePage.jsx              # Discovery feed, hero section, topic pills & note catalog
+        │   ├── LessonReaderPage.jsx      # Slide-by-slide reading canvas experience
+        │   ├── LessonEditorPage.jsx      # Block-based visual slide authoring studio
+        │   ├── StudioPage.jsx            # Author dashboard & lesson management
+        │   ├── TagManagerPage.jsx        # Topic tag management screen
+        │   ├── ProfilePage.jsx           # Author profile & password security management
+        │   ├── SigninPage.jsx            # Secure author login portal
+        │   └── NotFoundPage.jsx          # 404 fallback page
+        ├── components/
+        │   ├── SEO.jsx                   # Dynamic head tags & OpenGraph metadata
+        │   ├── blocks/                   # Slide content block renderers (Code, Diagram, Quiz, Callout)
+        │   ├── editor/                   # Visual slide authoring & block controls
+        │   ├── layout/                   # Global Navbar, Footer, and Page Shells
+        │   ├── reader/                   # SlideCanvas, ReaderNavbar, ReaderDock, & Modals
+        │   └── ui/                       # Buttons, Cards, Skeletons, Toasts, Search Modal, Catalog
+        └── utils/
+            ├── api.js                    # API utilities
+            ├── getenv.js                 # Environment variable resolver
+            └── markdown.js               # Markdown & diagram parser
 ```
 
 ---
@@ -102,125 +131,170 @@ kadha2.0/
 
 ```mermaid
 erDiagram
-    userprofiles ||--o{ lessons : "author of"
-    lessons ||--o{ slides : "contains ordered"
-    lessons ||--o{ tagsonlessons : "categorized by"
-    tags ||--o{ tagsonlessons : "associated with"
+    USERPROFILES ||--o{ LESSONS : "authors"
+    LESSONS ||--o{ SLIDES : "contains"
+    LESSONS ||--o{ TAGSONLESSONS : "categorized as"
+    TAGS ||--o{ TAGSONLESSONS : "tagged with"
+    USERPROFILES ||--o{ MEDIA : "uploads"
 
-    userprofiles {
-        int id PK
-        string email
-        string password
-        string name
-        string profileUrl
-        string bio
-        string role
+    USERPROFILES {
+        INTEGER id PK
+        TEXT email UK
+        TEXT password
+        TEXT name
+        TEXT profileUrl
+        TEXT bio
+        TEXT githubUrl
+        TEXT twitterUrl
+        TEXT role
+        DATETIME createdAt
     }
 
-    lessons {
-        int id PK
-        string title
-        string slug
-        string excerpt
-        string imageUrl
-        int readingTime
-        int slidesCount
-        int isPublished
-        int viewsCount
-        int authorId FK
+    LESSONS {
+        INTEGER id PK
+        TEXT title
+        TEXT slug UK
+        TEXT excerpt
+        TEXT imageUrl
+        INTEGER readingTime
+        INTEGER slidesCount
+        INTEGER isPublished
+        INTEGER viewsCount
+        INTEGER authorId FK
+        DATETIME createdAt
     }
 
-    slides {
-        int id PK
-        int lessonId FK
-        int orderNumber
-        string title
-        string blocksJson
+    SLIDES {
+        INTEGER id PK
+        INTEGER lessonId FK
+        INTEGER orderNumber
+        TEXT title
+        TEXT blocksJson
+        DATETIME createdAt
     }
 
-    tags {
-        int id PK
-        string name
+    TAGS {
+        INTEGER id PK
+        TEXT name UK
     }
 
-    tagsonlessons {
-        int lessonId PK,FK
-        int tagId PK,FK
+    TAGSONLESSONS {
+        INTEGER lessonId PK,FK
+        INTEGER tagId PK,FK
+    }
+
+    MEDIA {
+        INTEGER id PK
+        TEXT filename
+        TEXT base64Data
+        TEXT hash UK
+        TEXT mimeType
+        INTEGER size
+        INTEGER authorId FK
     }
 ```
 
 ---
 
-## 🛠️ REST API Endpoints Overview
+## 🛠️ REST API Specification
 
-| Method | Endpoint | Description | Auth Required |
+All backend endpoints are prefixed with `/api` and served from the Cloudflare Worker:
+
+### Authentication & Profile (`/api/auth`)
+| Method | Route | Description | Auth Required |
 | :--- | :--- | :--- | :---: |
-| `GET` | `/lessons/getall` | Fetch paginated lessons with tag, search query & sort options | ❌ |
-| `GET` | `/lessons/get/:id` | Fetch single lesson with ordered slides (supports `offset` & `limit`) | ❌ |
-| `GET` | `/lessons/stats` | Retrieve platform-wide total lessons, views & tags count | ❌ |
-| `GET` | `/lessons/tags` | Fetch all active subject tags | ❌ |
-| `POST` | `/lessons/add` | Create a new lesson note with ordered slides | ✅ |
-| `PUT` | `/lessons/edit/:id` | Update an existing lesson, slides & attached tags | ✅ |
-| `DELETE` | `/lessons/delete/:id` | Delete a lesson note and cascading slides | ✅ |
-| `POST` | `/lessons/tags/create` | Add new subject tags | ✅ |
-| `DELETE` | `/lessons/tags/:id` | Delete a tag and remove associated lesson mappings | ✅ |
-| `POST` | `/user/signin` | Authenticate author and receive JWT token | ❌ |
-| `GET` | `/user/profile` | Retrieve current authenticated author profile & stats | ✅ |
-| `PUT` | `/user/profile` | Update author bio, name, avatar & social links | ✅ |
-| `POST` | `/user/reset-password` | Update current author password | ✅ |
-| `POST` | `/user/add-author` | Provision a new author / admin account | ✅ |
+| `POST` | `/api/auth/signin` | Authenticate author and receive JWT token | ❌ |
+| `GET` | `/api/auth/profile` | Retrieve profile and author view statistics | ✅ |
+| `PUT` | `/api/auth/profile` | Update profile information and social links | ✅ |
+| `PUT` / `POST` | `/api/auth/password` | Update current author password | ✅ |
+| `POST` | `/api/auth/authors` | Provision a new author account (Admin only) | ✅ |
+
+### Notes & Lessons (`/api/lessons`)
+| Method | Route | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `GET` | `/api/lessons` | Fetch paginated lessons with search, tag filter & sorting | ❌ |
+| `GET` | `/api/lessons/:id` | Fetch lesson details and initial slide batch | ❌ |
+| `GET` | `/api/lessons/:id/slides` | Fetch paginated slides (`offset` & `limit`) | ❌ |
+| `GET` | `/api/lessons/stats/summary` | Fetch total platform lessons, views, and tag metrics | ❌ |
+| `POST` | `/api/lessons` | Create a new lesson note with ordered slides | ✅ |
+| `PUT` | `/api/lessons/:id` | Update note details, slides, and tag associations | ✅ |
+| `DELETE` | `/api/lessons/:id` | Delete a note and cascade delete its slides | ✅ |
+
+### Topic Tags (`/api/tags`)
+| Method | Route | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `GET` | `/api/tags` | List all active topic tags with note counts | ❌ |
+| `POST` | `/api/tags` | Create a new topic tag | ✅ |
+| `DELETE` | `/api/tags/:id` | Remove a topic tag | ✅ |
+
+### Media Library (`/api/media`)
+| Method | Route | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `GET` | `/api/media` | Retrieve uploaded media library items | ✅ |
+| `POST` | `/api/media/upload` | Upload and hash media base64 images | ✅ |
+| `DELETE` | `/api/media/:id` | Remove a media asset | ✅ |
 
 ---
 
-## 🚀 Getting Started Locally
+## 🚀 Local Development Setup
 
-### 1. Initialize Backend & Cloudflare D1 Local SQLite Database
+### 1. Prerequisites
+* [Node.js](https://nodejs.org/) (v18 or later)
+* [Cloudflare Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/) (`npm install -g wrangler`)
 
-Inside `backend/`:
-
+### 2. Run Backend Locally
 ```bash
 cd backend
 npm install
 
-# Initialize schema and seed demo content into local D1 SQLite
+# Initialize local SQLite D1 schema and seed demo data
 npm run db:init
 npm run db:seed
 
-# Start the Cloudflare Worker API server (runs at http://localhost:8787)
+# Start the Cloudflare Worker API on http://localhost:8787
 npm run dev
 ```
 
-### 2. Start the Frontend React Application
-
-Inside `frontend/`:
-
+### 3. Run Frontend Locally
 ```bash
 cd frontend
 npm install
 
-# Start Vite dev server (runs at http://localhost:3000)
+# Start Vite development server on http://localhost:3000
 npm run dev
 ```
 
 ---
 
-## ☁️ Deploying to Production (Cloudflare Pages & D1)
+## ☁️ Deployment
 
-1. Create a remote D1 database on Cloudflare:
-   ```bash
-   wrangler d1 create kadha2-db
-   ```
-2. Initialize database schema & seed remote database:
-   ```bash
-   npm run db:remote-init
-   npm run db:remote-seed
-   ```
-3. Deploy Worker API backend:
-   ```bash
-   npm run deploy
-   ```
-4. Build and deploy frontend bundle:
-   ```bash
-   cd frontend
-   npm run build
-   ```
+### Deploy Backend Worker
+```bash
+cd backend
+npm run deploy
+```
+
+### Deploy Frontend to GitHub Pages
+```bash
+cd frontend
+npm run deploy
+```
+
+---
+
+## 👨‍💻 Author & Connect
+
+**Created & Curated with ❤️ by Phaneendra Marri**
+
+* 🌐 **Personal Website**: [https://phaneendramarri.com](https://phaneendramarri.com)
+* 📖 **Notes Platform**: [https://phaneendramarri.github.io/notes/](https://phaneendramarri.github.io/notes/)
+* 🐙 **GitHub**: [@phaneendramarri](https://github.com/phaneendramarri)
+* 💼 **LinkedIn**: [Phaneendra Marri](https://linkedin.com/in/phaneendramarri)
+* 🐦 **Twitter / X**: [@phaneendramarri](https://x.com/phaneendramarri)
+* 📺 **YouTube**: [@phaneendramarri](https://youtube.com/@phaneendramarri)
+
+---
+
+## 📄 License
+
+This project is open-source and available under the [MIT License](LICENSE).

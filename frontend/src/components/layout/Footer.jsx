@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, ArrowUp, Terminal } from 'lucide-react';
 import useTags from '../../hooks/useTags.js';
-import kadhaLogo from '../../assets/kadha.svg';
+import phaneendraLogo from '../../assets/phaneendramarri.svg';
 
 export default function Footer() {
   const navigate = useNavigate();
@@ -33,7 +33,7 @@ export default function Footer() {
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-[var(--radius-sm)] bg-[var(--surface-2)] border border-[var(--line)] p-1 flex items-center justify-center">
-                <img src={kadhaLogo} alt="Notes" className="w-full h-full object-contain" />
+                <img src={phaneendraLogo} alt="Notes" className="w-full h-full object-contain" />
               </div>
               <span className="font-serif font-bold text-xl text-[var(--ink)]">
                 Notes<span className="text-[var(--accent)] font-bold">.</span>

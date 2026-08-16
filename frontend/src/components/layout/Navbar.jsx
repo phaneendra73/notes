@@ -4,7 +4,7 @@ import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../ui/Button.jsx';
 import SearchCommandModal from '../ui/SearchCommandModal.jsx';
-import kadhaLogo from '../../assets/kadha.svg';
+import phaneendraLogo from '../../assets/phaneendramarri.svg';
 import {
   Edit3, LogOut, Settings, Tag,
   Sun, Moon, Menu, X, User,
@@ -84,7 +84,7 @@ export default function Navbar() {
               className="flex items-center gap-2.5 bg-transparent border-none cursor-pointer group"
             >
               <div className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-[var(--radius-md)] bg-gradient-to-br from-[var(--accent-soft)] to-[var(--surface-2)] border border-[var(--line)] p-1 flex items-center justify-center group-hover:border-[var(--accent)] group-hover:scale-105 transition-all shadow-[var(--shadow-xs)]">
-                <img src={kadhaLogo} alt="Notes" className="w-full h-full object-contain" />
+                <img src={phaneendraLogo} alt="Notes" className="w-full h-full object-contain" />
               </div>
               <span className="font-serif font-bold text-xl sm:text-2xl text-[var(--ink)] tracking-tight group-hover:text-[var(--accent)] transition-colors">
                 Notes<span className="text-[var(--accent)]">.</span>

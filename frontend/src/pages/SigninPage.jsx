@@ -8,7 +8,7 @@ import { Button } from '../components/ui/Button.jsx';
 import { useToast } from '../components/ui/Toast.jsx';
 import { Mail, Lock, Shield, Loader2, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
-import kadhaLogo from '../assets/kadha.svg';
+import phaneendraLogo from '../assets/phaneendramarri.svg';
 
 export default function SigninPage() {
   const navigate = useNavigate();
@@ -58,7 +58,7 @@ export default function SigninPage() {
               <div className="w-12 h-12 rounded-[var(--radius-md)] bg-[var(--accent-soft)]
                 border border-[var(--accent-soft)] flex items-center justify-center mb-4">
                 <img
-                  src={kadhaLogo}
+                  src={phaneendraLogo}
                   alt="Notes"
                   className="w-6 h-6 object-contain"
                   onError={(e) => {
