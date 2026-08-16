@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { AlertCircle, Loader2 } from "lucide-react";
 
 export default function DiagramBlock({ block }) {
@@ -25,7 +25,7 @@ export default function DiagramBlock({ block }) {
         mermaid.initialize({
           startOnLoad: false,
           theme: "dark",
-          securityLevel: "loose",
+          securityLevel: "strict",
           fontFamily: "var(--font-mono)",
         });
         const id = `mermaid-${Math.random().toString(36).slice(2, 9)}`;

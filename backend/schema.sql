@@ -70,9 +70,17 @@ CREATE TABLE IF NOT EXISTS tagsonlessons (
   FOREIGN KEY (tagId)    REFERENCES tags(id)    ON DELETE CASCADE
 );
 
+-- Rate limiting table (for persistent edge rate limiting across Cloudflare Worker isolates)
+CREATE TABLE IF NOT EXISTS rate_limits (
+  key      TEXT PRIMARY KEY,
+  count    INTEGER NOT NULL DEFAULT 1,
+  resetAt  INTEGER NOT NULL
+);
+
 -- Performance indexes
 CREATE INDEX IF NOT EXISTS idx_lessons_published ON lessons(isPublished, createdAt DESC);
 CREATE INDEX IF NOT EXISTS idx_lessons_slug      ON lessons(slug);
 CREATE INDEX IF NOT EXISTS idx_slides_order      ON slides(lessonId, orderNumber ASC);
 CREATE INDEX IF NOT EXISTS idx_media_hash        ON media(hash);
 CREATE INDEX IF NOT EXISTS idx_tags_lessons      ON tagsonlessons(lessonId);
+CREATE INDEX IF NOT EXISTS idx_rate_limits_reset ON rate_limits(resetAt);

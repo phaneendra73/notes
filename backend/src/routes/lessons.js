@@ -127,6 +127,50 @@ lessonRoutes.get('/stats', async (c) => {
   }
 });
 
+// ── GET /api/lessons/:id/slides ───────────────────────────────────────────────
+// Paginated slides for a lesson. Supports: offset, limit.
+lessonRoutes.get('/:id/slides', async (c) => {
+  try {
+    const param = c.req.param('id');
+    const isNumericId = /^\d+$/.test(param);
+    const offset = Math.max(0, parseInt(c.req.query('offset')) || 0);
+    const limit = Math.max(1, parseInt(c.req.query('limit')) || 5);
+
+    const lesson = await c.env.DB.prepare(
+      `SELECT id FROM lessons WHERE ${isNumericId ? 'id = ?' : 'slug = ?'}`
+    )
+      .bind(isNumericId ? parseInt(param) : param)
+      .first();
+
+    if (!lesson) return c.json({ error: 'Lesson not found' }, 404);
+
+    const totalRow = await c.env.DB.prepare(
+      'SELECT COUNT(*) as total FROM slides WHERE lessonId = ?'
+    )
+      .bind(lesson.id)
+      .first();
+    const totalSlidesCount = totalRow?.total || 0;
+
+    const slidesRow = await c.env.DB.prepare(
+      'SELECT id, orderNumber, title, blocksJson FROM slides WHERE lessonId = ? ORDER BY orderNumber ASC LIMIT ? OFFSET ?'
+    )
+      .bind(lesson.id, limit, offset)
+      .all();
+
+    const slides = (slidesRow.results || []).map((row, idx) => parseSlideRow(row, offset + idx));
+
+    return c.json({
+      slides,
+      totalSlidesCount,
+      offset,
+      hasMore: offset + slides.length < totalSlidesCount,
+    });
+  } catch (err) {
+    console.error('Fetch slides batch error:', err);
+    return c.json({ error: 'Failed to fetch slides' }, 500);
+  }
+});
+
 // ── GET /api/lessons/:id ──────────────────────────────────────────────────────
 // Fetch a single lesson with paginated slides. Supports: offset, limit (0 = all slides).
 lessonRoutes.get('/:id', async (c) => {
@@ -262,6 +306,12 @@ lessonRoutes.put('/:id', requireAuth, async (c) => {
     const existing = await c.env.DB.prepare('SELECT * FROM lessons WHERE id = ?').bind(id).first();
     if (!existing) return c.json({ error: 'Lesson not found' }, 404);
 
+    const userId = parseInt(c.get('userId'));
+    const user = await c.env.DB.prepare('SELECT role FROM userprofiles WHERE id = ?').bind(userId).first();
+    if (user?.role !== 'admin' && existing.authorId !== userId) {
+      return c.json({ error: 'Forbidden: You do not have permission to modify this note' }, 403);
+    }
+
     const body = await c.req.json();
     const { title, excerpt, coverUrl, slides, tagIds, published } = body;
 
@@ -314,6 +364,15 @@ lessonRoutes.delete('/:id', requireAuth, async (c) => {
     const id = parseInt(c.req.param('id'));
     if (!id || isNaN(id)) return c.json({ error: 'Invalid lesson ID' }, 400);
 
+    const existing = await c.env.DB.prepare('SELECT id, authorId FROM lessons WHERE id = ?').bind(id).first();
+    if (!existing) return c.json({ error: 'Lesson not found' }, 404);
+
+    const userId = parseInt(c.get('userId'));
+    const user = await c.env.DB.prepare('SELECT role FROM userprofiles WHERE id = ?').bind(userId).first();
+    if (user?.role !== 'admin' && existing.authorId !== userId) {
+      return c.json({ error: 'Forbidden: You do not have permission to delete this note' }, 403);
+    }
+
     // slides and tagsonlessons use ON DELETE CASCADE in schema
     await c.env.DB.prepare('DELETE FROM lessons WHERE id = ?').bind(id).run();
 
@@ -323,3 +382,4 @@ lessonRoutes.delete('/:id', requireAuth, async (c) => {
     return c.json({ error: 'Failed to delete lesson' }, 500);
   }
 });
+

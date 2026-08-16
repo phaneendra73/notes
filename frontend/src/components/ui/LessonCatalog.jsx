@@ -7,10 +7,11 @@ import useSearch from '../../hooks/useSearch.js';
 import LessonCard from './LessonCard.jsx';
 import { Pagination } from './Pagination.jsx';
 import { Skeleton } from './Skeleton.jsx';
+import LessonReaderModal from './LessonReaderModal.jsx';
 import {
   BookOpen, RefreshCw, AlertCircle, Search,
   ArrowRight, Loader2, X,
-  LayoutGrid, List, ArrowUpDown
+  LayoutGrid, List, ArrowUpDown, ChevronDown, Check, Clock, Eye, Sparkles
 } from 'lucide-react';
 
 const SEARCH_PLACEHOLDERS = [
@@ -19,25 +20,51 @@ const SEARCH_PLACEHOLDERS = [
   "Search any concept or code pattern...",
 ];
 
+const SORT_OPTIONS = [
+  { value: 'recent', label: 'Newest First', icon: Clock },
+  { value: 'views', label: 'Most Viewed', icon: Eye },
+  { value: 'title', label: 'Title (A–Z)', icon: Sparkles },
+];
+
 export default function LessonCatalog() {
   const navigate = useNavigate();
   const searchInputRef = useRef(null);
   const catalogTopRef = useRef(null);
+  const sortDropdownRef = useRef(null);
+
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedLesson, setSelectedLesson] = useState(null);
 
   const [selectedTagId, setSelectedTagId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [searchFocused, setSearchFocused] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
-  const [sortBy, setSortBy] = useState('recent'); // 'recent' | 'views' | 'title'
+  const [viewMode, setViewMode] = useState('list');
+  const [sortBy, setSortBy] = useState('recent');
+  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
 
   const { tags: backendTags } = useTags();
   const { results: searchDropdownResults, loading: searchDropdownLoading } = useSearch(searchQuery);
-  // Fetch 10 cards per page
   const { lessons, loading, isFetching, error, pagination, refetch } = useLessons(selectedTagId, searchQuery, currentPage, 10);
 
   const isLoading = loading || isFetching;
+
+  const handleCardClick = (lesson) => {
+    setSelectedLesson(lesson);
+    setModalOpen(true);
+  };
+
+  const handleReadClick = (lesson, e) => {
+    e.stopPropagation();
+    navigate(`/read?id=${lesson.id}`);
+  };
+
+  const handleModalClose = () => {
+    setModalOpen(false);
+    setSelectedLesson(null);
+  };
 
   // Cycle search placeholders slowly
   useEffect(() => {
@@ -61,6 +88,17 @@ export default function LessonCatalog() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Close sort dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(e.target)) {
+        setSortDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   let filteredLessons = [...lessons];
@@ -87,31 +125,32 @@ export default function LessonCatalog() {
   const hasActiveFilters = selectedTagId !== null || searchQuery !== '';
 
   return (
-    <div ref={catalogTopRef} className="w-full max-w-[var(--maxw)] mx-auto px-4 sm:px-6 py-6 md:py-8 space-y-6 font-sans">
+    <>
+      <div ref={catalogTopRef} className="w-full max-w-[var(--maxw)] mx-auto px-4 sm:px-6 py-6 md:py-8 space-y-6 font-sans">
       
-      {/* 🟢 Compact, Simple Hero Section 🟢 */}
-      <section className="p-6 sm:p-8 rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-sm)] space-y-4">
+      {/* 🟢 Purposeful Hero Section 🟢 */}
+      <section className="mb-2">
         {/* Title & Subtitle */}
-        <div className="space-y-1">
-          <h1 className="font-serif font-bold text-2xl sm:text-3xl lg:text-4xl text-[var(--ink)] tracking-tight">
-            Notes
+        <div className="mb-6 space-y-2">
+          <h1 className="font-serif font-bold text-3xl sm:text-4xl lg:text-5xl text-[var(--ink)] tracking-tight leading-[1.1]">
+            Knowledge written clearly.
           </h1>
-          <p className="text-xs sm:text-sm text-[var(--muted)] font-normal max-w-xl leading-relaxed">
-            Visual notes on software architecture, code patterns, and systems.
+          <p className="text-base sm:text-lg text-[var(--ink-2)] leading-relaxed max-w-2xl">
+            Slide-based learning notes on software architecture, code patterns, and systems.
           </p>
         </div>
 
         {/* Prominent Search Bar */}
-        <div className="relative w-full">
+        <div className="relative w-full max-w-xl mx-auto">
           <div
             onClick={() => searchInputRef.current?.focus()}
-            className={`flex items-center w-full px-3.5 py-2.5 sm:py-3 rounded-[var(--radius-md)] border bg-[var(--bg)] shadow-[var(--shadow-sm)] transition-all cursor-text ${
+            className={`flex items-center w-full px-4 py-3.5 rounded-[var(--radius-lg)] border bg-[var(--bg)] shadow-[var(--shadow-md)] transition-all cursor-text ${
               searchFocused
                 ? 'border-[var(--accent)] ring-2 ring-[var(--accent-soft)]'
                 : 'border-[var(--line)] hover:border-[var(--line-strong)]'
             }`}
           >
-            <Search size={16} className="text-[var(--accent)] shrink-0 mr-2.5" />
+            <Search size={18} className="text-[var(--accent)] shrink-0 mr-3" />
             <input
               ref={searchInputRef}
               type="text"
@@ -122,7 +161,7 @@ export default function LessonCatalog() {
               }}
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-              placeholder={SEARCH_PLACEHOLDERS[placeholderIdx]}
+              placeholder="Search for topics, titles, or code patterns..."
               className="flex-1 bg-transparent text-xs sm:text-sm text-[var(--ink)] placeholder:text-[var(--muted)] outline-none font-normal"
             />
             {searchQuery ? (
@@ -131,17 +170,24 @@ export default function LessonCatalog() {
                   e.stopPropagation();
                   setSearchQuery('');
                 }}
-                className="p-1 rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--ink)] transition-colors cursor-pointer"
+                className="p-1.5 rounded-[var(--radius-md)] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)] transition-all cursor-pointer"
                 title="Clear search"
               >
-                <X size={14} />
+                <X size={15} />
               </button>
             ) : (
-              <kbd className="hidden sm:inline-block px-1.5 py-0.5 rounded-[var(--radius-sm)] bg-[var(--surface-2)] border border-[var(--line)] text-[10px] font-mono text-[var(--muted)] font-bold">
+              <kbd className="hidden sm:inline-block px-2 py-1 rounded-[var(--radius-md)] bg-[var(--surface-2)] border border-[var(--line)] text-[10px] font-mono text-[var(--muted)] font-bold">
                 Ctrl + K
               </kbd>
             )}
           </div>
+
+          {/* Search Results Count */}
+          {searchFocused && searchQuery.length >= 2 && !searchDropdownLoading && searchDropdownResults.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-2 px-2 text-xs text-[var(--muted)] font-medium">
+              {searchDropdownResults.length} result{searchDropdownResults.length !== 1 ? 's' : ''} found
+            </div>
+          )}
 
           {/* Autocomplete Dropdown */}
           <AnimatePresence>
@@ -150,27 +196,27 @@ export default function LessonCatalog() {
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 6 }}
-                className="absolute top-full left-0 right-0 z-40 mt-1.5 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-lg)] overflow-hidden p-2 text-left"
+                className="absolute top-full left-0 right-0 z-40 mt-2 rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-lg)] overflow-hidden"
               >
                 {searchDropdownLoading ? (
-                  <div className="p-3 flex items-center justify-center gap-2 text-xs text-[var(--muted)]">
-                    <Loader2 size={14} className="animate-spin text-[var(--accent)]" /> Searching notes...
+                  <div className="p-4 flex items-center justify-center gap-2 text-xs text-[var(--muted)]">
+                    <Loader2 size={14} className="animate-spin text-[var(--accent)]" /> Loading...
                   </div>
                 ) : searchDropdownResults.length > 0 ? (
-                  <div className="space-y-1">
-                    {searchDropdownResults.slice(0, 5).map((res) => (
+                  <div className="max-h-[300px] overflow-y-auto">
+                    {searchDropdownResults.slice(0, 8).map((res) => (
                       <button
                         key={res.id}
                         onClick={() => navigate(`/read?id=${res.id}`)}
-                        className="w-full text-left px-3 py-2 rounded-[var(--radius-sm)] hover:bg-[var(--surface-2)] hover:text-[var(--accent)] transition-colors flex items-center justify-between text-xs sm:text-sm font-semibold cursor-pointer text-[var(--ink)]"
+                        className="w-full text-left px-4 py-3 rounded-[var(--radius-md)] hover:bg-[var(--surface-2)] hover:text-[var(--accent)] transition-colors flex items-center justify-between text-sm font-semibold cursor-pointer text-[var(--ink)] border-b border-[var(--line)] last:border-0"
                       >
-                        <span className="truncate">{res.title}</span>
-                        <ArrowRight size={13} className="shrink-0 text-[var(--accent)] ml-2" />
+                        <span className="truncate flex-1">{res.title}</span>
+                        <ArrowRight size={15} className="shrink-0 text-[var(--accent)] ml-3" />
                       </button>
                     ))}
                   </div>
                 ) : (
-                  <div className="p-3 text-center text-xs text-[var(--muted)]">
+                  <div className="p-4 text-center text-xs text-[var(--muted)]">
                     No matching notes found for "{searchQuery}".
                   </div>
                 )}
@@ -200,7 +246,10 @@ export default function LessonCatalog() {
             return (
               <button
                 key={tag.id}
-                onClick={() => { setSelectedTagId(isActive ? null : tag.id); setCurrentPage(1); }}
+                onClick={() => {
+                  setSelectedTagId(isActive ? null : tag.id);
+                  setCurrentPage(1);
+                }}
                 className={`px-3.5 py-1.5 rounded-[var(--radius-md)] text-xs font-semibold shrink-0 transition-colors cursor-pointer border ${
                   isActive
                     ? 'bg-[var(--accent)] text-[var(--accent-on)] border-[var(--accent-strong)] font-bold shadow-[var(--shadow-sm)]'
@@ -224,18 +273,67 @@ export default function LessonCatalog() {
             </button>
           )}
 
-          {/* Sort Dropdown */}
-          <div className="flex items-center rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] px-2.5 py-1.5 gap-1.5 text-xs text-[var(--ink-2)] shadow-[var(--shadow-sm)]">
-            <ArrowUpDown size={12} className="text-[var(--muted)]" />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="bg-transparent text-xs text-[var(--ink)] outline-none border-none cursor-pointer pr-1 font-semibold"
+          {/* Custom Sort Dropdown */}
+          <div ref={sortDropdownRef} className="relative">
+            <button
+              onClick={() => setSortDropdownOpen((prev) => !prev)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-2)] text-xs font-semibold text-[var(--ink)] cursor-pointer shadow-[var(--shadow-sm)] transition-all select-none"
+              title="Sort Notes"
             >
-              <option value="recent">Newest</option>
-              <option value="views">Most Viewed</option>
-              <option value="title">Title A-Z</option>
-            </select>
+              {(() => {
+                const currentOpt = SORT_OPTIONS.find((opt) => opt.value === sortBy) || SORT_OPTIONS[0];
+                const IconComp = currentOpt.icon;
+                return (
+                  <>
+                    <IconComp size={13} className="text-[var(--accent)]" />
+                    <span>{currentOpt.label}</span>
+                  </>
+                );
+              })()}
+              <ChevronDown
+                size={13}
+                className={`text-[var(--muted)] transition-transform duration-200 ${
+                  sortDropdownOpen ? 'rotate-180 text-[var(--accent)]' : ''
+                }`}
+              />
+            </button>
+
+            <AnimatePresence>
+              {sortDropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 4, scale: 0.95 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  className="absolute right-0 top-full mt-1.5 z-50 w-44 rounded-xl border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-xl)] p-1 space-y-0.5 backdrop-blur-xl"
+                >
+                  {SORT_OPTIONS.map((opt) => {
+                    const isSelected = sortBy === opt.value;
+                    const OptIcon = opt.icon;
+                    return (
+                      <button
+                        key={opt.value}
+                        onClick={() => {
+                          setSortBy(opt.value);
+                          setSortDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-colors text-left ${
+                          isSelected
+                            ? 'bg-[var(--accent-soft)] text-[var(--accent)] font-bold'
+                            : 'text-[var(--ink)] hover:bg-[var(--surface-2)]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <OptIcon size={13} className={isSelected ? 'text-[var(--accent)]' : 'text-[var(--muted)]'} />
+                          <span>{opt.label}</span>
+                        </div>
+                        {isSelected && <Check size={13} className="text-[var(--accent)]" />}
+                      </button>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* View Mode Toggle */}
@@ -268,14 +366,14 @@ export default function LessonCatalog() {
 
       {/* 🟢 Notes Listing (Stacked Row List / Grid) 🟢 */}
       {isLoading ? (
-        <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 min-h-[360px]" : "space-y-3.5 min-h-[360px]"}>
+        <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[400px]" : "space-y-4 min-h-[400px]"}>
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-5 flex gap-4 items-center">
-              <Skeleton className="w-24 h-20 sm:w-32 sm:h-24 rounded-[var(--radius-md)] shrink-0" />
-              <div className="flex-1 space-y-2.5">
-                <Skeleton className="h-4 w-28 rounded-[var(--radius-sm)]" />
-                <Skeleton className="h-5 w-3/4 rounded-[var(--radius-sm)]" />
-                <Skeleton className="h-3.5 w-full rounded-[var(--radius-sm)]" />
+            <div key={i} className="rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6 flex gap-4 sm:gap-5 items-center">
+              <Skeleton className="w-28 h-22 sm:w-36 sm:h-28 rounded-[var(--radius-lg)] shrink-0" />
+              <div className="flex-1 space-y-3">
+                <Skeleton className="h-5 w-32 sm:w-40 rounded-[var(--radius-md)]" />
+                <Skeleton className="h-6 w-3/4 rounded-[var(--radius-md)]" />
+                <Skeleton className="h-4 w-full rounded-[var(--radius-sm)]" />
               </div>
             </div>
           ))}
@@ -302,29 +400,42 @@ export default function LessonCatalog() {
             className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 min-h-[360px]" : "space-y-3.5 min-h-[360px]"}
           >
             {filteredLessons.map((lesson) => (
-              <LessonCard key={lesson.id} lesson={lesson} viewMode={viewMode} />
+              <LessonCard 
+                key={lesson.id} 
+                lesson={lesson} 
+                viewMode={viewMode} 
+                selectedLesson={selectedLesson}
+                modalOpen={modalOpen}
+                onCardClick={handleCardClick}
+                onReadClick={handleReadClick}
+                onModalClose={handleModalClose}
+              />
             ))}
           </motion.div>
         </AnimatePresence>
       ) : (
-        <div className="rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] p-12 text-center space-y-3 min-h-[280px] flex flex-col items-center justify-center">
-          <BookOpen size={36} className="mx-auto text-[var(--muted)] opacity-50" />
-          <h3 className="font-serif font-bold text-lg text-[var(--ink)]">No Notes Found</h3>
-          <p className="text-xs text-[var(--muted)] max-w-md mx-auto leading-relaxed font-normal">
-            No notes matched your search query or selected topic.
+        <div className="rounded-[var(--radius-xl)] border border-[var(--line)] bg-[var(--surface)] p-12 sm:p-16 text-center space-y-5 min-h-[320px] flex flex-col items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-[var(--surface-2)] border border-[var(--line)] flex items-center justify-center mb-4">
+            <BookOpen size={32} className="text-[var(--muted)] opacity-60" />
+          </div>
+          <h3 className="font-serif font-bold text-xl sm:text-2xl text-[var(--ink)]">
+            No notes found
+          </h3>
+          <p className="text-sm text-[var(--muted)] max-w-md mx-auto leading-relaxed font-normal">
+            No notes matched your search query or selected topic. Try adjusting your search terms or clear the filters.
           </p>
           <button
             onClick={clearAllFilters}
-            className="px-4 py-2 rounded-[var(--radius-md)] bg-[var(--accent)] text-[var(--accent-on)] font-bold text-xs cursor-pointer hover:bg-[var(--accent-strong)] transition-colors inline-block font-sans mt-2"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[var(--radius-md)] bg-[var(--accent)] text-[var(--accent-on)] font-bold text-xs sm:text-sm cursor-pointer hover:bg-[var(--accent-strong)] transition-all duration-[var(--dur)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)]"
           >
-            Reset Filters
+            <RefreshCw size={14} /> Reset Filters
           </button>
         </div>
       )}
 
       {/* 🟢 Pagination (Load 10 at a time) 🟢 */}
       {pagination && pagination.totalPages > 1 && (
-        <div className="pt-4 flex justify-center">
+        <div className="pt-6 flex justify-center">
           <Pagination
             currentPage={currentPage}
             totalPages={pagination.totalPages}
@@ -334,5 +445,12 @@ export default function LessonCatalog() {
         </div>
       )}
     </div>
+
+    <LessonReaderModal 
+      lesson={selectedLesson} 
+      isOpen={modalOpen} 
+      onClose={handleModalClose} 
+    />
+    </>
   );
 }

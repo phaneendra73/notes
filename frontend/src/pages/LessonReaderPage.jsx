@@ -16,12 +16,15 @@ const BATCH_SIZE = 5;
  */
 export default function LessonReaderPage() {
   const location = useLocation();
-  const lessonId = new URLSearchParams(location.search).get('id') || '1';
+  const searchParams = new URLSearchParams(location.search);
+  const lessonId = searchParams.get('id') || '1';
+  const initialSlideParam = parseInt(searchParams.get('slide'), 10);
+  const targetInitialSlide = !isNaN(initialSlideParam) && initialSlideParam >= 0 ? initialSlideParam : 0;
 
   const [lesson, setLesson] = useState(null);
   const [slidesMap, setSlidesMap] = useState({}); // { [slideIndex]: slide }
   const [totalSlidesCount, setTotalSlidesCount] = useState(0);
-  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(targetInitialSlide);
   const [direction, setDirection] = useState(1);
   const [loading, setLoading] = useState(true);
   const [fetchingBatch, setFetchingBatch] = useState(false);
@@ -35,9 +38,11 @@ export default function LessonReaderPage() {
     if (!lessonId) return new Set([0]);
     try {
       const saved = sessionStorage.getItem(`kadha_visited_${lessonId}`);
-      return saved ? new Set(JSON.parse(saved)) : new Set([0]);
+      const set = saved ? new Set(JSON.parse(saved)) : new Set([0]);
+      set.add(targetInitialSlide);
+      return set;
     } catch {
-      return new Set([0]);
+      return new Set([targetInitialSlide]);
     }
   });
 
@@ -58,7 +63,7 @@ export default function LessonReaderPage() {
     });
   }, []);
 
-  // Initial load — fetch lesson metadata + first BATCH_SIZE slides
+  // Initial load — fetch lesson metadata + initial slides batch
   useEffect(() => {
     if (!lessonId) {
       setError('No lesson ID specified in URL');
@@ -79,10 +84,11 @@ export default function LessonReaderPage() {
           sessionStorage.setItem(sessionKey, '1');
         }
 
+        const fetchLimit = Math.max(BATCH_SIZE, Math.floor(targetInitialSlide / BATCH_SIZE) * BATCH_SIZE + BATCH_SIZE);
         const res = await client.get(`/api/lessons/${lessonId}`, {
           params: {
             offset: 0,
-            limit: BATCH_SIZE,
+            limit: fetchLimit,
             ...(shouldIncrement ? { incrementView: 1 } : {}),
           },
         });

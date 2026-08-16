@@ -102,10 +102,13 @@ export function parseSlideRow(row, index = 0) {
 export async function syncLessonTags(db, lessonId, tagIds) {
   await db.prepare('DELETE FROM tagsonlessons WHERE lessonId = ?').bind(lessonId).run();
   if (!Array.isArray(tagIds) || tagIds.length === 0) return;
-  for (const tagId of tagIds) {
-    await db
-      .prepare('INSERT OR IGNORE INTO tagsonlessons (lessonId, tagId) VALUES (?, ?)')
-      .bind(lessonId, tagId)
-      .run();
+  for (const rawId of tagIds) {
+    const tagId = parseInt(rawId, 10);
+    if (!isNaN(tagId)) {
+      await db
+        .prepare('INSERT OR IGNORE INTO tagsonlessons (lessonId, tagId) VALUES (?, ?)')
+        .bind(lessonId, tagId)
+        .run();
+    }
   }
 }

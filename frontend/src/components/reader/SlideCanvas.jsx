@@ -58,24 +58,29 @@ export default function SlideCanvas({ slide, slideIndex, totalSlides = 1, direct
           initial="initial"
           animate="animate"
           exit="exit"
-          className="relative p-6 sm:p-10 rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-md)] overflow-hidden min-h-[420px] flex flex-col justify-between"
+          className="relative p-6 sm:p-12 rounded-[var(--radius-xl)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-lg)] overflow-hidden min-h-[480px] flex flex-col justify-between"
         >
           <div>
-            {/* Slide Header Telemetry */}
-            <div className="flex items-center justify-between pb-4 mb-6 border-b border-[var(--line)] text-xs">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[var(--radius-sm)] bg-[var(--accent-soft)] border border-[var(--accent-soft)] text-[var(--accent)] font-semibold uppercase tracking-wider text-[11px]">
-                <Sliders size={13} />
-                <span>Slide {slideIndex + 1} of {totalSlides}</span>
+            {/* Slide Header */}
+            <div className="flex items-center justify-between mb-6">
+              {/* Slide Counter */}
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-[var(--radius-md)] bg-[var(--surface-2)] border border-[var(--line)] text-xs font-mono font-semibold text-[var(--accent)]">
+                <Sliders size={14} /> Slide {slideIndex + 1} of {totalSlides}
               </span>
 
-              <span className="hidden sm:inline-flex items-center gap-1 text-[var(--muted)] font-mono text-[11px]">
-                Swipe or press <kbd className="px-1.5 py-0.5 rounded-[var(--radius-sm)] bg-[var(--surface-2)] border border-[var(--line)] text-[10px] font-mono font-bold text-[var(--accent)]">←</kbd> <kbd className="px-1.5 py-0.5 rounded-[var(--radius-sm)] bg-[var(--surface-2)] border border-[var(--line)] text-[10px] font-mono font-bold text-[var(--accent)]">→</kbd>
-              </span>
+              {/* Keyboard Shortcuts Hint */}
+              <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] bg-[var(--surface-2)] border border-[var(--line)] text-[11px] font-mono text-[var(--muted)]">
+                <span>Press</span>
+                <kbd className="px-1.5 py-0.5 rounded-[var(--radius-sm)] bg-[var(--accent)] text-[var(--accent-on)] font-bold text-[10px]">←</kbd>
+                <span>or</span>
+                <kbd className="px-1.5 py-0.5 rounded-[var(--radius-sm)] bg-[var(--accent)] text-[var(--accent-on)] font-bold text-[10px]">→</kbd>
+                <span>to navigate</span>
+              </div>
             </div>
 
-            {/* Slide Title - Serif Fraunces Display */}
+            {/* Slide Title */}
             {slide?.title && (
-              <h1 className="font-serif font-bold text-2xl sm:text-3xl lg:text-4xl text-[var(--ink)] tracking-tight leading-tight mb-8 pb-4 border-b border-[var(--line)]">
+              <h1 className="font-serif font-bold text-2xl sm:text-3xl lg:text-4xl text-[var(--ink)] tracking-tight leading-[1.2] mb-6 pb-4 border-b border-[var(--line)]">
                 {slide.title}
               </h1>
             )}
@@ -90,25 +95,25 @@ export default function SlideCanvas({ slide, slideIndex, totalSlides = 1, direct
           </div>
 
           {/* Touch Side Tap Indicators for Mobile */}
-          <div className="mt-8 pt-4 border-t border-[var(--line)] flex items-center justify-between md:hidden text-xs text-[var(--muted)] font-semibold">
+          <div className="mt-6 pt-5 border-t border-[var(--line)] flex items-center justify-between md:hidden">
             <button
               onClick={onPrev}
               disabled={slideIndex === 0}
-              className="flex items-center gap-1 text-[var(--accent)] disabled:opacity-30 disabled:text-[var(--muted)] cursor-pointer"
+              className="flex items-center gap-2 text-[var(--accent)] disabled:opacity-40 disabled:text-[var(--muted)] disabled:cursor-not-allowed transition-colors font-semibold text-xs"
             >
-              <ChevronLeft size={16} /> Prev Slide
+              <ChevronLeft size={18} /> Previous
             </button>
 
-            <span className="font-mono text-[11px] text-[var(--ink)]">
+            <span className="font-mono text-xs font-bold text-[var(--ink)]">
               {slideIndex + 1} / {totalSlides}
             </span>
 
             <button
               onClick={onNext}
               disabled={slideIndex === totalSlides - 1}
-              className="flex items-center gap-1 text-[var(--accent)] disabled:opacity-30 disabled:text-[var(--muted)] cursor-pointer"
+              className="flex items-center gap-2 text-[var(--accent)] disabled:opacity-40 disabled:text-[var(--muted)] disabled:cursor-not-allowed transition-colors font-semibold text-xs"
             >
-              Next Slide <ChevronRight size={16} />
+              Next <ChevronRight size={18} />
             </button>
           </div>
         </motion.div>

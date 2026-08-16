@@ -1,10 +1,42 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Badge } from './Badge.jsx';
-import { Clock, ChevronRight, Eye, Sliders } from 'lucide-react';
+import { ArrowRight, Layers, Clock, Eye } from 'lucide-react';
 
-export default function LessonCard({ lesson, blog, viewMode = 'list' }) {
+function formatRelativeTime(dateString) {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+  const now = new Date();
+  const diffInSeconds = Math.floor((now - date) / 1000);
+
+  if (diffInSeconds < 60) return 'just now';
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 30) return `${diffInDays}d ago`;
+  const diffInMonths = Math.floor(diffInDays / 30);
+  if (diffInMonths < 12) return `${diffInMonths}mo ago`;
+  const diffInYears = Math.floor(diffInMonths / 12);
+  return `${diffInYears > 1 ? 'over ' + diffInYears : 'over 1'}y ago`;
+}
+
+function formatViewsCount(count) {
+  const num = Number(count) || 0;
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M reads`;
+  if (num >= 1000) return `${(num / 1000).toFixed(1)}k reads`;
+  return `${num} ${num === 1 ? 'read' : 'reads'}`;
+}
+
+export default function LessonCard({
+  lesson,
+  blog,
+  viewMode = 'list',
+  onCardClick,
+  onReadClick,
+}) {
   const navigate = useNavigate();
   const item = lesson || blog;
   if (!item) return null;
@@ -14,95 +46,115 @@ export default function LessonCard({ lesson, blog, viewMode = 'list' }) {
 
   const tags = item.tagObjects || item.tags || [];
   const cover = item.coverUrl || item.imageUrl || fallbackImage;
-  const slidesCount = item.totalSlidesCount || item.slidesCount || 1;
+  const slidesCount = item.totalSlidesCount || item.slidesCount || item.slides?.length || 1;
+  const viewsCount = item.viewsCount ?? item.views ?? 0;
+  const relativeDate = formatRelativeTime(item.createdAt);
 
   const handleCardClick = (e) => {
-    // If the click was on an anchor tag or button, let default action happen
-    if (e.target.closest('a') || e.target.closest('button')) {
-      return;
-    }
-    navigate(`/read?id=${item.id}`);
+    // If clicked on direct read button, skip opening modal
+    if (e.target.closest('[data-read-btn="true"]')) return;
+    onCardClick?.(item);
   };
 
-  // 🟢 Row / List View (One-by-one stacked card structure)
+  const handleReadClick = (e) => {
+    e.stopPropagation();
+    if (onReadClick) {
+      onReadClick(item, e);
+    } else {
+      navigate(`/read?id=${item.id}`);
+    }
+  };
+
+  // 🟢 Row / List View (Stacked interactive track card)
   if (viewMode === 'list') {
     return (
       <motion.div
         whileHover={{ y: -2 }}
-        transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
         onClick={handleCardClick}
-        className="w-full select-none cursor-pointer"
+        className="w-full select-none cursor-pointer group"
       >
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 sm:p-5 rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--line-strong)] hover:shadow-[var(--shadow-md)] transition-all duration-[var(--dur)] group">
-          {/* Left Cover Image & Note Overview */}
-          <div className="flex items-start sm:items-center gap-4 min-w-0 flex-1">
-            {/* Note Thumbnail */}
-            <div className="relative w-24 h-20 sm:w-32 sm:h-24 shrink-0 rounded-[var(--radius-md)] overflow-hidden bg-[var(--surface-2)] border border-[var(--line)] group-hover:border-[var(--accent)] transition-colors">
+        <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-5 p-4 sm:p-5 rounded-2xl border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--accent)] hover:shadow-[var(--shadow-md)] transition-all duration-300 overflow-hidden">
+          {/* Subtle Ambient Hover Glow */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent-soft)]/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+          {/* Left - Cover Image & Information */}
+          <div className="flex items-start sm:items-center gap-4 min-w-0 flex-1 relative z-10">
+            <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden shrink-0 border border-[var(--line)] bg-[var(--surface-2)] shadow-sm">
               <img
                 src={cover}
                 alt={item.title || 'Note'}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 loading="lazy"
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.src = fallbackImage;
                 }}
               />
-              <div className="absolute bottom-1 right-1 bg-black/75 backdrop-blur-xs text-[10px] font-mono text-[var(--accent)] px-1.5 py-0.5 rounded-[var(--radius-sm)] flex items-center gap-1 font-bold">
-                <Sliders size={10} /> {slidesCount}
-              </div>
             </div>
 
-            {/* Information */}
             <div className="min-w-0 flex-1 space-y-1.5">
-              {/* Tags & Slide Count */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {tags.slice(0, 2).map((t, idx) => (
-                  <Badge
-                    key={idx}
-                    variant="secondary"
-                    className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-[var(--radius-sm)] border border-[var(--accent-soft)] text-[var(--accent)] bg-[var(--accent-soft)] font-sans"
-                  >
-                    {typeof t === 'string' ? t : t.name}
-                  </Badge>
-                ))}
-                <span className="text-xs font-mono text-[var(--muted)] flex items-center gap-1 font-medium">
-                  <Sliders size={11} className="text-[var(--accent)]" /> {slidesCount} {slidesCount === 1 ? 'slide' : 'slides'}
-                </span>
-              </div>
+              {tags.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  {tags.slice(0, 2).map((tag, idx) => (
+                    <span
+                      key={tag.id || idx}
+                      className="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold bg-[var(--accent-soft)] text-[var(--accent)] tracking-wide"
+                    >
+                      {tag.name || tag}
+                    </span>
+                  ))}
+                </div>
+              )}
 
-              {/* Title */}
               <h3 className="font-serif font-bold text-base sm:text-lg text-[var(--ink)] leading-snug group-hover:text-[var(--accent)] transition-colors line-clamp-1">
                 {item.title}
               </h3>
 
-              {/* Excerpt / Summary */}
-              <p className="text-xs sm:text-sm text-[var(--ink-2)] line-clamp-2 leading-relaxed font-normal">
-                {item.excerpt || 'Interactive visual note explaining key concepts with code and diagrams.'}
-              </p>
+              {item.excerpt && (
+                <p className="text-xs sm:text-sm text-[var(--ink-2)] line-clamp-1 sm:line-clamp-2 leading-relaxed font-normal">
+                  {item.excerpt}
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Right Meta & Read Action */}
-          <div className="flex items-center justify-between sm:justify-end sm:flex-col sm:items-end gap-3 shrink-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-[var(--line)] text-xs text-[var(--muted)]">
-            <div className="flex items-center gap-3 font-mono text-xs">
-              <span className="flex items-center gap-1 text-[var(--accent)] font-semibold">
-                <Clock size={12} /> {item.readingTime ? `${item.readingTime}m read` : '3m read'}
+          {/* Right - Meta Badge & Actions */}
+          <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 pt-3 sm:pt-0 border-t sm:border-t-0 border-[var(--line)] shrink-0 relative z-10">
+            <div className="flex flex-col sm:items-end gap-1">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--accent)] bg-[var(--surface-2)] border border-[var(--line)] px-2.5 py-1 rounded-lg">
+                <Layers size={13} />
+                <span>{slidesCount} {slidesCount === 1 ? 'Chapter' : 'Chapters'}</span>
               </span>
-              {item.viewsCount !== undefined && (
-                <span className="flex items-center gap-1 text-[var(--muted)]">
-                  <Eye size={12} /> {item.viewsCount}
+
+              <div className="flex items-center gap-2 text-[11px] text-[var(--muted)] font-medium">
+                <span className="flex items-center gap-1" title={`${viewsCount} total reads`}>
+                  <Eye size={12} className="text-[var(--accent)]" />
+                  <span>{formatViewsCount(viewsCount)}</span>
                 </span>
-              )}
+                {relativeDate && (
+                  <>
+                    <span>•</span>
+                    <span className="flex items-center gap-1">
+                      <Clock size={11} />
+                      <span>{relativeDate}</span>
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
 
-            <button
-              onClick={() => navigate(`/read?id=${item.id}`)}
-              className="inline-flex items-center gap-1 px-4 py-2 rounded-[var(--radius-md)] bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] hover:bg-[var(--accent-strong)] transition-colors font-bold text-xs cursor-pointer shadow-[var(--shadow-sm)] font-sans"
-            >
-              <span>Read Note</span>
-              <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                data-read-btn="true"
+                onClick={handleReadClick}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[var(--accent)] text-[var(--accent-on)] font-bold text-xs sm:text-sm shadow-sm hover:bg-[var(--accent-strong)] hover:shadow-md transition-all duration-200 cursor-pointer active:scale-95 shrink-0"
+                title="Start Reading"
+              >
+                <span>Read</span>
+                <ArrowRight size={14} />
+              </button>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -112,75 +164,90 @@ export default function LessonCard({ lesson, blog, viewMode = 'list' }) {
   // 🟢 Grid View Mode
   return (
     <motion.div
-      whileHover={{ y: -3 }}
-      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
       onClick={handleCardClick}
-      className="h-full select-none cursor-pointer"
+      className="h-full select-none cursor-pointer group"
     >
-      <div className="h-full flex flex-col overflow-hidden border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--line-strong)] transition-all duration-[var(--dur)] ease-[var(--ease)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] group rounded-[var(--radius-lg)]">
-        {/* Cover Image */}
-        <div className="relative aspect-video w-full overflow-hidden bg-[var(--surface-2)]">
+      <div className="h-full flex flex-col rounded-2xl border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--accent)] hover:shadow-[var(--shadow-lg)] transition-all duration-300 overflow-hidden">
+        {/* Banner Image */}
+        <div className="relative h-44 sm:h-48 w-full bg-[var(--surface-2)] overflow-hidden shrink-0">
           <img
             src={cover}
             alt={item.title || 'Note'}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
             onError={(e) => {
               e.target.onerror = null;
               e.target.src = fallbackImage;
             }}
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
 
-          {/* Slide Count Badge */}
-          <div className="absolute bottom-2.5 left-2.5">
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--accent-on)] bg-[var(--accent)] px-2.5 py-0.5 rounded-[var(--radius-sm)] font-mono shadow-[var(--shadow-sm)]">
-              <Sliders size={11} /> {slidesCount} {slidesCount === 1 ? 'slide' : 'slides'}
+          {/* Overlay Chips */}
+          <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 z-10">
+            {tags.length > 0 ? (
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-black/60 text-white backdrop-blur-md border border-white/10 truncate">
+                {tags[0].name || tags[0]}
+              </span>
+            ) : <span />}
+
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-black/60 text-white backdrop-blur-md border border-white/10 shrink-0">
+              <Layers size={12} className="text-[var(--accent-soft)]" />
+              <span>{slidesCount} {slidesCount === 1 ? 'Chapter' : 'Chapters'}</span>
             </span>
           </div>
         </div>
 
         {/* Card Body */}
-        <div className="p-5 flex flex-col flex-1 gap-2.5">
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {tags.slice(0, 3).map((t, idx) => (
-                <Badge
-                  key={idx}
-                  variant="secondary"
-                  className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-[var(--radius-sm)] border border-[var(--accent-soft)] text-[var(--accent)] bg-[var(--accent-soft)] font-sans"
-                >
-                  {typeof t === 'string' ? t : t.name}
-                </Badge>
-              ))}
-            </div>
-          )}
+        <div className="p-5 flex-1 flex flex-col justify-between gap-4">
+          <div className="space-y-2">
+            <h3 className="font-serif font-bold text-base sm:text-lg text-[var(--ink)] leading-snug group-hover:text-[var(--accent)] transition-colors line-clamp-2">
+              {item.title}
+            </h3>
 
-          <h3 className="font-serif font-bold text-lg text-[var(--ink)] line-clamp-2 leading-snug group-hover:text-[var(--accent)] transition-colors">
-            {item.title}
-          </h3>
+            {item.excerpt && (
+              <p className="text-xs sm:text-sm text-[var(--ink-2)] line-clamp-2 leading-relaxed font-normal">
+                {item.excerpt}
+              </p>
+            )}
+          </div>
 
-          <p className="font-sans text-xs text-[var(--ink-2)] line-clamp-2 leading-relaxed font-normal">
-            {item.excerpt || 'Interactive visual note explaining key concepts with code and diagrams.'}
-          </p>
-
-          <div className="mt-auto pt-3.5 border-t border-[var(--line)] flex items-center justify-between text-xs text-[var(--muted)] font-sans font-medium">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1 font-semibold text-[var(--accent)]">
-                <Clock size={13} /> {item.readingTime ? `${item.readingTime}m` : '3m'}
-              </span>
-              {item.viewsCount !== undefined && (
-                <span className="flex items-center gap-1 text-[11px] font-mono text-[var(--muted)]">
-                  <Eye size={12} /> {item.viewsCount}
+          <div className="space-y-3 pt-2 border-t border-[var(--line)]">
+            <div className="flex items-center justify-between text-[11px] text-[var(--muted)] font-medium">
+              <div className="flex items-center gap-1.5">
+                <span className="flex items-center gap-1" title={`${viewsCount} total reads`}>
+                  <Eye size={12} className="text-[var(--accent)]" />
+                  <span>{formatViewsCount(viewsCount)}</span>
                 </span>
-              )}
+                {relativeDate && (
+                  <>
+                    <span>•</span>
+                    <span className="flex items-center gap-1">
+                      <Clock size={11} /> {relativeDate}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              <span
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCardClick?.(item);
+                }}
+                className="font-semibold text-[var(--accent)] hover:underline cursor-pointer"
+              >
+                View Chapters
+              </span>
             </div>
 
             <button
-              onClick={() => navigate(`/read?id=${item.id}`)}
-              className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-[var(--radius-sm)] bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] hover:bg-[var(--accent-strong)] transition-colors font-bold text-xs cursor-pointer shadow-[var(--shadow-sm)]"
+              data-read-btn="true"
+              onClick={handleReadClick}
+              className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[var(--accent)] text-[var(--accent-on)] font-bold text-xs sm:text-sm shadow-sm hover:bg-[var(--accent-strong)] hover:shadow-md transition-all duration-200 cursor-pointer active:scale-95"
             >
               <span>Read</span>
-              <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRight size={14} />
             </button>
           </div>
         </div>

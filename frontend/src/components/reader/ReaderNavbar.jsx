@@ -53,6 +53,14 @@ export default function ReaderNavbar({
 
   return (
     <>
+      {/* Topmost Viewport Reading Progress Line */}
+      <div className="fixed top-0 left-0 right-0 z-[60] h-[3px] bg-[var(--surface-2)]">
+        <div
+          className="h-full bg-gradient-to-r from-[var(--accent)] via-emerald-400 to-[var(--accent)] transition-all duration-300 shadow-[0_0_8px_var(--accent)]"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
       <motion.header
         animate={{ y: visible ? 0 : -80 }}
         transition={{ duration: 0.2 }}
@@ -69,7 +77,7 @@ export default function ReaderNavbar({
             </h2>
           </div>
 
-          {/* Center: Progress Counter & Bar */}
+          {/* Center: Progress Counter, Estimate & Bar */}
           <div className="hidden md:flex items-center gap-3 shrink-0">
             <span className="text-xs font-mono font-bold text-[var(--accent)]">
               Slide {currentSlideIndex + 1} of {totalSlides}
@@ -77,6 +85,9 @@ export default function ReaderNavbar({
             <div className="w-28 h-2 rounded-[var(--radius-sm)] bg-[var(--surface-2)] border border-[var(--line)] overflow-hidden p-[1px]">
               <div className="h-full bg-[var(--accent)] rounded-[var(--radius-sm)] transition-all duration-300" style={{ width: `${progress}%` }} />
             </div>
+            <span className="text-[11px] font-medium text-[var(--muted)] pl-1">
+              ~{Math.max(1, Math.ceil((totalSlides - currentSlideIndex) * 1.5))}m left
+            </span>
           </div>
 
           {/* Right: Actions */}

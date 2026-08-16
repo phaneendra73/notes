@@ -55,17 +55,17 @@ export default function Navbar() {
             onClick={() => navigate('/')}
             className="flex items-center gap-2.5 bg-transparent border-none cursor-pointer group"
           >
-            <div className="w-8 h-8 rounded-[var(--radius-sm)] bg-[var(--surface-2)] border border-[var(--line)] p-1 flex items-center justify-center group-hover:border-[var(--accent)] transition-colors">
+            <div className="w-9 h-9 rounded-[var(--radius-md)] bg-gradient-to-br from-[var(--accent-soft)] to-[var(--surface-2)] border border-[var(--line)] p-0.5 flex items-center justify-center group-hover:border-[var(--accent)] transition-colors">
               <img src={kadhaLogo} alt="Notes" className="w-full h-full object-contain" />
             </div>
-            <span className="font-serif font-bold text-xl text-[var(--ink)] tracking-tight group-hover:text-[var(--accent)] transition-colors">
-              Notes<span className="text-[var(--accent)] font-bold">.</span>
+            <span className="font-serif font-bold text-xl sm:text-2xl text-[var(--ink)] tracking-tight group-hover:text-[var(--accent)] transition-colors">
+              Notes<span className="text-[var(--accent)]">.</span>
             </span>
           </button>
 
           {/* Authenticated Author Links */}
           {isAuthenticated && (
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="hidden md:flex items-center gap-2">
               {navLinks.map((n) => {
                 const active = location.pathname === n.to;
                 const Icon = n.icon;
@@ -73,13 +73,13 @@ export default function Navbar() {
                   <button
                     key={n.to}
                     onClick={() => handleNavClick(n.to)}
-                    className={`px-3 py-1.5 rounded-[var(--radius-md)] text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                    className={`px-3.5 py-1.75 rounded-[var(--radius-md)] text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                       active
-                        ? 'bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent-soft)] font-bold'
+                        ? 'bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] font-bold shadow-[var(--shadow-sm)]'
                         : 'text-[var(--ink-2)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)] border border-transparent'
                     }`}
                   >
-                    {Icon && <Icon size={13} className={active ? 'text-[var(--accent)]' : 'text-[var(--muted)]'} />}
+                    {Icon && <Icon size={13} className={active ? 'text-[var(--accent-on)]' : 'text-[var(--muted)]'} />}
                     <span>{n.label}</span>
                   </button>
                 );
@@ -94,27 +94,33 @@ export default function Navbar() {
           <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
             className="w-9 h-9 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-2)] flex items-center justify-center text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all cursor-pointer"
-            title="Toggle Light / Dark Theme"
+            title="Toggle Light / Dark Theme (Ctrl+T)"
           >
             {isDark ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} className="text-[var(--ink-2)]" />}
           </button>
 
+          {/* Keyboard Shortcut Hint */}
+          <span className="hidden lg:block text-[10px] text-[var(--muted)] font-mono px-2 py-1 bg-[var(--surface-2)] rounded-[var(--radius-sm)] border border-[var(--line)]">
+            Ctrl+K
+          </span>
+
           {/* When authenticated, show Create Note button & Sign Out */}
           {isAuthenticated && (
-            <div className="hidden sm:flex items-center gap-1.5">
+            <div className="hidden sm:flex items-center gap-2">
               <Button
                 size="sm"
-                className="rounded-[var(--radius-md)] text-xs font-bold gap-1.5 px-3.5 cursor-pointer bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] hover:bg-[var(--accent-strong)]"
+                className="rounded-[var(--radius-lg)] text-xs font-bold gap-1.5 px-4.5 cursor-pointer bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] hover:bg-[var(--accent-strong)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)]"
                 onClick={() => navigate('/editor')}
+                title="Create New Note (Ctrl+N)"
               >
-                <Edit3 size={13} /> New Note
+                <Edit3 size={14} /> New Note
               </Button>
               <button
                 onClick={handleSignOut}
-                className="p-2 rounded-[var(--radius-md)] text-[var(--muted)] hover:text-[var(--err)] hover:bg-[var(--err-soft)] transition-colors cursor-pointer"
-                title="Sign Out"
+                className="p-2.5 rounded-[var(--radius-md)] text-[var(--muted)] hover:text-[var(--err)] hover:bg-[var(--err-soft)] transition-all cursor-pointer"
+                title="Sign Out (Ctrl+Q)"
               >
-                <LogOut size={15} />
+                <LogOut size={16} />
               </button>
             </div>
           )}
@@ -123,7 +129,7 @@ export default function Navbar() {
           {isAuthenticated && (
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden p-2 rounded-[var(--radius-md)] text-[var(--ink)] hover:text-[var(--accent)] transition-colors cursor-pointer"
+              className="md:hidden p-2.5 rounded-[var(--radius-md)] text-[var(--ink)] hover:text-[var(--accent)] hover:bg-[var(--surface-2)] transition-all cursor-pointer"
             >
               {mobileOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
@@ -138,40 +144,41 @@ export default function Navbar() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="md:hidden border-t border-[var(--line)] bg-[var(--surface)] p-4 space-y-3"
+            className="md:hidden border-t border-[var(--line)] bg-[var(--surface)] p-4 space-y-4"
           >
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-2">
               {navLinks.map((n) => {
                 const Icon = n.icon;
                 return (
                   <button
                     key={n.to}
                     onClick={() => handleNavClick(n.to)}
-                    className="w-full p-2.5 rounded-[var(--radius-md)] text-left text-xs font-semibold flex items-center gap-2.5 hover:bg-[var(--surface-2)] text-[var(--ink)] transition-colors"
+                    className="w-full p-3.5 rounded-[var(--radius-lg)] text-left text-xs font-semibold flex items-center gap-3.5 hover:bg-[var(--surface-2)] text-[var(--ink)] transition-all cursor-pointer active:scale-[0.98]"
                   >
-                    {Icon && <Icon size={14} className="text-[var(--accent)]" />}
+                    {Icon && <Icon size={16} className="text-[var(--accent)]" />}
                     <span>{n.label}</span>
                   </button>
                 );
               })}
             </div>
 
-            <div className="pt-2 border-t border-[var(--line)] flex items-center justify-between">
+            <div className="pt-3 border-t border-[var(--line)] space-y-2">
               <Button
                 size="sm"
-                className="rounded-[var(--radius-md)] text-xs font-bold gap-2 bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] hover:bg-[var(--accent-strong)]"
+                className="w-full rounded-[var(--radius-lg)] text-sm font-bold gap-2 bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] hover:bg-[var(--accent-strong)]"
                 onClick={() => {
                   navigate('/editor');
                   setMobileOpen(false);
                 }}
+                title="Create New Note (Ctrl+N)"
               >
-                <Edit3 size={13} /> New Note
+                <Edit3 size={15} /> New Note
               </Button>
               <button
                 onClick={handleSignOut}
-                className="text-xs text-[var(--err)] font-semibold flex items-center gap-1 cursor-pointer"
+                className="w-full text-[11px] text-[var(--err)] font-semibold flex items-center gap-2 py-2.5 px-4 rounded-[var(--radius-md)] hover:bg-[var(--err-soft)] transition-all cursor-pointer text-left"
               >
-                <LogOut size={13} /> Sign Out
+                <LogOut size={14} /> Sign Out (Ctrl+Q)
               </button>
             </div>
           </motion.div>

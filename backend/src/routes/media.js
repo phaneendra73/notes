@@ -154,6 +154,16 @@ mediaRoutes.delete('/:id', requireAuth, async (c) => {
   try {
     const id = parseInt(c.req.param('id'));
     if (!id || isNaN(id)) return c.json({ error: 'Invalid media ID' }, 400);
+
+    const existing = await c.env.DB.prepare('SELECT id, authorId FROM media WHERE id = ?').bind(id).first();
+    if (!existing) return c.json({ error: 'Media not found' }, 404);
+
+    const userId = parseInt(c.get('userId'));
+    const user = await c.env.DB.prepare('SELECT role FROM userprofiles WHERE id = ?').bind(userId).first();
+    if (user?.role !== 'admin' && existing.authorId !== userId) {
+      return c.json({ error: 'Forbidden: You do not have permission to delete this media' }, 403);
+    }
+
     await c.env.DB.prepare('DELETE FROM media WHERE id = ?').bind(id).run();
     return c.json({ message: 'Media deleted' });
   } catch (err) {
