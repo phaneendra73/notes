@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import useLessons from '../../hooks/useLessons.js';
 import useTags from '../../hooks/useTags.js';
@@ -28,15 +28,21 @@ const SORT_OPTIONS = [
 
 export default function LessonCatalog() {
   const navigate = useNavigate();
+  const location = useLocation();
   const searchInputRef = useRef(null);
   const catalogTopRef = useRef(null);
   const sortDropdownRef = useRef(null);
+
+  // Parse URL search params
+  const urlParams = new URLSearchParams(location.search);
+  const tagParam = urlParams.get('tag');
+  const initialTagId = tagParam ? parseInt(tagParam, 10) : null;
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState(null);
 
-  const [selectedTagId, setSelectedTagId] = useState(null);
+  const [selectedTagId, setSelectedTagId] = useState(initialTagId);
   const [searchQuery, setSearchQuery] = useState('');
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [searchFocused, setSearchFocused] = useState(false);
@@ -44,6 +50,19 @@ export default function LessonCatalog() {
   const [viewMode, setViewMode] = useState('list');
   const [sortBy, setSortBy] = useState('recent');
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+
+  // Sync URL tag param changes
+  useEffect(() => {
+    const p = new URLSearchParams(location.search);
+    const t = p.get('tag');
+    setSelectedTagId(t ? parseInt(t, 10) : null);
+    if (p.get('focus') === 'search') {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+        searchInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+  }, [location.search]);
 
   const { tags: backendTags } = useTags();
   const { results: searchDropdownResults, loading: searchDropdownLoading } = useSearch(searchQuery);
