@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import client from '../api/client.js';
 
 /**
- * useLessons — fetches a paginated list of lessons from the API without flashing skeletons on filter changes.
+ * useLessons — fetches a paginated list of lessons from the API.
  *
  * @param {number|null} tagId - Filter by tag ID (null = all)
  * @param {string} searchQuery - Text search query
@@ -10,21 +10,17 @@ import client from '../api/client.js';
  * @param {number} limit - Items per page
  * @returns {{ lessons, loading, isFetching, error, pagination, refetch }}
  */
-export default function useLessons(tagId = null, searchQuery = '', page = 1, limit = 9) {
+export default function useLessons(tagId = null, searchQuery = '', page = 1, limit = 10) {
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState(null);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, totalCount: 0 });
-  const isInitial = useRef(true);
 
   const fetchLessons = useCallback(async (pageNum = page) => {
     try {
-      if (isInitial.current) {
-        setLoading(true);
-      } else {
-        setIsFetching(true);
-      }
+      setLoading(true);
+      setIsFetching(true);
       setError(null);
 
       const isAuth = Boolean(localStorage.getItem('jwt'));
@@ -50,11 +46,12 @@ export default function useLessons(tagId = null, searchQuery = '', page = 1, lim
     } finally {
       setLoading(false);
       setIsFetching(false);
-      isInitial.current = false;
     }
   }, [tagId, searchQuery, page, limit]);
 
-  useEffect(() => { fetchLessons(page); }, [fetchLessons, page]);
+  useEffect(() => {
+    fetchLessons(page);
+  }, [fetchLessons, page]);
 
   return { lessons, loading, isFetching, error, pagination, refetch: fetchLessons };
 }

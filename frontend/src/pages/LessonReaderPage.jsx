@@ -130,7 +130,7 @@ export default function LessonReaderPage() {
     }
   }, [lessonId, slidesMap, fetchingBatch, mergeSlides]);
 
-  // Persist visited slides
+  // Persist visited slides and last read note state for the workbench
   useEffect(() => {
     if (!lessonId) return;
     try {
@@ -139,6 +139,21 @@ export default function LessonReaderPage() {
       // ignore quota errors
     }
   }, [visitedSlides, lessonId]);
+
+  useEffect(() => {
+    if (lesson) {
+      try {
+        localStorage.setItem('kadha_last_read', JSON.stringify({
+          id: lesson.id,
+          title: lesson.title,
+          coverUrl: lesson.coverUrl || lesson.imageUrl,
+          slideIndex: currentSlideIndex,
+          totalSlides: totalSlidesCount,
+          timestamp: Date.now()
+        }));
+      } catch {}
+    }
+  }, [lesson, currentSlideIndex, totalSlidesCount]);
 
   // Pre-fetch next batch if user is within 2 slides of un-fetched range
   useEffect(() => {

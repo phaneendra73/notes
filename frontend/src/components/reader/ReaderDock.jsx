@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Home, Edit2, Printer, Bookmark, HelpCircle } from "lucide-react";
-import useBookmarks from "../../hooks/useBookmarks.js";
+import { ChevronLeft, ChevronRight, Home, Edit2, Printer, HelpCircle } from "lucide-react";
 
 export default function ReaderDock({
   currentSlideIndex,
@@ -17,8 +16,6 @@ export default function ReaderDock({
   const navigate = useNavigate();
   const [visible, setVisible] = useState(true);
   const lastScrollY = useRef(0);
-  const { isBookmarked, toggleBookmark } = useBookmarks();
-  const bookmarked = lessonId ? isBookmarked(parseInt(lessonId)) : false;
 
   useEffect(() => {
     const onScroll = () => {
@@ -67,16 +64,6 @@ export default function ReaderDock({
         </button>
 
         <div className="w-[1px] h-5 bg-[var(--line)]" />
-
-        {lessonId && (
-          <button
-            className={`${btnBase} ${bookmarked ? "border-[var(--accent-strong)] bg-[var(--accent)] text-[var(--accent-on)]" : ""}`}
-            onClick={() => toggleBookmark(parseInt(lessonId))}
-            title={bookmarked ? "Remove Bookmark" : "Save Bookmark"}
-          >
-            <Bookmark size={16} className={bookmarked ? "fill-current" : ""} />
-          </button>
-        )}
 
         <button className={btnBase} onClick={onOpenHelp} title="Keyboard Shortcuts (?)">
           <HelpCircle size={16} className="text-[var(--accent)]" />

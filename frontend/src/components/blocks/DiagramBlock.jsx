@@ -1,70 +1,81 @@
-import React, { useEffect, useRef, useState } from "react";
-import { FiAlertCircle, FiLoader } from "react-icons/fi";
+ï»¿import React, { useEffect, useRef, useState } from "react";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 export default function DiagramBlock({ block }) {
-  const codeText    = block?.content || "";
   const containerRef = useRef(null);
   const [svgHtml, setSvgHtml] = useState("");
-  const [error,   setError]   = useState(null);
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!codeText.trim()) { setLoading(false); return; }
-    let isMounted = true;
+  const codeText = block?.content || "";
 
-    const renderDiagram = async () => {
+  useEffect(() => {
+    let isMounted = true;
+    if (!codeText.trim()) {
+      setLoading(false);
+      return;
+    }
+
+    async function renderMermaid() {
       try {
         setLoading(true);
         setError(null);
         const mermaidModule = await import("mermaid");
         const mermaid = mermaidModule.default;
-        mermaid.initialize({ startOnLoad: false, theme: "dark", securityLevel: "loose", fontFamily: "inherit" });
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "dark",
+          securityLevel: "loose",
+          fontFamily: "var(--font-mono)",
+        });
         const id = `mermaid-${Math.random().toString(36).slice(2, 9)}`;
         const { svg } = await mermaid.render(id, codeText.trim());
-        if (isMounted) { setSvgHtml(svg); setLoading(false); }
+        if (isMounted) {
+          setSvgHtml(svg);
+          setLoading(false);
+        }
       } catch (err) {
         if (isMounted) {
           console.error("Mermaid render error:", err);
-          setError(err?.message || "Invalid diagram syntax");
+          setError("Diagram could not be rendered.");
           setLoading(false);
         }
       }
-    };
+    }
 
-    renderDiagram();
-    return () => { isMounted = false; };
+    renderMermaid();
+
+    return () => {
+      isMounted = false;
+    };
   }, [codeText]);
 
+  if (!codeText.trim()) return null;
+
   return (
-    <div className="p-6 rounded-[1.25rem] bg-card border border-border flex flex-col items-center justify-center min-h-[140px] overflow-x-auto">
-      {loading && (
-        <div className="flex items-center gap-2 text-[0.8rem] text-primary font-mono">
-          <FiLoader size={16} className="animate-spin" /> Rendering diagram…
-        </div>
+    <div className="w-full my-4 rounded-[var(--radius-md)] border border-[var(--line)] bg-[#10100E] p-4 sm:p-6 overflow-hidden shadow-[var(--shadow-sm)]">
+      {block?.title && (
+        <h4 className="font-mono text-xs font-bold text-[var(--accent)] uppercase tracking-wider mb-4 pb-2 border-b border-[var(--line)]">
+          {block.title}
+        </h4>
       )}
 
-      {!loading && error && (
-        <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-center w-full">
-          <p className="font-extrabold text-red-400 text-[0.8rem] flex items-center justify-center gap-1.5">
-            <FiAlertCircle size={14} /> Diagram Syntax Error
-          </p>
-          <p className="text-[0.75rem] text-red-300 mt-1">{error}</p>
+      {loading ? (
+        <div className="flex items-center justify-center py-12 gap-2 text-xs text-[var(--muted)]">
+          <Loader2 size={16} className="animate-spin text-[var(--accent)]" />
+          <span>Rendering architecture diagram...</span>
         </div>
-      )}
-
-      {!loading && !error && svgHtml && (
+      ) : error ? (
+        <div className="flex items-center justify-center py-8 gap-2 text-xs text-[var(--err)]">
+          <AlertCircle size={16} />
+          <span>{error}</span>
+        </div>
+      ) : (
         <div
           ref={containerRef}
-          className="w-full flex justify-center overflow-x-auto"
-          // mermaid render output is sanitized SVG from a controlled library — acceptable use
+          className="w-full flex items-center justify-center overflow-x-auto select-none [&>svg]:max-w-full [&>svg]:h-auto"
           dangerouslySetInnerHTML={{ __html: svgHtml }}
         />
-      )}
-
-      {block?.caption && (
-        <span className="mt-3 text-[0.75rem] font-semibold text-muted-foreground text-center">
-          {block.caption}
-        </span>
       )}
     </div>
   );

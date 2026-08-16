@@ -1,31 +1,31 @@
 import React from "react";
-import { FiZap, FiAlertTriangle, FiInfo, FiBookmark } from "react-icons/fi";
+import { Zap, AlertTriangle, Info, Bookmark } from "lucide-react";
 import { renderInlineText } from "../../lib/inline.js";
 
 const VARIANTS = {
   tip: {
-    Icon: FiZap,
+    Icon: Zap,
     label: "Key Takeaway",
-    wrapper: "border-amber-500/35 bg-gradient-to-br from-amber-500/8 to-card text-amber-400",
-    header:  "text-amber-400",
+    wrapper: "border-[var(--accent-soft)] bg-[var(--accent-soft)] text-[var(--accent)]",
+    header:  "text-[var(--accent)]",
   },
   warning: {
-    Icon: FiAlertTriangle,
+    Icon: AlertTriangle,
     label: "Warning",
-    wrapper: "border-rose-500/35 bg-gradient-to-br from-rose-500/8 to-card text-rose-400",
-    header:  "text-rose-400",
+    wrapper: "border-[var(--err-soft)] bg-[var(--err-soft)] text-[var(--err)]",
+    header:  "text-[var(--err)]",
   },
   info: {
-    Icon: FiInfo,
-    label: "Info",
-    wrapper: "border-sky-500/35 bg-gradient-to-br from-sky-500/8 to-card text-sky-400",
-    header:  "text-sky-400",
+    Icon: Info,
+    label: "Information",
+    wrapper: "border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink)]",
+    header:  "text-[var(--accent)]",
   },
   note: {
-    Icon: FiBookmark,
+    Icon: Bookmark,
     label: "Note",
-    wrapper: "border-purple-500/35 bg-gradient-to-br from-purple-500/8 to-card text-purple-400",
-    header:  "text-purple-400",
+    wrapper: "border-[var(--line)] bg-[var(--surface)] text-[var(--ink)]",
+    header:  "text-[var(--muted)]",
   },
 };
 
@@ -36,12 +36,12 @@ export default function CalloutBlock({ block }) {
   const label = block.title || v.label;
 
   return (
-    <div className={`p-5 rounded-[1.25rem] border backdrop-blur-sm shadow-sm ${v.wrapper}`}>
-      <div className={`flex items-center gap-2 mb-2 text-[0.75rem] font-black uppercase tracking-widest ${v.header}`}>
-        <Icon size={15} />
+    <div className={`p-4 sm:p-5 rounded-[var(--radius-md)] border shadow-[var(--shadow-sm)] ${v.wrapper}`}>
+      <div className={`flex items-center gap-2 mb-2 text-xs font-bold uppercase tracking-wider ${v.header}`}>
+        <Icon size={14} />
         <span>{label}</span>
       </div>
-      <div className="text-[0.95rem] leading-[1.65] text-foreground">
+      <div className="text-sm leading-relaxed text-[var(--ink)] font-normal">
         {renderInlineText(block.content || "")}
       </div>
     </div>

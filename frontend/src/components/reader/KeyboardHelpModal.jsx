@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiCommand, FiArrowRight, FiArrowLeft, FiMaximize, FiHelpCircle } from 'react-icons/fi';
+import { Command, X } from 'lucide-react';
 
 const SHORTCUTS = [
   { key: '→ / Space', action: 'Next Slide' },
@@ -21,51 +21,51 @@ export default function KeyboardHelpModal({ isOpen, onClose }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-md"
+            className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-xs"
           />
 
           {/* Modal Box */}
           <div className="fixed inset-0 z-[101] flex items-center justify-center p-4">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              initial={{ opacity: 0, scale: 0.96, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="w-full max-w-md rounded-3xl border border-primary/40 bg-card p-6 shadow-[0_25px_80px_rgba(0,0,0,0.6)] relative overflow-hidden"
+              exit={{ opacity: 0, scale: 0.96, y: 8 }}
+              className="w-full max-w-md rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] p-6 shadow-[var(--shadow-lg)] relative overflow-hidden"
             >
-              <div className="flex items-center justify-between pb-4 mb-4 border-b border-border">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/30">
-                    <FiCommand size={18} />
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-[var(--line)]">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-[var(--radius-sm)] bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent-soft)]">
+                    <Command size={16} />
                   </div>
-                  <h3 className="font-heading font-black text-lg text-foreground">
+                  <h3 className="font-serif font-bold text-lg text-[var(--ink)]">
                     Keyboard Shortcuts
                   </h3>
                 </div>
                 <button
                   onClick={onClose}
-                  className="p-1.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer transition-colors"
+                  className="p-1.5 rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)] cursor-pointer transition-colors"
                 >
-                  <FiX size={18} />
+                  <X size={16} />
                 </button>
               </div>
 
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {SHORTCUTS.map((sc, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between p-3 rounded-2xl bg-muted/40 border border-border/70 text-xs font-bold"
+                    className="flex items-center justify-between p-3 rounded-[var(--radius-md)] bg-[var(--surface-2)] border border-[var(--line)] text-xs font-semibold"
                   >
-                    <span className="text-muted-foreground">{sc.action}</span>
-                    <kbd className="px-2.5 py-1 rounded-lg bg-card border border-primary/30 text-primary font-mono text-[11px] shadow-sm">
+                    <span className="text-[var(--ink-2)] font-normal">{sc.action}</span>
+                    <kbd className="px-2 py-0.5 rounded-[var(--radius-sm)] bg-[var(--surface)] border border-[var(--line)] text-[var(--accent)] font-mono text-[11px] font-bold shadow-[var(--shadow-sm)]">
                       {sc.key}
                     </kbd>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-6 pt-4 border-t border-border/60 text-center">
-                <p className="text-[11px] text-muted-foreground font-semibold">
-                  Press <kbd className="px-1.5 py-0.5 rounded bg-muted text-primary font-mono">Esc</kbd> anytime to close this helper modal.
+              <div className="mt-5 pt-3 border-t border-[var(--line)] text-center">
+                <p className="text-xs text-[var(--muted)] font-normal">
+                  Press <kbd className="px-1.5 py-0.5 rounded-[var(--radius-sm)] bg-[var(--surface-2)] border border-[var(--line)] text-[var(--accent)] font-mono text-[11px]">Esc</kbd> anytime to close this modal.
                 </p>
               </div>
             </motion.div>

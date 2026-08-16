@@ -1,5 +1,5 @@
 import React from "react";
-import { FiMaximize2 } from "react-icons/fi";
+import { Maximize2 } from "lucide-react";
 
 const ALIGN = {
   left:   "items-start",
@@ -25,12 +25,12 @@ export default function ImageBlock({ block, onImageClick }) {
   return (
     <figure className={`flex flex-col w-full my-4 ${alignClass}`}>
       <div
-        className={`relative overflow-hidden rounded-[1.25rem] border border-border bg-card cursor-pointer transition-all duration-200 hover:border-primary group ${sizeClass}`}
+        className={`relative overflow-hidden rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] cursor-pointer transition-all duration-[var(--dur)] hover:border-[var(--accent)] group shadow-[var(--shadow-sm)] ${sizeClass}`}
         onClick={() => onImageClick?.(src)}
       >
         <img
           src={src}
-          alt={caption || "Lesson image"}
+          alt={caption || "Visual note diagram"}
           className="w-full h-auto max-h-[520px] object-contain block"
           loading="lazy"
           onError={(e) => {
@@ -39,12 +39,12 @@ export default function ImageBlock({ block, onImageClick }) {
           }}
         />
         {/* Zoom overlay */}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center text-white text-[0.75rem] font-extrabold gap-1.5">
-          <FiMaximize2 size={16} /> Expand
+        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center text-white text-xs font-bold gap-1.5 backdrop-blur-xs">
+          <Maximize2 size={15} /> Expand Diagram
         </div>
       </div>
       {caption && (
-        <figcaption className="mt-2 text-[0.75rem] font-semibold text-muted-foreground text-center">
+        <figcaption className="mt-2 text-xs font-medium text-[var(--muted)] text-center font-sans">
           {caption}
         </figcaption>
       )}

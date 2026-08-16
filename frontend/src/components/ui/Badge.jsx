@@ -3,20 +3,22 @@ import { cva } from "class-variance-authority";
 import { cn } from "../../lib/utils.js";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none",
+  "inline-flex items-center rounded-[var(--radius-sm)] border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-colors select-none font-mono",
   {
     variants: {
       variant: {
         default:
-          "border-primary/20 bg-primary/10 text-primary",
+          "border-[var(--accent-soft)] bg-[var(--accent-soft)] text-[var(--accent)] font-semibold",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground",
+          "border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink-2)] font-medium",
+        accent:
+          "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-on)] font-bold",
         destructive:
-          "border-transparent bg-destructive text-destructive-foreground",
+          "border-[var(--err-soft)] bg-[var(--err-soft)] text-[var(--err)] font-semibold",
         outline:
-          "text-foreground",
+          "border-[var(--line)] bg-transparent text-[var(--ink)]",
         draft:
-          "border-amber-500/20 bg-amber-500/10 text-amber-500 dark:text-amber-400",
+          "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold",
       },
     },
     defaultVariants: {

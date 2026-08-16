@@ -14,10 +14,10 @@ const ProfilePage = lazy(() => import('./pages/ProfilePage.jsx'));
 
 function LoadingFallback() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] font-sans">
       <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-        <span className="text-sm font-semibold text-muted-foreground">Loading Notes…</span>
+        <div className="w-8 h-8 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
+        <span className="text-xs font-semibold text-[var(--muted)]">Loading Notes…</span>
       </div>
     </div>
   );

@@ -5,15 +5,15 @@ import { useToast } from './ui/Toast.jsx';
 import { Button } from './ui/Button.jsx';
 import { Input } from './ui/Input.jsx';
 import {
-  FiX,
-  FiUploadCloud,
-  FiSearch,
-  FiCheck,
-  FiCopy,
-  FiTrash2,
-  FiImage,
-  FiLoader,
-} from 'react-icons/fi';
+  X,
+  UploadCloud,
+  Search,
+  Check,
+  Copy,
+  Trash2,
+  Image as ImageIcon,
+  Loader2,
+} from 'lucide-react';
 
 /** Compute SHA-256 hash of an ArrayBuffer in browser */
 async function computeSHA256(buffer) {
@@ -66,7 +66,7 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
   const [copiedId, setCopiedId] = useState(null);
   const [activeTab, setActiveTab] = useState('gallery'); // 'gallery' | 'upload'
   const [dragOver, setDragOver] = useState(false);
-  const [selectedSize, setSelectedSize] = useState('300px');
+  const [selectedSize, setSelectedSize] = useState('medium');
   const [selectedAlign, setSelectedAlign] = useState('center');
 
   // Fetch images from Media Library API
@@ -163,36 +163,26 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 9999,
-          background: 'rgba(2, 6, 23, 0.85)',
-          backdropFilter: 'blur(16px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '1.5rem',
-        }}
+        className="modal-backdrop"
       >
         <motion.div
-          initial={{ scale: 0.95, y: 15 }}
+          initial={{ scale: 0.96, y: 10 }}
           animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.95, y: 15 }}
+          exit={{ scale: 0.96, y: 10 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-4xl max-h-[85vh] rounded-[24px] border border-border bg-card shadow-[0_24px_70px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden"
+          className="w-full max-w-4xl max-h-[85vh] rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-lg)] flex flex-col overflow-hidden text-[var(--ink)] font-sans"
         >
           {/* Modal Header */}
-          <div className="p-5 border-b border-border flex items-center justify-between gap-4 bg-muted/20">
+          <div className="p-5 border-b border-[var(--line)] flex items-center justify-between gap-4 bg-[var(--surface-2)]">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-                <FiImage size={20} />
+              <div className="p-2.5 rounded-[var(--radius-md)] bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent-soft)]">
+                <ImageIcon size={18} />
               </div>
               <div>
-                <h2 className="font-heading font-extrabold text-lg text-foreground leading-none">
+                <h2 className="font-serif font-bold text-lg text-[var(--ink)] leading-none">
                   Media Library
                 </h2>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-[var(--muted)] mt-1 font-normal">
                   Upload, reuse, and manage course images & WebP diagrams
                 </p>
               </div>
@@ -200,42 +190,42 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
 
             <button
               onClick={onClose}
-              className="p-2 rounded-xl border border-border hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              className="p-1.5 rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--ink)] transition-colors cursor-pointer"
             >
-              <FiX size={18} />
+              <X size={16} />
             </button>
           </div>
 
           {/* Subheader Toolbar & Tabs */}
-          <div className="px-5 py-3 border-b border-border flex flex-wrap items-center justify-between gap-3 bg-muted/10">
+          <div className="px-5 py-3 border-b border-[var(--line)] flex flex-wrap items-center justify-between gap-3 bg-[var(--surface)]">
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
-                variant={activeTab === 'gallery' ? 'default' : 'ghost'}
+                variant={activeTab === 'gallery' ? 'default' : 'outline'}
                 onClick={() => setActiveTab('gallery')}
-                className="rounded-xl font-bold text-xs"
+                className="rounded-[var(--radius-md)] font-bold text-xs"
               >
-                <FiImage size={14} className="mr-1.5" /> All Media ({images.length})
+                <ImageIcon size={13} className="mr-1.5" /> All Media ({images.length})
               </Button>
               <Button
                 size="sm"
-                variant={activeTab === 'upload' ? 'default' : 'ghost'}
+                variant={activeTab === 'upload' ? 'default' : 'outline'}
                 onClick={() => setActiveTab('upload')}
-                className="rounded-xl font-bold text-xs"
+                className="rounded-[var(--radius-md)] font-bold text-xs"
               >
-                <FiUploadCloud size={14} className="mr-1.5" /> Upload New
+                <UploadCloud size={13} className="mr-1.5" /> Upload New
               </Button>
             </div>
 
             {/* Search filter & Image formatting options */}
             <div className="flex items-center gap-3 flex-wrap">
               {onSelectImage && mode !== 'cover' && (
-                <div className="flex items-center gap-2 text-xs bg-background/80 px-2.5 py-1 rounded-xl border border-border">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase">Size:</span>
+                <div className="flex items-center gap-2 text-xs bg-[var(--surface-2)] px-2.5 py-1 rounded-[var(--radius-md)] border border-[var(--line)] font-semibold">
+                  <span className="text-[10px] uppercase text-[var(--muted)]">Size:</span>
                   <select
                     value={selectedSize}
                     onChange={(e) => setSelectedSize(e.target.value)}
-                    className="bg-transparent text-xs font-extrabold text-primary focus:outline-none cursor-pointer"
+                    className="bg-transparent text-xs font-bold text-[var(--accent)] outline-none cursor-pointer"
                   >
                     <option value="small">Small (~320px)</option>
                     <option value="medium">Medium (~560px)</option>
@@ -243,11 +233,11 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
                     <option value="full">Full Width</option>
                   </select>
 
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase ml-1">Align:</span>
+                  <span className="text-[10px] uppercase text-[var(--muted)] ml-1">Align:</span>
                   <select
                     value={selectedAlign}
                     onChange={(e) => setSelectedAlign(e.target.value)}
-                    className="bg-transparent text-xs font-extrabold text-primary focus:outline-none cursor-pointer"
+                    className="bg-transparent text-xs font-bold text-[var(--accent)] outline-none cursor-pointer"
                   >
                     <option value="center">Center</option>
                     <option value="left">Left</option>
@@ -258,12 +248,12 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
 
               {activeTab === 'gallery' && (
                 <div className="relative w-full sm:w-56">
-                  <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)] w-3.5 h-3.5" />
                   <Input
                     placeholder="Search media..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 h-8 text-xs rounded-xl"
+                    className="pl-8 h-8 text-xs rounded-[var(--radius-md)] bg-[var(--surface)]"
                   />
                 </div>
               )}
@@ -285,10 +275,10 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
                   handleFileUpload(e.dataTransfer.files);
                 }}
                 onClick={() => fileInputRef.current?.click()}
-                className={`border-2 border-dashed rounded-2xl p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 ${
+                className={`border-2 border-dashed rounded-[var(--radius-lg)] p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 ${
                   dragOver
-                    ? 'border-primary bg-primary/10 scale-[0.99]'
-                    : 'border-border hover:border-primary/50 hover:bg-muted/30'
+                    ? 'border-[var(--accent)] bg-[var(--accent-soft)]'
+                    : 'border-[var(--line)] hover:border-[var(--accent)] hover:bg-[var(--surface-2)]'
                 }`}
               >
                 <input
@@ -301,20 +291,20 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
 
                 {uploading ? (
                   <div className="flex flex-col items-center gap-3">
-                    <FiLoader size={36} className="spin text-primary" />
-                    <p className="font-bold text-sm text-foreground">
+                    <Loader2 size={32} className="animate-spin text-[var(--accent)]" />
+                    <p className="font-bold text-sm text-[var(--ink)]">
                       Compressing to WebP & calculating SHA-256 hash...
                     </p>
                   </div>
                 ) : (
                   <>
-                    <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4">
-                      <FiUploadCloud size={32} />
+                    <div className="w-14 h-14 rounded-[var(--radius-md)] bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center mb-3">
+                      <UploadCloud size={28} />
                     </div>
-                    <h3 className="font-heading font-extrabold text-base text-foreground mb-1">
+                    <h3 className="font-serif font-bold text-base text-[var(--ink)] mb-1">
                       Drag & Drop image here, or click to browse
                     </h3>
-                    <p className="text-xs text-muted-foreground max-w-sm">
+                    <p className="text-xs text-[var(--muted)] max-w-sm font-normal">
                       Images automatically get compressed to WebP format with SHA-256 deduplication to prevent duplicate uploads.
                     </p>
                   </>
@@ -323,8 +313,8 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
             ) : (
               <div>
                 {loading && (
-                  <div className="flex items-center justify-center py-16 text-muted-foreground">
-                    <FiLoader size={28} className="spin text-primary mr-2" /> Loading Media Library...
+                  <div className="flex items-center justify-center py-16 text-[var(--muted)] text-xs font-semibold">
+                    <Loader2 size={24} className="animate-spin text-[var(--accent)] mr-2" /> Loading Media Library...
                   </div>
                 )}
 
@@ -333,10 +323,10 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
                     {images.map((img) => (
                       <motion.div
                         key={img.id}
-                        whileHover={{ scale: 1.02 }}
-                        className="group relative rounded-2xl border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-primary/50 transition-all flex flex-col"
+                        whileHover={{ scale: 1.01 }}
+                        className="group relative rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] overflow-hidden shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] hover:border-[var(--accent)] transition-all flex flex-col"
                       >
-                        <div className="relative h-36 w-full bg-black/40 overflow-hidden flex items-center justify-center">
+                        <div className="relative h-36 w-full bg-[var(--surface-2)] overflow-hidden flex items-center justify-center">
                           <img
                             src={img.url}
                             alt={img.filename}
@@ -344,7 +334,7 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
                             loading="lazy"
                           />
 
-                          <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center gap-2 p-2">
+                          <div className="absolute inset-0 bg-black/60 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center gap-2 p-2">
                             {onSelectImage && (
                               <Button
                                 size="xs"
@@ -353,7 +343,7 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
                                   onSelectImage(img.url, img.filename, selectedSize, selectedAlign);
                                   onClose();
                                 }}
-                                className="w-full font-extrabold rounded-lg text-xs"
+                                className="w-full font-bold rounded-[var(--radius-sm)] text-xs"
                               >
                                 {mode === 'cover' ? 'Set as Cover' : 'Insert into Slide'}
                               </Button>
@@ -366,26 +356,26 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
                                 onClick={(e) => handleCopyLink(img.url, img.id, e)}
                                 className="flex-1 text-[11px] h-7 bg-white/10 hover:bg-white/20 text-white border-white/20"
                               >
-                                {copiedId === img.id ? <FiCheck className="text-emerald-400" size={12} /> : <FiCopy size={12} />}
-                                {copiedId === img.id ? 'Copied' : 'Copy Link'}
+                                {copiedId === img.id ? <Check className="text-emerald-400" size={12} /> : <Copy size={12} />}
+                                <span>{copiedId === img.id ? 'Copied' : 'Copy'}</span>
                               </Button>
 
                               <button
                                 onClick={(e) => handleDeleteImage(img.id, e)}
-                                className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500 text-white transition-colors cursor-pointer"
+                                className="p-1.5 rounded-[var(--radius-sm)] bg-red-500/20 hover:bg-red-500 text-white transition-colors cursor-pointer"
                                 title="Delete image"
                               >
-                                <FiTrash2 size={12} />
+                                <Trash2 size={12} />
                               </button>
                             </div>
                           </div>
                         </div>
 
-                        <div className="p-2.5 bg-muted/10 border-t border-border flex flex-col gap-0.5">
-                          <p className="font-semibold text-xs text-foreground truncate" title={img.filename}>
+                        <div className="p-2.5 bg-[var(--surface-2)] border-t border-[var(--line)] flex flex-col gap-0.5">
+                          <p className="font-semibold text-xs text-[var(--ink)] truncate" title={img.filename}>
                             {img.filename}
                           </p>
-                          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                          <div className="flex items-center justify-between text-[10px] font-mono text-[var(--muted)]">
                             <span>{img.size ? `${Math.round(img.size / 1024)} KB` : 'WebP'}</span>
                             <span>{img.width ? `${img.width}x${img.height}` : ''}</span>
                           </div>

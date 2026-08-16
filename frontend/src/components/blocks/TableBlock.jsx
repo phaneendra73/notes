@@ -1,11 +1,5 @@
-import React from "react";
+ï»¿import React from "react";
 
-/**
- * TableBlock — renders a structured data table.
- *
- * Block schema:
- *   { type: "table", caption, headers: string[], rows: string[][], striped, bordered }
- */
 export default function TableBlock({ block }) {
   if (!block) return null;
   const headers  = Array.isArray(block.headers) ? block.headers : [];
@@ -16,25 +10,25 @@ export default function TableBlock({ block }) {
 
   if (headers.length === 0 && rows.length === 0) {
     return (
-      <div className="flex items-center justify-center p-6 rounded-xl border-2 border-dashed border-border text-muted-foreground text-sm">
-        Empty table — add headers and rows.
+      <div className="flex items-center justify-center p-6 rounded-[var(--radius-md)] border border-dashed border-[var(--line)] text-[var(--muted)] text-xs font-medium">
+        Empty comparison table.
       </div>
     );
   }
 
-  const cellBorder = bordered ? "border border-border" : "";
+  const cellBorder = bordered ? "border border-[var(--line)]" : "";
 
   return (
-    <div className="my-5 rounded-xl overflow-hidden">
+    <div className="my-5 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] overflow-hidden shadow-[var(--shadow-sm)]">
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-sm leading-normal text-foreground bg-card">
+        <table className="w-full border-collapse text-xs sm:text-sm leading-normal text-[var(--ink)]">
           {headers.length > 0 && (
-            <thead className="bg-muted">
+            <thead className="bg-[var(--surface-2)]">
               <tr>
                 {headers.map((h, i) => (
                   <th
                     key={i}
-                    className={`px-4 py-2.5 text-left font-heading font-semibold text-[0.8rem] uppercase tracking-wide whitespace-nowrap ${cellBorder}`}
+                    className={`px-4 py-2.5 text-left font-serif font-bold text-xs uppercase tracking-wider text-[var(--ink)] whitespace-nowrap ${cellBorder}`}
                   >
                     {h}
                   </th>
@@ -46,10 +40,10 @@ export default function TableBlock({ block }) {
             {rows.map((row, ri) => (
               <tr
                 key={ri}
-                className={`transition-colors hover:bg-accent/60 ${striped && ri % 2 === 0 ? "bg-card" : striped ? "bg-muted/50" : "bg-card"}`}
+                className={`transition-colors hover:bg-[var(--surface-2)] ${striped && ri % 2 === 0 ? "bg-[var(--surface)]" : striped ? "bg-[var(--surface-2)]/50" : "bg-[var(--surface)]"}`}
               >
                 {(Array.isArray(row) ? row : []).map((cell, ci) => (
-                  <td key={ci} className={`px-4 py-2 align-top ${cellBorder}`}>{cell}</td>
+                  <td key={ci} className={`px-4 py-2.5 align-top ${cellBorder} text-[var(--ink-2)] font-sans`}>{cell}</td>
                 ))}
               </tr>
             ))}
@@ -57,7 +51,7 @@ export default function TableBlock({ block }) {
         </table>
       </div>
       {caption && (
-        <p className="mt-2 text-[0.8rem] text-muted-foreground text-center italic">{caption}</p>
+        <p className="p-2 text-xs text-[var(--muted)] text-center italic border-t border-[var(--line)]">{caption}</p>
       )}
     </div>
   );

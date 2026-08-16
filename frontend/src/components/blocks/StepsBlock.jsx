@@ -1,33 +1,32 @@
-import React from "react";
+ï»¿import React from "react";
 import { renderInlineText } from "../../lib/inline.js";
 
-/**
- * StepsBlock — numbered step-by-step list.
- * Block schema: { type: "steps", title, items: string[] }
- */
 export default function StepsBlock({ block }) {
   if (!block) return null;
   const items = Array.isArray(block.items) ? block.items : [];
   const title = block.title || "";
 
   return (
-    <div className="my-5">
+    <div className="my-5 space-y-3">
       {title && (
-        <p className="font-heading font-semibold text-[0.9rem] mb-3 text-foreground">{title}</p>
+        <h4 className="font-serif font-bold text-sm sm:text-base text-[var(--ink)]">{title}</h4>
       )}
       <ol className="list-none p-0 m-0 flex flex-col gap-2.5">
         {items.map((item, i) => (
-          <li key={i} className="flex items-start gap-3.5">
-            <span className="shrink-0 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[0.75rem] font-black font-heading mt-0.5">
+          <li
+            key={i}
+            className="flex items-start gap-3.5 p-3 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-sm)]"
+          >
+            <span className="shrink-0 w-6 h-6 rounded-[var(--radius-sm)] bg-[var(--accent)] text-[var(--accent-on)] flex items-center justify-center text-xs font-bold font-mono">
               {i + 1}
             </span>
-            <span className="flex-1 text-[0.9rem] leading-[1.6] pt-[0.15rem] text-foreground">
+            <span className="flex-1 text-xs sm:text-sm leading-relaxed text-[var(--ink-2)] font-sans pt-0.5">
               {renderInlineText(item)}
             </span>
           </li>
         ))}
         {items.length === 0 && (
-          <li className="text-muted-foreground text-sm">No steps yet.</li>
+          <li className="text-[var(--muted)] text-xs">No steps defined.</li>
         )}
       </ol>
     </div>
