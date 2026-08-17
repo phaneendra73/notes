@@ -2,8 +2,8 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 
 export default function SEO({
-  title = 'Notes — Your Personal Knowledge Base | Notes.phaneendramarri.com',
-  description = 'A personal engineering study hub to review concepts in C#, .NET Core, Data Structures & Algorithms, SQL, and System Design.',
+  title = 'Notes — Phaneendra Marri',
+  description = 'Interactive notes, mental models, and deep dives into core engineering concepts.',
   image = 'https://avatars.githubusercontent.com/u/118047850?s=96&v=4',
   article = false,
   author = 'Phaneendra Marri',

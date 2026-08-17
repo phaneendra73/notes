@@ -174,7 +174,7 @@ export default function HeroSection() {
           className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[var(--radius-sm)] text-[11px] font-mono font-medium bg-[var(--surface-2)]/90 text-[var(--accent)] border border-[var(--line)] shadow-xs"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
-          <span>Visual Engineering Notes</span>
+          <span>Interactive Notes</span>
         </motion.div>
 
         {/* Clean Single-Line Display Headline: "Knowledge, written clearly." */}
@@ -193,8 +193,7 @@ export default function HeroSection() {
 
           {/* Compact Subtitle */}
           <p className="text-xs sm:text-sm text-[var(--ink-2)] max-w-md mx-auto leading-relaxed font-normal">
-            A curated collection of software architecture, .NET internals,
-            algorithms, and distributed systems.
+            Distilled mental models, interactive diagrams, and deep dives into core concepts.
           </p>
         </motion.div>
       </div>
