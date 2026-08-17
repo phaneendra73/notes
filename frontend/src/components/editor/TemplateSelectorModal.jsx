@@ -35,7 +35,7 @@ export default function TemplateSelectorModal({ isOpen, onClose, onSelectTemplat
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-full max-w-2xl bg-[var(--surface)] border border-[var(--line)] rounded-2xl shadow-2xl overflow-hidden flex flex-col z-10 max-h-[88vh]"
+          className="relative w-full max-w-2xl bg-[var(--surface)] border border-[var(--line)] rounded-[var(--radius-md)] shadow-2xl overflow-hidden flex flex-col z-10 max-h-[88vh]"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-[var(--line)] bg-[var(--surface)]">
@@ -50,7 +50,7 @@ export default function TemplateSelectorModal({ isOpen, onClose, onSelectTemplat
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)] transition-colors cursor-pointer"
+              className="p-1.5 rounded-[var(--radius-sm)] text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)] transition-colors cursor-pointer"
               title="Close"
             >
               <X size={18} />
@@ -71,10 +71,10 @@ export default function TemplateSelectorModal({ isOpen, onClose, onSelectTemplat
                     onSelectTemplate(tmpl);
                     onClose();
                   }}
-                  className="p-4 rounded-xl border border-[var(--line)] bg-[var(--surface-2)]/50 hover:bg-[var(--surface-2)] hover:border-[var(--accent)] transition-all cursor-pointer group flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
+                  className="p-4 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-2)]/50 hover:bg-[var(--surface-2)] hover:border-[var(--accent)] transition-all cursor-pointer group flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
                 >
                   <div className="flex items-start gap-3.5">
-                    <div className="w-10 h-10 rounded-lg bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent)]/30 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <div className="w-10 h-10 rounded-[var(--radius-sm)] bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent)]/30 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                       <IconComp size={20} />
                     </div>
                     <div className="space-y-1">

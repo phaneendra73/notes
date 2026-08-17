@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { renderInlineText } from "../../lib/inline.js";
 
 export default function StepsBlock({ block }) {
@@ -20,7 +20,7 @@ export default function StepsBlock({ block }) {
             <span className="shrink-0 w-6 h-6 rounded-[var(--radius-sm)] bg-[var(--accent)] text-[var(--accent-on)] flex items-center justify-center text-xs font-bold font-mono">
               {i + 1}
             </span>
-            <span className="flex-1 text-xs sm:text-sm leading-relaxed text-[var(--ink-2)] font-sans pt-0.5">
+            <span className="flex-1 text-sm sm:text-base leading-relaxed text-[var(--ink-2)] font-sans pt-0.5">
               {renderInlineText(item)}
             </span>
           </li>

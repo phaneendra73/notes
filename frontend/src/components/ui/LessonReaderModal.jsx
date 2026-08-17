@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import client from '../../api/client.js';
-import { X, ArrowRight, Layers, Loader2, Sparkles, Clock } from 'lucide-react';
+import { X, ArrowRight, Layers, Loader2, Clock } from 'lucide-react';
 
 function formatRelativeTime(dateString) {
   if (!dateString) return '';
@@ -113,12 +113,12 @@ export default function LessonReaderModal({ lesson, isOpen, onClose }) {
           exit={{ opacity: 0, scale: 0.94, y: 15 }}
           transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-lg bg-[var(--surface)] border border-[var(--line)] rounded-2xl shadow-[var(--shadow-xl)] overflow-hidden flex flex-col my-auto z-10 max-h-[90vh]"
+          className="relative w-full max-w-lg bg-[var(--surface)] border border-[var(--line)] rounded-[var(--radius-md)] shadow-[var(--shadow-xl)] overflow-hidden flex flex-col my-auto z-10 max-h-[90vh]"
         >
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute top-3.5 right-3.5 z-20 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white backdrop-blur-md transition-all cursor-pointer shadow-md"
+            className="absolute top-3.5 right-3.5 z-20 p-2 rounded-[var(--radius-sm)] bg-black/50 hover:bg-black/70 text-white backdrop-blur-md transition-all cursor-pointer shadow-md"
             title="Close"
           >
             <X size={18} />
@@ -127,7 +127,7 @@ export default function LessonReaderModal({ lesson, isOpen, onClose }) {
           {/* Modal Body Container */}
           <div className="flex flex-col gap-4 p-5 sm:p-6 overflow-y-auto w-full custom-scrollbar">
             {/* 1. Cover Image */}
-            <div className="relative w-full h-[22vh] sm:h-[24vh] min-h-[160px] rounded-xl overflow-hidden bg-[var(--surface-2)] shrink-0 border border-[var(--line)]">
+            <div className="relative w-full h-[22vh] sm:h-[24vh] min-h-[160px] rounded-[var(--radius-sm)] overflow-hidden bg-[var(--surface-2)] shrink-0 border border-[var(--line)]">
               <img
                 src={cover}
                 alt={lesson.title || 'Track Cover'}
@@ -143,7 +143,7 @@ export default function LessonReaderModal({ lesson, isOpen, onClose }) {
                   {tags.slice(0, 3).map((tag, idx) => (
                     <span
                       key={tag.id || idx}
-                      className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-black/60 text-white backdrop-blur-md border border-white/10"
+                      className="px-2.5 py-0.5 rounded-[var(--radius-sm)] text-[11px] font-semibold bg-black/60 text-white backdrop-blur-md border border-white/10"
                     >
                       {tag.name || tag}
                     </span>
@@ -153,7 +153,7 @@ export default function LessonReaderModal({ lesson, isOpen, onClose }) {
             </div>
 
             {/* 2. Title & Description Box */}
-            <div className="flex flex-col gap-2.5 bg-[var(--accent-soft)]/20 border border-[var(--line)] rounded-xl p-4 sm:p-5">
+            <div className="flex flex-col gap-2.5 bg-[var(--accent-soft)]/20 border border-[var(--line)] rounded-[var(--radius-sm)] p-4 sm:p-5">
               <h3 className="text-xl sm:text-2xl font-bold text-[var(--ink)] tracking-tight leading-tight">
                 {lesson.title}
               </h3>
@@ -193,10 +193,10 @@ export default function LessonReaderModal({ lesson, isOpen, onClose }) {
                       <div
                         key={slide.id || index}
                         onClick={() => handleChapterClick(index)}
-                        className="cursor-pointer group flex items-center justify-between bg-[var(--surface-2)] hover:bg-[var(--surface-3)] border border-[var(--line)] hover:border-[var(--accent)] rounded-xl px-4 py-3 transition-all duration-200 shadow-sm hover:shadow hover:-translate-y-0.5 w-full"
+                        className="cursor-pointer group flex items-center justify-between bg-[var(--surface-2)] hover:bg-[var(--surface-3)] border border-[var(--line)] hover:border-[var(--accent)] rounded-[var(--radius-sm)] px-4 py-3 transition-all duration-200 shadow-sm hover:shadow hover:-translate-y-0.5 w-full"
                       >
                         <div className="flex items-center gap-3 min-w-0 flex-1 mr-3">
-                          <span className="text-xs font-mono font-bold text-[var(--accent)] bg-[var(--accent-soft)] px-2 py-0.5 rounded-md shrink-0">
+                          <span className="text-xs font-mono font-bold text-[var(--accent)] bg-[var(--accent-soft)] px-2 py-0.5 rounded-[var(--radius-sm)] shrink-0">
                             {String(index + 1).padStart(2, '0')}
                           </span>
                           <span className="text-sm font-medium text-[var(--ink)] group-hover:text-[var(--accent)] truncate transition-colors">
@@ -213,10 +213,10 @@ export default function LessonReaderModal({ lesson, isOpen, onClose }) {
                 ) : (
                   <div
                     onClick={() => handleChapterClick(0)}
-                    className="cursor-pointer group flex items-center justify-between bg-[var(--surface-2)] hover:bg-[var(--surface-3)] border border-[var(--line)] hover:border-[var(--accent)] rounded-xl px-4 py-3 transition-all duration-200 w-full"
+                    className="cursor-pointer group flex items-center justify-between bg-[var(--surface-2)] hover:bg-[var(--surface-3)] border border-[var(--line)] hover:border-[var(--accent)] rounded-[var(--radius-sm)] px-4 py-3 transition-all duration-200 w-full"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-xs font-mono font-bold text-[var(--accent)] bg-[var(--accent-soft)] px-2 py-0.5 rounded-md">
+                      <span className="text-xs font-mono font-bold text-[var(--accent)] bg-[var(--accent-soft)] px-2 py-0.5 rounded-[var(--radius-sm)]">
                         01
                       </span>
                       <span className="text-sm font-medium text-[var(--ink)] group-hover:text-[var(--accent)]">
@@ -233,7 +233,7 @@ export default function LessonReaderModal({ lesson, isOpen, onClose }) {
             <div className="pt-2">
               <button
                 onClick={handleStart}
-                className="w-full h-11 rounded-xl bg-[var(--accent)] text-[var(--accent-on)] font-bold text-sm flex items-center justify-center gap-2 hover:bg-[var(--accent-strong)] transition-all duration-200 shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)] active:scale-[0.99] cursor-pointer"
+                className="w-full h-11 rounded-[var(--radius-sm)] bg-[var(--accent)] text-[var(--accent-on)] font-bold text-sm flex items-center justify-center gap-2 hover:bg-[var(--accent-strong)] transition-all duration-200 shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)] active:scale-[0.99] cursor-pointer"
               >
                 <span>Start Reading</span>
                 <ArrowRight size={16} />

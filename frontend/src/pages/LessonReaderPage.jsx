@@ -30,7 +30,6 @@ export default function LessonReaderPage() {
   const [fetchingBatch, setFetchingBatch] = useState(false);
   const [error, setError] = useState(null);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const readerRef = useRef(null);
 
   // Restore visited slides from sessionStorage
@@ -213,16 +212,22 @@ export default function LessonReaderPage() {
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
-      readerRef.current?.requestFullscreen?.().then(() => setIsFullscreen(true)).catch(() => {});
+      readerRef.current?.requestFullscreen?.().catch(() => {});
     } else {
-      document.exitFullscreen?.().then(() => setIsFullscreen(false)).catch(() => {});
+      document.exitFullscreen?.().catch(() => {});
     }
   }, []);
 
   // Keyboard navigation
   useEffect(() => {
     const onKeyDown = (e) => {
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+      const activeTag = document.activeElement?.tagName;
+      const isInputFocused = ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag) || document.activeElement?.isContentEditable;
+      if (isInputFocused) return;
+      
+      // If user is focused on an interactive button/link and presses space, allow native button activation
+      if (['BUTTON', 'A'].includes(activeTag) && e.key === ' ') return;
+
       if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goNext(); }
       else if (e.key === 'ArrowLeft') { e.preventDefault(); goPrev(); }
       else if (e.key === '?' || (e.shiftKey && e.key === '/')) { e.preventDefault(); setHelpOpen((o) => !o); }
@@ -309,6 +314,7 @@ export default function LessonReaderPage() {
 
       <main className="reader-main flex-1 flex items-center justify-center py-8">
         <SlideCanvas
+          lesson={lesson}
           slide={currentSlide}
           slideIndex={currentSlideIndex}
           totalSlides={totalSlidesCount}

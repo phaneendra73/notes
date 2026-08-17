@@ -13,7 +13,9 @@ authRoutes.post('/signin', async (c) => {
       return c.json({ error: 'Email and password are required' }, 400);
     }
 
-    const user = await c.env.DB.prepare('SELECT * FROM userprofiles WHERE email = ?')
+    const user = await c.env.DB.prepare(
+      'SELECT id, email, name, password, profileUrl, bio, githubUrl, twitterUrl, role FROM userprofiles WHERE email = ?'
+    )
       .bind(email.trim().toLowerCase())
       .first();
 
@@ -27,7 +29,9 @@ authRoutes.post('/signin', async (c) => {
     }
 
     const secret = c.env?.JWT_SECRET || 'kadha_super_secret_jwt_key_2025';
-    const token = await sign({ id: user.id }, secret);
+    // 7-day token expiration claim
+    const exp = Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 7);
+    const token = await sign({ id: user.id, exp }, secret);
 
     return c.json(
       {
@@ -129,7 +133,7 @@ async function updatePassword(c) {
       return c.json({ error: 'New password must be at least 4 characters' }, 400);
     }
 
-    const user = await c.env.DB.prepare('SELECT * FROM userprofiles WHERE id = ?')
+    const user = await c.env.DB.prepare('SELECT id, password FROM userprofiles WHERE id = ?')
       .bind(parseInt(userId))
       .first();
 
@@ -137,11 +141,13 @@ async function updatePassword(c) {
       return c.json({ error: 'User not found' }, 404);
     }
 
-    if (currentPassword) {
-      const valid = await verifyPassword(currentPassword, user.password);
-      if (!valid) {
-        return c.json({ error: 'Current password is incorrect' }, 400);
-      }
+    if (!currentPassword) {
+      return c.json({ error: 'Current password is required' }, 400);
+    }
+
+    const valid = await verifyPassword(currentPassword, user.password);
+    if (!valid) {
+      return c.json({ error: 'Current password is incorrect' }, 400);
     }
 
     const hashed = await hashPassword(newPassword);

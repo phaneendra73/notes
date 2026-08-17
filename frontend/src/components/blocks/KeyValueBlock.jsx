@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 
 export default function KeyValueBlock({ block }) {
   if (!block) return null;
@@ -30,7 +30,7 @@ export default function KeyValueBlock({ block }) {
             }`}>
               {p.key}
             </dt>
-            <dd className="text-xs sm:text-sm text-[var(--ink)] leading-relaxed m-0 font-sans">{p.value}</dd>
+            <dd className="text-sm sm:text-base text-[var(--ink)] leading-relaxed m-0 font-sans">{p.value}</dd>
           </div>
         ))}
         {pairs.length === 0 && (

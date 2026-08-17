@@ -58,6 +58,12 @@ tagRoutes.delete('/:id', requireAuth, async (c) => {
       return c.json({ error: 'Invalid tag ID' }, 400);
     }
 
+    const userId = parseInt(c.get('userId'));
+    const user = await c.env.DB.prepare('SELECT role FROM userprofiles WHERE id = ?').bind(userId).first();
+    if (user?.role !== 'admin') {
+      return c.json({ error: 'Forbidden: Only administrators can delete global tags' }, 403);
+    }
+
     const existing = await c.env.DB.prepare('SELECT id, name FROM tags WHERE id = ?')
       .bind(tagId)
       .first();

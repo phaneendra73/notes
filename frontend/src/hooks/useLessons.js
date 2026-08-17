@@ -4,13 +4,22 @@ import client from '../api/client.js';
 /**
  * useLessons — fetches a paginated list of lessons from the API.
  *
- * @param {number|null} tagId - Filter by tag ID (null = all)
+ * @param {number|number[]|null} tagId - Filter by tag ID(s) (null = all)
  * @param {string} searchQuery - Text search query
  * @param {number} page - Current page (1-based)
  * @param {number} limit - Items per page
+ * @param {boolean} includeUnpublished - Whether to fetch draft/unpublished notes
+ * @param {string} sort - Sort order ('latest', 'views', 'oldest')
  * @returns {{ lessons, loading, isFetching, error, pagination, refetch }}
  */
-export default function useLessons(tagId = null, searchQuery = '', page = 1, limit = 10) {
+export default function useLessons(
+  tagId = null,
+  searchQuery = '',
+  page = 1,
+  limit = 10,
+  includeUnpublished = false,
+  sort = 'latest'
+) {
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
@@ -23,14 +32,14 @@ export default function useLessons(tagId = null, searchQuery = '', page = 1, lim
       setIsFetching(true);
       setError(null);
 
-      const isAuth = Boolean(localStorage.getItem('jwt'));
       const tagParam = Array.isArray(tagId) ? tagId.join(',') : tagId;
       const params = {
         page: pageNum,
         limit,
         ...(searchQuery && { query: searchQuery }),
         ...(tagId != null && { tags: tagParam }),
-        ...(isAuth && { includeUnpublished: 'true' }),
+        ...(includeUnpublished && { includeUnpublished: 'true' }),
+        ...(sort && { sort }),
       };
 
       const res = await client.get('/api/lessons', { params });
@@ -47,7 +56,7 @@ export default function useLessons(tagId = null, searchQuery = '', page = 1, lim
       setLoading(false);
       setIsFetching(false);
     }
-  }, [tagId, searchQuery, page, limit]);
+  }, [tagId, searchQuery, page, limit, includeUnpublished, sort]);
 
   useEffect(() => {
     fetchLessons(page);

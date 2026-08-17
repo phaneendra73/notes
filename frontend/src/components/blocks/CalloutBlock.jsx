@@ -41,7 +41,7 @@ export default function CalloutBlock({ block }) {
         <Icon size={14} />
         <span>{label}</span>
       </div>
-      <div className="text-sm leading-relaxed text-[var(--ink)] font-normal">
+      <div className="text-[14.5px] sm:text-base leading-relaxed text-[var(--ink)] font-normal font-sans">
         {renderInlineText(block.content || "")}
       </div>
     </div>

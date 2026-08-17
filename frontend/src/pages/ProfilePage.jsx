@@ -7,8 +7,8 @@ import Footer from '../components/layout/Footer.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { useToast } from '../components/ui/Toast.jsx';
 import {
-  User, Eye, BookOpen, Save, Key, UserPlus, Lock, Loader2,
-  ExternalLink, ArrowRight, ShieldCheck, Globe, Link2
+  User, BookOpen, Save, Key, UserPlus, Lock, Loader2,
+  ArrowRight, ShieldCheck, Globe, Link2
 } from 'lucide-react';
 
 export default function ProfilePage() {

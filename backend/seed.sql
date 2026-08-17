@@ -1,6 +1,6 @@
 -- Kadha Simplified Seed Data (v3.0)
 
-INSERT OR REPLACE INTO userprofiles (id, email, password, name, profileUrl, bio, githubUrl, twitterUrl)
+INSERT OR REPLACE INTO userprofiles (id, email, password, name, profileUrl, bio, githubUrl, twitterUrl, role)
 VALUES (
   1,
   'author@kadha.io',
@@ -9,7 +9,8 @@ VALUES (
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
   'Software Engineer & Systems Architect studying C#, .NET, DSA, and SQL.',
   'https://github.com',
-  'https://x.com'
+  'https://x.com',
+  'admin'
 );
 
 INSERT OR IGNORE INTO tags (id, name) VALUES

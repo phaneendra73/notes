@@ -5,6 +5,7 @@ import {
   calcReadingTime,
   generateSlug,
   parseSlideRow,
+  syncLessonSlides,
   syncLessonTags,
 } from '../db/queries.js';
 
@@ -76,6 +77,7 @@ lessonRoutes.get('/', async (c) => {
     let orderBy = 'l.createdAt DESC';
     if (sort === 'views') orderBy = 'l.viewsCount DESC, l.createdAt DESC';
     else if (sort === 'oldest') orderBy = 'l.createdAt ASC';
+    else if (sort === 'title') orderBy = 'l.title ASC';
 
     const countRow = await c.env.DB.prepare(
       `SELECT COUNT(*) as total FROM lessons l ${whereSql}`
@@ -329,34 +331,49 @@ lessonRoutes.put('/:id', requireAuth, async (c) => {
     const readingTime = processedSlides ? calcReadingTime(processedSlides) : existing.readingTime;
     const slidesCount = processedSlides ? processedSlides.length : existing.slidesCount;
 
-    await c.env.DB.prepare(
-      `UPDATE lessons SET title = ?, excerpt = ?, imageUrl = ?, readingTime = ?, slidesCount = ?, isPublished = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`
-    )
-      .bind(updatedTitle, updatedExcerpt, updatedCoverUrl, readingTime, slidesCount, updatedPublished, id)
-      .run();
-
+    // Perform smart differential sync on slides if provided
+    let slideDiffResult = null;
     if (processedSlides) {
-      await c.env.DB.prepare('DELETE FROM slides WHERE lessonId = ?').bind(id).run();
-      for (let i = 0; i < processedSlides.length; i++) {
-        const slide = processedSlides[i];
-        const orderNum = slide.orderNumber || i + 1;
-        const blocks = Array.isArray(slide.blocks) && slide.blocks.length > 0
-          ? slide.blocks
-          : [{ type: 'paragraph', content: slide.content || '' }];
+      slideDiffResult = await syncLessonSlides(c.env.DB, id, processedSlides);
+    }
 
-        await c.env.DB.prepare(
-          'INSERT INTO slides (lessonId, orderNumber, title, blocksJson) VALUES (?, ?, ?, ?)'
-        )
-          .bind(id, orderNum, slide.title || `Slide ${orderNum}`, JSON.stringify(blocks))
-          .run();
-      }
+    // Check if lesson metadata or slide count/reading time changed or slides were modified
+    const slidesModified = slideDiffResult && (
+      slideDiffResult.toDelete.length > 0 ||
+      slideDiffResult.toUpdate.length > 0 ||
+      slideDiffResult.toInsert.length > 0
+    );
+
+    const metaChanged =
+      updatedTitle !== existing.title ||
+      updatedExcerpt !== existing.excerpt ||
+      updatedCoverUrl !== existing.imageUrl ||
+      updatedPublished !== existing.isPublished ||
+      readingTime !== existing.readingTime ||
+      slidesCount !== existing.slidesCount ||
+      slidesModified;
+
+    if (metaChanged) {
+      await c.env.DB.prepare(
+        `UPDATE lessons SET title = ?, excerpt = ?, imageUrl = ?, readingTime = ?, slidesCount = ?, isPublished = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`
+      )
+        .bind(updatedTitle, updatedExcerpt, updatedCoverUrl, readingTime, slidesCount, updatedPublished, id)
+        .run();
     }
 
     if (tagIds !== undefined) {
       await syncLessonTags(c.env.DB, id, tagIds);
     }
 
-    return c.json({ message: 'Lesson updated' });
+    return c.json({
+      message: 'Lesson updated',
+      diff: slideDiffResult ? {
+        deleted: slideDiffResult.toDelete.length,
+        updated: slideDiffResult.toUpdate.length,
+        inserted: slideDiffResult.toInsert.length,
+        unchanged: slideDiffResult.unchanged.length,
+      } : null,
+    });
   } catch (err) {
     console.error('Update lesson error:', err);
     return c.json({ error: 'Failed to update lesson', details: err.message }, 500);

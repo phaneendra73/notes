@@ -54,7 +54,7 @@ export default function CodeBlock({ block }) {
       </div>
 
       {/* Code Body with optional line numbering */}
-      <div className="p-4 overflow-x-auto text-xs sm:text-sm leading-relaxed text-[#e6edf3]">
+      <div className="p-3.5 sm:p-4 overflow-x-auto text-[13.5px] sm:text-sm leading-relaxed text-[#e6edf3]">
         <pre className="m-0 font-mono flex">
           {lines.length > 2 ? (
             <div className="select-none pr-4 text-right text-[#484f58] font-mono border-r border-[#30363d] mr-4 shrink-0">

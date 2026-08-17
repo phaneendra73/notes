@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 
 export default function TableBlock({ block }) {
   if (!block) return null;
@@ -21,7 +21,7 @@ export default function TableBlock({ block }) {
   return (
     <div className="my-5 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] overflow-hidden shadow-[var(--shadow-sm)]">
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-xs sm:text-sm leading-normal text-[var(--ink)]">
+        <table className="w-full border-collapse text-[13px] sm:text-sm leading-normal text-[var(--ink)]">
           {headers.length > 0 && (
             <thead className="bg-[var(--surface-2)]">
               <tr>

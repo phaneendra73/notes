@@ -6,7 +6,7 @@ export function CustomSelect({ value, onValueChange, options, placeholder = "Sel
   return (
     <RadixSelect.Root value={String(value)} onValueChange={onValueChange}>
       <RadixSelect.Trigger
-        className={`inline-flex items-center justify-between gap-2 px-3 py-2 rounded-xl border border-border bg-card/90 text-foreground text-xs font-extrabold cursor-pointer outline-none transition-all hover:border-primary hover:text-primary focus:border-primary focus:ring-1 focus:ring-primary shadow-sm ${className}`}
+        className={`inline-flex items-center justify-between gap-2 px-3 py-2 rounded-[var(--radius-sm)] border border-border bg-card/90 text-foreground text-xs font-extrabold cursor-pointer outline-none transition-all hover:border-primary hover:text-primary focus:border-primary focus:ring-1 focus:ring-primary shadow-sm ${className}`}
       >
         <RadixSelect.Value placeholder={placeholder} />
         <RadixSelect.Icon className="text-primary">
@@ -16,7 +16,7 @@ export function CustomSelect({ value, onValueChange, options, placeholder = "Sel
 
       <RadixSelect.Portal>
         <RadixSelect.Content
-          className="z-[200] min-w-[12rem] overflow-hidden rounded-2xl border border-primary/40 bg-card/95 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-1.5 animate-in fade-in-80 zoom-in-95"
+          className="z-[200] min-w-[12rem] overflow-hidden rounded-[var(--radius-md)] border border-primary/40 bg-card/95 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-1.5 animate-in fade-in-80 zoom-in-95"
           position="popper"
           sideOffset={5}
         >
@@ -29,7 +29,7 @@ export function CustomSelect({ value, onValueChange, options, placeholder = "Sel
               <RadixSelect.Item
                 key={opt.value}
                 value={String(opt.value)}
-                className="relative flex items-center justify-between px-3 py-2 rounded-xl text-xs font-black text-foreground cursor-pointer outline-none select-none transition-colors data-[highlighted]:bg-primary/15 data-[highlighted]:text-primary"
+                className="relative flex items-center justify-between px-3 py-2 rounded-[var(--radius-sm)] text-xs font-black text-foreground cursor-pointer outline-none select-none transition-colors data-[highlighted]:bg-primary/15 data-[highlighted]:text-primary"
               >
                 <RadixSelect.ItemText>{opt.label}</RadixSelect.ItemText>
                 <RadixSelect.ItemIndicator className="text-primary">

@@ -14,6 +14,7 @@ import {
   Clock, Globe, Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useDebounce } from 'use-debounce';
 import useLessons from '../hooks/useLessons.js';
 
 export default function StudioPage() {
@@ -21,10 +22,18 @@ export default function StudioPage() {
   const toast = useToast();
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery] = useDebounce(searchQuery, 300);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  const { lessons, loading, isFetching, error, pagination, refetch } = useLessons(null, searchQuery, page, 10);
+  const { lessons, loading, isFetching, error, pagination, refetch } = useLessons(
+    null,
+    debouncedQuery,
+    page,
+    10,
+    true,
+    'latest'
+  );
   const isLoading = loading || isFetching;
 
   useEffect(() => {

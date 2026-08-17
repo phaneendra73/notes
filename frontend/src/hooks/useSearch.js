@@ -57,6 +57,11 @@ function fuzzyScore(lesson, query) {
   return matched > 0 ? 10 + total - matched * 2 : Infinity;
 }
 
+// Module-level in-memory cache for fuzzy search candidate fallback pool
+let cachedFallbackPool = null;
+let cachedPoolTimestamp = 0;
+const POOL_CACHE_TTL_MS = 60000; // 60s cache
+
 /**
  * useSearch — debounced lesson search with client-side fuzzy ranking fallback.
  *
@@ -93,12 +98,17 @@ export default function useSearch(query) {
         const res = await client.get('/api/lessons', { params });
         let candidates = res.data.lessons || [];
 
-        // If backend returns nothing, fetch all for client fuzzy fallback
+        // If backend returns nothing, use cached/fetch fallback for client fuzzy matching
         if (candidates.length === 0) {
-          const fallback = await client.get('/api/lessons', {
-            params: { limit: 50, ...(isAuth && { includeUnpublished: 'true' }) },
-          });
-          candidates = fallback.data.lessons || [];
+          const now = Date.now();
+          if (!cachedFallbackPool || now - cachedPoolTimestamp > POOL_CACHE_TTL_MS) {
+            const fallback = await client.get('/api/lessons', {
+              params: { limit: 50, ...(isAuth && { includeUnpublished: 'true' }) },
+            });
+            cachedFallbackPool = fallback.data.lessons || [];
+            cachedPoolTimestamp = now;
+          }
+          candidates = cachedFallbackPool;
         }
 
         const ranked = candidates

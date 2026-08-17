@@ -15,9 +15,8 @@ import TemplateSelectorModal from '../components/editor/TemplateSelectorModal.js
 import useTags from '../hooks/useTags.js';
 import {
   ArrowLeft, Save, Plus, Trash2, Tag,
-  Eye, EyeOff, Loader2, ChevronDown, ChevronUp, Image as ImageIcon,
-  Sliders, Layers, Check, ArrowUp, ArrowDown, X, Sparkles, Layout, Monitor, Sun, Moon,
-  FileCode
+  Eye, Loader2, ChevronDown, ChevronUp,
+  Sliders, Sparkles, Layout, Monitor, Sun, Moon
 } from 'lucide-react';
 import { createDefaultBlock } from '../lib/blocks.js';
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import useSearch from '../../hooks/useSearch.js';
-import useLessons from '../../hooks/useLessons.js';
+import client from '../../api/client.js';
 import {
   Search, X, ArrowRight, BookOpen, Clock, Tag,
   Loader2, Sparkles
@@ -12,14 +12,37 @@ export default function SearchCommandModal({ isOpen, onClose }) {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [suggestedNotes, setSuggestedNotes] = useState([]);
+  const [suggestedLoading, setSuggestedLoading] = useState(false);
   const inputRef = useRef(null);
   const resultsContainerRef = useRef(null);
 
-  // Search hook for dynamic live search
+  // Search hook for dynamic live search (only searches when query is entered)
   const { results, loading } = useSearch(query);
 
-  // Suggested / recent notes when search query is empty
-  const { lessons: suggestedNotes, loading: suggestedLoading } = useLessons(null, '', 1, 6);
+  // Lazy-fetch suggested / recent notes only when modal is actually opened
+  useEffect(() => {
+    if (!isOpen) return;
+    if (suggestedNotes.length > 0) return; // already cached
+
+    let cancelled = false;
+    const fetchSuggestions = async () => {
+      try {
+        setSuggestedLoading(true);
+        const res = await client.get('/api/lessons', { params: { page: 1, limit: 6 } });
+        if (!cancelled) {
+          setSuggestedNotes(res.data.lessons || []);
+        }
+      } catch (err) {
+        console.error('Failed to load search suggestions:', err);
+      } finally {
+        if (!cancelled) setSuggestedLoading(false);
+      }
+    };
+
+    fetchSuggestions();
+    return () => { cancelled = true; };
+  }, [isOpen, suggestedNotes.length]);
 
   const hasQuery = query.trim().length > 0;
   const displayList = hasQuery ? results : suggestedNotes || [];

@@ -14,7 +14,7 @@ const slideVariants = {
   }),
 };
 
-export default function SlideCanvas({ slide, slideIndex, totalSlides = 1, direction = 1, onNext, onPrev }) {
+export default function SlideCanvas({ lesson, slide, slideIndex, totalSlides = 1, direction = 1, onNext, onPrev }) {
   const [zoomedImage, setZoomedImage] = useState(null);
   const touchStartX = useRef(null);
   const containerRef = useRef(null);
@@ -46,7 +46,7 @@ export default function SlideCanvas({ slide, slideIndex, totalSlides = 1, direct
   return (
     <div
       ref={containerRef}
-      className="w-full max-w-4xl mx-auto relative select-none"
+      className="w-full max-w-4xl mx-auto relative"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -58,14 +58,14 @@ export default function SlideCanvas({ slide, slideIndex, totalSlides = 1, direct
           initial="initial"
           animate="animate"
           exit="exit"
-          className="relative p-6 sm:p-12 rounded-[var(--radius-xl)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-lg)] overflow-hidden min-h-[480px] flex flex-col justify-between"
+          className="relative p-4 sm:p-8 md:p-12 rounded-[var(--radius-xl)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-lg)] overflow-hidden min-h-[480px] flex flex-col justify-between"
         >
           <div>
             {/* Slide Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
               {/* Slide Counter */}
-              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-[var(--radius-md)] bg-[var(--surface-2)] border border-[var(--line)] text-xs font-mono font-semibold text-[var(--accent)]">
-                <Sliders size={14} /> Slide {slideIndex + 1} of {totalSlides}
+              <span className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-[var(--radius-md)] bg-[var(--surface-2)] border border-[var(--line)] text-xs font-mono font-semibold text-[var(--accent)]">
+                <Sliders size={13} /> Slide {slideIndex + 1} of {totalSlides}
               </span>
 
               {/* Keyboard Shortcuts Hint */}
@@ -78,15 +78,28 @@ export default function SlideCanvas({ slide, slideIndex, totalSlides = 1, direct
               </div>
             </div>
 
+            {/* Note Overview / Excerpt (Slide 1 Intro) */}
+            {slideIndex === 0 && lesson?.excerpt && (
+              <div className="mb-5 sm:mb-6 p-4 sm:p-5 rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface-2)]/60 text-[13.5px] sm:text-sm leading-relaxed shadow-[var(--shadow-sm)]">
+                <div className="flex items-center gap-2 mb-1.5 font-serif font-bold text-xs uppercase tracking-wider text-[var(--accent)]">
+                  <span>💡</span>
+                  <span>Note Overview</span>
+                </div>
+                <p className="m-0 text-[var(--ink-2)] font-sans leading-relaxed">
+                  {lesson.excerpt}
+                </p>
+              </div>
+            )}
+
             {/* Slide Title */}
             {slide?.title && (
-              <h1 className="font-serif font-bold text-2xl sm:text-3xl lg:text-4xl text-[var(--ink)] tracking-tight leading-[1.2] mb-6 pb-4 border-b border-[var(--line)]">
+              <h1 className="font-serif font-bold text-xl sm:text-3xl lg:text-4xl text-[var(--ink)] tracking-tight leading-[1.2] mb-5 sm:mb-6 pb-3 sm:pb-4 border-b border-[var(--line)]">
                 {slide.title}
               </h1>
             )}
 
             {/* Slide Blocks Rendering */}
-            <div className="slide-blocks text-[var(--ink)] space-y-6 font-sans">
+            <div className="slide-blocks text-[var(--ink)] space-y-5 sm:space-y-6 font-sans">
               <BlockRenderer
                 blocks={slide?.blocks}
                 onImageClick={(src) => setZoomedImage(src)}

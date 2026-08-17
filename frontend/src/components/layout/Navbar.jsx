@@ -1,50 +1,64 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useTheme } from 'next-themes';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '../ui/Button.jsx';
-import SearchCommandModal from '../ui/SearchCommandModal.jsx';
-import phaneendraLogo from '../../../assets/phaneendramarri.svg';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useTheme } from "next-themes";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "../ui/Button.jsx";
+import SearchCommandModal from "../ui/SearchCommandModal.jsx";
+import phaneendraLogo from "../../../assets/phaneendramarri.svg";
 import {
-  Edit3, LogOut, Settings, Tag,
-  Sun, Moon, Menu, X, User,
-  Search, Lock, Sparkles, BookOpen
-} from 'lucide-react';
-import { FaGithub } from 'react-icons/fa';
+  Edit3,
+  LogOut,
+  Settings,
+  Tag,
+  Sun,
+  Moon,
+  Menu,
+  X,
+  User,
+  Search,
+  Lock,
+} from "lucide-react";
+import { FaGithub } from "react-icons/fa";
 
 export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, setTheme } = useTheme();
-  const isDark = theme === 'dark';
-  const isAuthenticated = Boolean(localStorage.getItem('jwt'));
+  const isDark = theme === "dark";
+  const isAuthenticated = Boolean(localStorage.getItem("jwt"));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
 
   // Sync body.dark-theme class for exact design system compliance
   useEffect(() => {
     if (isDark) {
-      document.body.classList.add('dark-theme');
+      document.body.classList.add("dark-theme");
     } else {
-      document.body.classList.remove('dark-theme');
+      document.body.classList.remove("dark-theme");
     }
   }, [isDark]);
 
-  // Global keyboard listener for Ctrl+K / Cmd+K
+  // Global keyboard listener for Ctrl+K / Cmd+K and custom trigger event
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setSearchModalOpen((prev) => !prev);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    const handleOpenSearchEvent = () => setSearchModalOpen(true);
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("open-search-palette", handleOpenSearchEvent);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("open-search-palette", handleOpenSearchEvent);
+    };
   }, []);
 
   const handleSignOut = () => {
-    localStorage.removeItem('jwt');
-    navigate('/');
+    localStorage.removeItem("jwt");
+    navigate("/");
     setMobileOpen(false);
   };
 
@@ -59,42 +73,40 @@ export default function Navbar() {
   };
 
   const authorNavLinks = [
-    { to: '/studio', icon: Settings, label: 'Studio' },
-    { to: '/tags', icon: Tag, label: 'Tags' },
-    { to: '/profile', icon: User, label: 'Profile' },
+    { to: "/studio", icon: Settings, label: "Studio" },
+    { to: "/tags", icon: Tag, label: "Tags" },
+    { to: "/profile", icon: User, label: "Profile" },
   ];
 
   const popularTopics = [
-    { name: 'C#', tagId: 1 },
-    { name: '.NET Core', tagId: 2 },
-    { name: 'DSA', tagId: 3 },
-    { name: 'SQL', tagId: 4 },
-    { name: 'System Design', tagId: 5 },
+    { name: "C#", tagId: 1 },
+    { name: ".NET Core", tagId: 2 },
+    { name: "DSA", tagId: 3 },
+    { name: "SQL", tagId: 4 },
+    { name: "System Design", tagId: 5 },
   ];
 
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b border-[var(--line)] bg-[var(--surface)]/95 backdrop-blur-md transition-colors duration-[var(--dur)] shadow-[var(--shadow-xs)]">
         <div className="max-w-[var(--maxw)] mx-auto px-4 sm:px-6 h-[var(--header-h)] flex items-center justify-between gap-2.5 sm:gap-4">
-          
           {/* Left: Brand Logo & System Badge */}
           <div className="flex items-center gap-2.5 sm:gap-3">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate("/")}
               className="flex items-center gap-2.5 bg-transparent border-none cursor-pointer group"
             >
               <div className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-[var(--radius-md)] bg-gradient-to-br from-[var(--accent-soft)] to-[var(--surface-2)] border border-[var(--line)] p-1 flex items-center justify-center group-hover:border-[var(--accent)] group-hover:scale-105 transition-all shadow-[var(--shadow-xs)]">
-                <img src={phaneendraLogo} alt="Notes" className="w-full h-full object-contain" />
+                <img
+                  src={phaneendraLogo}
+                  alt="Notes"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <span className="font-serif font-bold text-xl sm:text-2xl text-[var(--ink)] tracking-tight group-hover:text-[var(--accent)] transition-colors">
                 Notes<span className="text-[var(--accent)]">.</span>
               </span>
             </button>
-
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.75 rounded-full text-[10px] font-mono font-medium bg-[var(--surface-2)] text-[var(--ink-2)] border border-[var(--line)] shadow-xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              Engineering Notes
-            </span>
 
             {/* Authenticated Author Links on Desktop */}
             {isAuthenticated && (
@@ -108,11 +120,18 @@ export default function Navbar() {
                       onClick={() => handleNavClick(n.to)}
                       className={`px-3 py-1.5 rounded-[var(--radius-md)] text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                         active
-                          ? 'bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] font-bold shadow-xs'
-                          : 'text-[var(--ink-2)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)] border border-transparent'
+                          ? "bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] font-bold shadow-xs"
+                          : "text-[var(--ink-2)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)] border border-transparent"
                       }`}
                     >
-                      <Icon size={13} className={active ? 'text-[var(--accent-on)]' : 'text-[var(--muted)]'} />
+                      <Icon
+                        size={13}
+                        className={
+                          active
+                            ? "text-[var(--accent-on)]"
+                            : "text-[var(--muted)]"
+                        }
+                      />
                       <span>{n.label}</span>
                     </button>
                   );
@@ -129,7 +148,10 @@ export default function Navbar() {
               title="Search notes (Ctrl+K)"
             >
               <div className="flex items-center gap-2 text-xs font-normal">
-                <Search size={14} className="text-[var(--muted)] group-hover:text-[var(--accent)] transition-colors" />
+                <Search
+                  size={14}
+                  className="text-[var(--muted)] group-hover:text-[var(--accent)] transition-colors"
+                />
                 <span className="truncate">Search notes, C#, DSA, SQL…</span>
               </div>
               <kbd className="inline-flex items-center gap-0.5 text-[10px] font-mono px-1.5 py-0.5 rounded-[var(--radius-sm)] bg-[var(--surface)] text-[var(--muted)] border border-[var(--line)] group-hover:border-[var(--accent-soft)]">
@@ -157,17 +179,24 @@ export default function Navbar() {
               className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-2)] text-xs font-medium text-[var(--ink-2)] hover:text-[var(--ink)] hover:border-[var(--accent)] transition-all cursor-pointer group"
               title="GitHub Repository"
             >
-              <FaGithub size={14} className="text-[var(--ink-2)] group-hover:text-[var(--ink)] transition-colors" />
+              <FaGithub
+                size={14}
+                className="text-[var(--ink-2)] group-hover:text-[var(--ink)] transition-colors"
+              />
               <span className="hidden xl:inline">GitHub</span>
             </a>
 
             {/* Theme Toggle Button */}
             <button
-              onClick={() => setTheme(isDark ? 'light' : 'dark')}
+              onClick={() => setTheme(isDark ? "light" : "dark")}
               className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-2)] flex items-center justify-center text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all cursor-pointer"
-              title={`Switch to ${isDark ? 'Light' : 'Dark'} mode`}
+              title={`Switch to ${isDark ? "Light" : "Dark"} mode`}
             >
-              {isDark ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} className="text-[var(--ink-2)]" />}
+              {isDark ? (
+                <Sun size={15} className="text-amber-400" />
+              ) : (
+                <Moon size={15} className="text-[var(--ink-2)]" />
+              )}
             </button>
 
             {/* Authenticated Author Actions */}
@@ -176,10 +205,11 @@ export default function Navbar() {
                 <Button
                   size="sm"
                   className="rounded-[var(--radius-lg)] text-xs font-bold gap-1.5 px-3.5 sm:px-4 cursor-pointer bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] hover:bg-[var(--accent-strong)] shadow-xs hover:shadow-md"
-                  onClick={() => navigate('/editor')}
+                  onClick={() => navigate("/editor")}
                   title="Create New Note (Ctrl+N)"
                 >
-                  <Edit3 size={13} /> <span className="hidden md:inline">New Note</span>
+                  <Edit3 size={13} />{" "}
+                  <span className="hidden md:inline">New Note</span>
                 </Button>
                 <button
                   onClick={handleSignOut}
@@ -191,7 +221,7 @@ export default function Navbar() {
               </div>
             ) : (
               <button
-                onClick={() => navigate('/signin')}
+                onClick={() => navigate("/signin")}
                 className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-md)] text-xs font-medium text-[var(--ink-2)] hover:text-[var(--accent)] bg-[var(--surface-2)] hover:bg-[var(--accent-soft)] border border-[var(--line)] hover:border-[var(--accent)] transition-all cursor-pointer"
                 title="Author Sign In"
               >
@@ -216,7 +246,7 @@ export default function Navbar() {
           {mobileOpen && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
+              animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               className="sm:hidden border-t border-[var(--line)] bg-[var(--surface)] p-4 space-y-4 shadow-lg overflow-hidden"
             >
@@ -229,12 +259,16 @@ export default function Navbar() {
                   <Search size={14} className="text-[var(--accent)]" />
                   <span>Search notes, C#, DSA, SQL…</span>
                 </div>
-                <span className="text-[10px] font-mono bg-[var(--surface)] px-1.5 py-0.5 rounded border border-[var(--line)]">Ctrl+K</span>
+                <span className="text-[10px] font-mono bg-[var(--surface)] px-1.5 py-0.5 rounded border border-[var(--line)]">
+                  Ctrl+K
+                </span>
               </button>
 
               {/* Popular Topics Quick Filter */}
               <div className="space-y-1.5">
-                <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[var(--muted)]">Topics</span>
+                <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[var(--muted)]">
+                  Topics
+                </span>
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {popularTopics.map((topic) => (
                     <button
@@ -285,7 +319,7 @@ export default function Navbar() {
                         size="sm"
                         className="w-full rounded-[var(--radius-lg)] text-xs font-bold gap-2 bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] hover:bg-[var(--accent-strong)]"
                         onClick={() => {
-                          navigate('/editor');
+                          navigate("/editor");
                           setMobileOpen(false);
                         }}
                       >
@@ -304,7 +338,7 @@ export default function Navbar() {
                 {!isAuthenticated && (
                   <div className="pt-2 border-t border-[var(--line)]">
                     <button
-                      onClick={() => handleNavClick('/signin')}
+                      onClick={() => handleNavClick("/signin")}
                       className="w-full p-2.5 rounded-[var(--radius-md)] text-left text-xs font-semibold flex items-center gap-2.5 bg-[var(--surface-2)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] text-[var(--ink)] transition-colors cursor-pointer"
                     >
                       <Lock size={14} className="text-[var(--accent)]" />

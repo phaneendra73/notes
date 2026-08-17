@@ -53,6 +53,14 @@ export default function ReaderNavbar({
 
   return (
     <>
+      {/* Persistent Ultra-thin Reading Progress Bar at the very top of the screen */}
+      <div className="fixed top-0 left-0 right-0 z-60 h-[3px] bg-[var(--surface-2)] overflow-hidden pointer-events-none">
+        <div
+          className="h-full bg-[var(--accent)] transition-all duration-300 ease-out"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
       <motion.header
         animate={{ y: visible ? 0 : -80 }}
         transition={{ duration: 0.2 }}
@@ -109,11 +117,6 @@ export default function ReaderNavbar({
             </button>
           </div>
         </div>
-
-        {/* Top Progress Line Accent */}
-        <div className="w-full h-[2px] bg-[var(--surface-2)] relative overflow-hidden">
-          <div className="h-full bg-[var(--accent)] transition-all duration-300" style={{ width: `${progress}%` }} />
-        </div>
       </motion.header>
 
       {/* Slide Outline Drawer */}
@@ -134,6 +137,11 @@ export default function ReaderNavbar({
                 <X size={15} />
               </button>
             </div>
+            {lesson?.excerpt && (
+              <div className="px-3.5 py-2.5 bg-[var(--surface-2)]/50 border-b border-[var(--line)] text-xs text-[var(--ink-2)] leading-relaxed italic">
+                {lesson.excerpt}
+              </div>
+            )}
             <div className="p-2 overflow-y-auto flex flex-col gap-1">
               {slides.map((slide, idx) => {
                 const visited = visitedSlides.has(idx);

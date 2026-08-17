@@ -1,23 +1,31 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import useLessons from '../../hooks/useLessons.js';
-import useTags from '../../hooks/useTags.js';
-import LessonCard from './LessonCard.jsx';
-import { Pagination } from './Pagination.jsx';
-import { Skeleton } from './Skeleton.jsx';
-import LessonReaderModal from './LessonReaderModal.jsx';
-import SearchCommandModal from './SearchCommandModal.jsx';
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import useLessons from "../../hooks/useLessons.js";
+import useTags from "../../hooks/useTags.js";
+import LessonCard from "./LessonCard.jsx";
+import { Pagination } from "./Pagination.jsx";
+import { Skeleton } from "./Skeleton.jsx";
+import LessonReaderModal from "./LessonReaderModal.jsx";
+import HeroSection from "./HeroSection.jsx";
 import {
-  BookOpen, RefreshCw, AlertCircle, Search,
-  ArrowRight, Loader2, X,
-  LayoutGrid, List, ArrowUpDown, ChevronDown, Check, Clock, Eye, Sparkles, Filter
-} from 'lucide-react';
+  BookOpen,
+  AlertCircle,
+  X,
+  LayoutGrid,
+  List,
+  ChevronDown,
+  Check,
+  Clock,
+  Eye,
+  Sparkles,
+  Filter,
+} from "lucide-react";
 
 const SORT_OPTIONS = [
-  { value: 'recent', label: 'Newest First', icon: Clock },
-  { value: 'views', label: 'Most Viewed', icon: Eye },
-  { value: 'title', label: 'Title (A–Z)', icon: Sparkles },
+  { value: "recent", label: "Newest First", icon: Clock },
+  { value: "views", label: "Most Viewed", icon: Eye },
+  { value: "title", label: "Title (A–Z)", icon: Sparkles },
 ];
 
 export default function LessonCatalog() {
@@ -28,45 +36,54 @@ export default function LessonCatalog() {
 
   // Parse URL search params
   const urlParams = new URLSearchParams(location.search);
-  const tagParam = urlParams.get('tags') || urlParams.get('tag');
+  const tagParam = urlParams.get("tags") || urlParams.get("tag");
   const initialTagIds = tagParam
-    ? tagParam.split(',').map((x) => parseInt(x.trim(), 10)).filter((x) => !isNaN(x))
+    ? tagParam
+        .split(",")
+        .map((x) => parseInt(x.trim(), 10))
+        .filter((x) => !isNaN(x))
     : [];
 
   // Modal states
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState(null);
-  const [commandModalOpen, setCommandModalOpen] = useState(false);
 
   // Multi-select tags state (array of numbers)
   const [selectedTagIds, setSelectedTagIds] = useState(initialTagIds);
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewMode, setViewMode] = useState('list');
-  const [sortBy, setSortBy] = useState('recent');
+  const [viewMode, setViewMode] = useState("list");
+  const [sortBy, setSortBy] = useState("recent");
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
 
   // Sync URL tag param changes
   useEffect(() => {
     const p = new URLSearchParams(location.search);
-    const t = p.get('tags') || p.get('tag');
+    const t = p.get("tags") || p.get("tag");
     if (t) {
-      const ids = t.split(',').map((x) => parseInt(x.trim(), 10)).filter((x) => !isNaN(x));
+      const ids = t
+        .split(",")
+        .map((x) => parseInt(x.trim(), 10))
+        .filter((x) => !isNaN(x));
       setSelectedTagIds(ids);
     } else {
       setSelectedTagIds([]);
     }
-    if (p.get('focus') === 'search') {
-      setCommandModalOpen(true);
+    if (p.get("focus") === "search") {
+      window.dispatchEvent(new CustomEvent("open-search-palette"));
     }
   }, [location.search]);
 
   const { tags: backendTags, loading: tagsLoading } = useTags();
-  const { lessons, loading, isFetching, error, pagination, refetch } = useLessons(
-    selectedTagIds.length > 0 ? selectedTagIds : null,
-    '',
-    currentPage,
-    10
-  );
+  const backendSort = sortBy === "recent" ? "latest" : sortBy;
+  const { lessons, loading, isFetching, error, pagination, refetch } =
+    useLessons(
+      selectedTagIds.length > 0 ? selectedTagIds : null,
+      "",
+      currentPage,
+      10,
+      false,
+      backendSort,
+    );
 
   const isLoading = loading || isFetching;
 
@@ -104,31 +121,30 @@ export default function LessonCatalog() {
   // Close sort dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (sortDropdownRef.current && !sortDropdownRef.current.contains(e.target)) {
+      if (
+        sortDropdownRef.current &&
+        !sortDropdownRef.current.contains(e.target)
+      ) {
         setSortDropdownOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  let filteredLessons = [...lessons];
-
-  // Client-side sorting
-  if (sortBy === 'views') {
-    filteredLessons.sort((a, b) => (b.viewsCount || 0) - (a.viewsCount || 0));
-  } else if (sortBy === 'title') {
-    filteredLessons.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
-  }
+  const filteredLessons = lessons;
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
-    catalogTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    catalogTopRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   };
 
   const clearAllFilters = () => {
     setSelectedTagIds([]);
-    setSortBy('recent');
+    setSortBy("recent");
     setCurrentPage(1);
   };
 
@@ -136,38 +152,12 @@ export default function LessonCatalog() {
 
   return (
     <>
-      <div ref={catalogTopRef} className="w-full max-w-[var(--maxw)] mx-auto px-4 sm:px-6 py-5 sm:py-8 space-y-5 sm:space-y-6 font-sans">
-      
-        {/* 🟢 Hero Section 🟢 */}
-        <section className="space-y-2.5 sm:space-y-3 pb-1 sm:pb-2">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div className="space-y-1.5 sm:space-y-2 max-w-2xl">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.75 rounded-full text-[10px] sm:text-[11px] font-mono font-medium bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent)]/20 shadow-xs">
-                <Sparkles size={12} /> Engineering Notes
-              </div>
-              <h1 className="font-serif font-bold text-2xl sm:text-4xl lg:text-5xl text-[var(--ink)] tracking-tight leading-[1.15]">
-                Knowledge written clearly.
-              </h1>
-              <p className="text-xs sm:text-sm md:text-base text-[var(--ink-2)] leading-relaxed">
-                Concise technical notes and deep dives covering C#, .NET Core, Data Structures, SQL Indexing, and System Design.
-              </p>
-            </div>
-
-            {/* Quick Spotlight Search Trigger in Hero */}
-            <button
-              onClick={() => setCommandModalOpen(true)}
-              className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2.5 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-[var(--radius-lg)] bg-[var(--surface)] hover:bg-[var(--surface-2)] border border-[var(--line)] hover:border-[var(--accent)] text-xs text-[var(--muted)] hover:text-[var(--ink)] transition-all cursor-pointer shadow-xs shrink-0 group"
-            >
-              <div className="flex items-center gap-2">
-                <Search size={14} className="text-[var(--accent)] group-hover:scale-110 transition-transform" />
-                <span className="font-medium text-[var(--ink-2)] group-hover:text-[var(--ink)]">Search notes…</span>
-              </div>
-              <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--surface-2)] text-[var(--muted)] border border-[var(--line)]">
-                Ctrl+K
-              </kbd>
-            </button>
-          </div>
-        </section>
+      <div
+        ref={catalogTopRef}
+        className="w-full max-w-[var(--maxw)] mx-auto px-4 sm:px-6 py-5 sm:py-8 space-y-5 sm:space-y-6 font-sans"
+      >
+        {/* 🟢 Redesigned Centered Editorial Hero Section 🟢 */}
+        <HeroSection />
 
         {/* 🟢 Controls Toolbar: Multi-Select Topic Filter Pills + Sort & View Modes 🟢 */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-2 border-b border-[var(--line)]">
@@ -177,15 +167,17 @@ export default function LessonCatalog() {
             <motion.button
               whileHover={{ scale: 1.04, y: -1 }}
               whileTap={{ scale: 0.96 }}
-              transition={{ type: 'spring', stiffness: 450, damping: 25 }}
+              transition={{ type: "spring", stiffness: 450, damping: 25 }}
               onClick={selectAllTags}
               className={`px-3 py-1.5 rounded-[var(--radius-md)] text-xs font-semibold shrink-0 transition-colors cursor-pointer border flex items-center gap-1.5 ${
                 selectedTagIds.length === 0
-                  ? 'bg-[var(--accent)] text-[var(--accent-on)] border-[var(--accent-strong)] font-bold shadow-[var(--shadow-sm)] ring-1 ring-[var(--accent)]/40'
-                  : 'bg-[var(--surface)] border-[var(--line)] text-[var(--ink-2)] hover:text-[var(--ink)] hover:border-[var(--accent)] hover:bg-[var(--surface-2)]'
+                  ? "bg-[var(--accent)] text-[var(--accent-on)] border-[var(--accent-strong)] font-bold shadow-[var(--shadow-sm)] ring-1 ring-[var(--accent)]/40"
+                  : "bg-[var(--surface)] border-[var(--line)] text-[var(--ink-2)] hover:text-[var(--ink)] hover:border-[var(--accent)] hover:bg-[var(--surface-2)]"
               }`}
             >
-              {selectedTagIds.length === 0 && <Check size={12} className="stroke-[3]" />}
+              {selectedTagIds.length === 0 && (
+                <Check size={12} className="stroke-[3]" />
+              )}
               <span>All</span>
             </motion.button>
 
@@ -207,12 +199,12 @@ export default function LessonCatalog() {
                     key={tag.id}
                     whileHover={{ scale: 1.04, y: -1 }}
                     whileTap={{ scale: 0.96 }}
-                    transition={{ type: 'spring', stiffness: 450, damping: 25 }}
+                    transition={{ type: "spring", stiffness: 450, damping: 25 }}
                     onClick={() => toggleTag(tag.id)}
                     className={`px-3 py-1.5 rounded-[var(--radius-md)] text-xs font-semibold shrink-0 transition-colors cursor-pointer border flex items-center gap-1.5 ${
                       isActive
-                        ? 'bg-[var(--accent)] text-[var(--accent-on)] border-[var(--accent-strong)] font-bold shadow-[var(--shadow-sm)] ring-1 ring-[var(--accent)]/40'
-                        : 'bg-[var(--surface)] border-[var(--line)] text-[var(--ink-2)] hover:text-[var(--ink)] hover:border-[var(--accent)] hover:bg-[var(--surface-2)]'
+                        ? "bg-[var(--accent)] text-[var(--accent-on)] border-[var(--accent-strong)] font-bold shadow-[var(--shadow-sm)] ring-1 ring-[var(--accent)]/40"
+                        : "bg-[var(--surface)] border-[var(--line)] text-[var(--ink-2)] hover:text-[var(--ink)] hover:border-[var(--accent)] hover:bg-[var(--surface-2)]"
                     }`}
                   >
                     {isActive && <Check size={12} className="stroke-[3]" />}
@@ -249,7 +241,9 @@ export default function LessonCatalog() {
                 title="Sort Notes"
               >
                 {(() => {
-                  const currentOpt = SORT_OPTIONS.find((opt) => opt.value === sortBy) || SORT_OPTIONS[0];
+                  const currentOpt =
+                    SORT_OPTIONS.find((opt) => opt.value === sortBy) ||
+                    SORT_OPTIONS[0];
                   const IconComp = currentOpt.icon;
                   return (
                     <>
@@ -261,7 +255,7 @@ export default function LessonCatalog() {
                 <ChevronDown
                   size={13}
                   className={`text-[var(--muted)] transition-transform duration-200 ${
-                    sortDropdownOpen ? 'rotate-180 text-[var(--accent)]' : ''
+                    sortDropdownOpen ? "rotate-180 text-[var(--accent)]" : ""
                   }`}
                 />
               </button>
@@ -283,19 +277,29 @@ export default function LessonCatalog() {
                           key={opt.value}
                           onClick={() => {
                             setSortBy(opt.value);
+                            setCurrentPage(1);
                             setSortDropdownOpen(false);
                           }}
                           className={`w-full px-3 py-2 text-left text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
                             isSelected
-                              ? 'bg-[var(--accent-soft)] text-[var(--accent)]'
-                              : 'text-[var(--ink)] hover:bg-[var(--surface-2)]'
+                              ? "bg-[var(--accent-soft)] text-[var(--accent)]"
+                              : "text-[var(--ink)] hover:bg-[var(--surface-2)]"
                           }`}
                         >
                           <div className="flex items-center gap-2">
-                            <IconComp size={14} className={isSelected ? 'text-[var(--accent)]' : 'text-[var(--muted)]'} />
+                            <IconComp
+                              size={14}
+                              className={
+                                isSelected
+                                  ? "text-[var(--accent)]"
+                                  : "text-[var(--muted)]"
+                              }
+                            />
                             <span>{opt.label}</span>
                           </div>
-                          {isSelected && <Check size={14} className="text-[var(--accent)]" />}
+                          {isSelected && (
+                            <Check size={14} className="text-[var(--accent)]" />
+                          )}
                         </button>
                       );
                     })}
@@ -307,22 +311,22 @@ export default function LessonCatalog() {
             {/* View Mode Toggle: List vs Grid */}
             <div className="flex items-center p-0.5 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
               <button
-                onClick={() => setViewMode('list')}
+                onClick={() => setViewMode("list")}
                 className={`p-1.5 rounded-[var(--radius-sm)] transition-colors cursor-pointer ${
-                  viewMode === 'list'
-                    ? 'bg-[var(--accent)] text-[var(--accent-on)] shadow-xs'
-                    : 'text-[var(--muted)] hover:text-[var(--ink)]'
+                  viewMode === "list"
+                    ? "bg-[var(--accent)] text-[var(--accent-on)] shadow-xs"
+                    : "text-[var(--muted)] hover:text-[var(--ink)]"
                 }`}
                 title="List View"
               >
                 <List size={14} />
               </button>
               <button
-                onClick={() => setViewMode('grid')}
+                onClick={() => setViewMode("grid")}
                 className={`p-1.5 rounded-[var(--radius-sm)] transition-colors cursor-pointer ${
-                  viewMode === 'grid'
-                    ? 'bg-[var(--accent)] text-[var(--accent-on)] shadow-xs'
-                    : 'text-[var(--muted)] hover:text-[var(--ink)]'
+                  viewMode === "grid"
+                    ? "bg-[var(--accent)] text-[var(--accent-on)] shadow-xs"
+                    : "text-[var(--muted)] hover:text-[var(--ink)]"
                 }`}
                 title="Grid View"
               >
@@ -350,7 +354,13 @@ export default function LessonCatalog() {
 
         {/* 🟢 Loading Skeletons 🟢 */}
         {isLoading ? (
-          <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5" : "space-y-3 sm:space-y-4"}>
+          <div
+            className={
+              viewMode === "grid"
+                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
+                : "space-y-3 sm:space-y-4"
+            }
+          >
             {[1, 2, 3, 4, 5, 6].map((n) => (
               <div
                 key={n}
@@ -371,7 +381,13 @@ export default function LessonCatalog() {
           </div>
         ) : filteredLessons.length > 0 ? (
           /* 🟢 Lessons List / Grid 🟢 */
-          <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5" : "space-y-3 sm:space-y-4"}>
+          <div
+            className={
+              viewMode === "grid"
+                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
+                : "space-y-3 sm:space-y-4"
+            }
+          >
             {filteredLessons.map((lesson) => (
               <LessonCard
                 key={lesson.id}
@@ -389,7 +405,9 @@ export default function LessonCatalog() {
               <BookOpen size={20} />
             </div>
             <div className="space-y-1">
-              <h3 className="text-base font-serif font-bold text-[var(--ink)]">No notes found</h3>
+              <h3 className="text-base font-serif font-bold text-[var(--ink)]">
+                No notes found
+              </h3>
               <p className="text-xs text-[var(--muted)] max-w-sm mx-auto">
                 {hasActiveFilters
                   ? "No notes matched your selected tags. Try selecting different topics or clearing the filter."
@@ -425,12 +443,6 @@ export default function LessonCatalog() {
         onClose={handleModalClose}
         lesson={selectedLesson}
         onFullView={(lesson) => navigate(`/read?id=${lesson.id}`)}
-      />
-
-      {/* 🟢 Global Command Search Modal 🟢 */}
-      <SearchCommandModal
-        isOpen={commandModalOpen}
-        onClose={() => setCommandModalOpen(false)}
       />
     </>
   );

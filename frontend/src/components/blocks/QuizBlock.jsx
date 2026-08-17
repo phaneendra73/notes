@@ -20,7 +20,7 @@ export default function QuizBlock({ block }) {
   };
 
   const optionClass = (idx) => {
-    const base = "w-full px-4 py-3 rounded-[var(--radius-md)] border text-xs sm:text-sm font-semibold text-left cursor-pointer flex items-center justify-between transition-all shadow-[var(--shadow-sm)]";
+    const base = "w-full px-4 py-3.5 rounded-[var(--radius-md)] border text-sm sm:text-base font-medium text-left cursor-pointer flex items-center justify-between transition-all shadow-[var(--shadow-sm)] min-h-[46px]";
     if (!submitted) return `${base} border-[var(--line)] bg-[var(--surface)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)]`;
     if (idx === correctAnswer) return `${base} border-[var(--ok)] bg-[var(--ok-soft)] text-[var(--ok)] font-bold`;
     if (idx === selectedIdx)   return `${base} border-[var(--err)] bg-[var(--err-soft)] text-[var(--err)] font-bold`;
@@ -28,10 +28,10 @@ export default function QuizBlock({ block }) {
   };
 
   return (
-    <div className="p-5 sm:p-6 rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-sm)] space-y-4">
+    <div className="p-4 sm:p-6 rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-sm)] space-y-4">
       {/* Badge */}
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--radius-sm)] bg-[var(--accent-soft)] border border-[var(--accent-soft)] text-[var(--accent)] text-[11px] font-bold uppercase tracking-wider font-sans">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--radius-sm)] bg-[var(--accent-soft)] border border-[var(--accent-soft)] text-[var(--accent)] text-xs font-bold uppercase tracking-wider font-sans">
           <HelpCircle size={13} /> Knowledge Check
         </span>
       </div>
@@ -52,7 +52,7 @@ export default function QuizBlock({ block }) {
               <span className="w-6 h-6 rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-2)] flex items-center justify-center text-xs font-mono font-bold shrink-0 text-[var(--ink)]">
                 {String.fromCharCode(65 + idx)}
               </span>
-              <span className="truncate">{opt}</span>
+              <span className="break-words whitespace-normal text-left flex-1">{opt}</span>
             </div>
             {submitted && idx === correctAnswer && <CheckCircle2 size={16} className="text-[var(--ok)] shrink-0 ml-2" />}
             {submitted && idx === selectedIdx && idx !== correctAnswer && <XCircle size={16} className="text-[var(--err)] shrink-0 ml-2" />}

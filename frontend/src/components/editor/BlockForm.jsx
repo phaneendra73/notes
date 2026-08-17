@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import {
   ChevronDown,
   ChevronUp,
+  ArrowUp,
+  ArrowDown,
   Trash2,
   Check,
   X,
@@ -63,11 +65,12 @@ export default function BlockForm({ block, onChange, onDelete, onMoveUp, onMoveD
   const [confirmDelete, setConfirmDelete] = useState(false);
   const update = (patch) => onChange({ ...block, ...patch });
 
-  const btnBase = "flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border bg-background text-muted-foreground text-[0.72rem] font-extrabold cursor-pointer transition-colors hover:text-foreground hover:border-primary";
+  const btnIcon = "flex items-center justify-center w-7 h-7 rounded-[var(--radius-sm)] border border-border bg-background text-muted-foreground cursor-pointer transition-colors hover:text-primary hover:border-primary active:scale-95";
+  const btnBase = "flex items-center gap-1 px-2.5 py-1 rounded-[var(--radius-sm)] border border-border bg-background text-muted-foreground text-[0.72rem] font-extrabold cursor-pointer transition-colors hover:text-foreground hover:border-primary";
   const btnDanger = "text-rose-400 border-rose-500/40 bg-rose-500/10";
 
   return (
-    <div className="rounded-2xl border border-border bg-card overflow-hidden transition-all hover:border-primary/50 shadow-sm">
+    <div className="rounded-[var(--radius-md)] border border-border bg-card overflow-hidden transition-all hover:border-primary/50 shadow-sm">
       {/* Header Bar */}
       <div className="flex items-center justify-between px-4 py-3 bg-muted/40 border-b border-border">
         <button
@@ -83,10 +86,14 @@ export default function BlockForm({ block, onChange, onDelete, onMoveUp, onMoveD
 
         <div className="flex items-center gap-1.5">
           {!isFirst && (
-            <button type="button" className={btnBase} onClick={onMoveUp} title="Move block up">^</button>
+            <button type="button" className={btnIcon} onClick={onMoveUp} title="Move block up">
+              <ArrowUp size={13} />
+            </button>
           )}
           {!isLast && (
-            <button type="button" className={btnBase} onClick={onMoveDown} title="Move block down">v</button>
+            <button type="button" className={btnIcon} onClick={onMoveDown} title="Move block down">
+              <ArrowDown size={13} />
+            </button>
           )}
           {confirmDelete ? (
             <>
@@ -100,7 +107,7 @@ export default function BlockForm({ block, onChange, onDelete, onMoveUp, onMoveD
           ) : (
             <button
               type="button"
-              className={`${btnBase} hover:text-rose-400 hover:border-rose-500/40 hover:bg-rose-500/10`}
+              className={`${btnIcon} hover:text-rose-400 hover:border-rose-500/40 hover:bg-rose-500/10`}
               onClick={() => setConfirmDelete(true)}
               title="Delete block"
             >
@@ -125,7 +132,7 @@ const fieldGroup = "flex flex-col gap-3.5";
 const fieldRow   = "flex flex-col gap-1.5";
 const label      = "text-[0.75rem] font-black text-foreground flex items-center justify-between uppercase tracking-wider";
 const hint       = "text-[0.7rem] font-semibold text-muted-foreground normal-case tracking-normal";
-const inputCls   = "w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-xs font-semibold outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary";
+const inputCls   = "w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] border border-border bg-background text-foreground text-xs font-semibold outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary";
 const textareaCls = `${inputCls} resize-y leading-relaxed`;
 const codeTaCls  = `${textareaCls} font-mono text-[0.82rem] leading-relaxed bg-[#090d16] text-[#00e57a] border-primary/25`;
 
@@ -352,6 +359,418 @@ function BlockFields({ block, update, onOpenMediaLibrary }) {
           </div>
         </div>
       );
+
+    case "table": {
+      const headers = Array.isArray(block.headers) && block.headers.length > 0 ? block.headers : ["Column 1", "Column 2", "Column 3"];
+      const rows = Array.isArray(block.rows) && block.rows.length > 0 ? block.rows : [["", "", ""]];
+
+      const updateHeader = (colIdx, value) => {
+        const nextHeaders = [...headers];
+        nextHeaders[colIdx] = value;
+        update({ headers: nextHeaders });
+      };
+
+      const addColumn = () => {
+        const newColName = `Column ${headers.length + 1}`;
+        const nextHeaders = [...headers, newColName];
+        const nextRows = rows.map((r) => [...(Array.isArray(r) ? r : []), ""]);
+        update({ headers: nextHeaders, rows: nextRows });
+      };
+
+      const removeColumn = (colIdx) => {
+        if (headers.length <= 1) return;
+        const nextHeaders = headers.filter((_, i) => i !== colIdx);
+        const nextRows = rows.map((r) => (Array.isArray(r) ? r.filter((_, i) => i !== colIdx) : []));
+        update({ headers: nextHeaders, rows: nextRows });
+      };
+
+      const updateCell = (rowIdx, colIdx, value) => {
+        const nextRows = rows.map((r, ri) => {
+          if (ri !== rowIdx) return r;
+          const newRow = Array.isArray(r) ? [...r] : [];
+          newRow[colIdx] = value;
+          return newRow;
+        });
+        update({ rows: nextRows });
+      };
+
+      const addRow = () => {
+        const newRow = headers.map(() => "");
+        update({ rows: [...rows, newRow] });
+      };
+
+      const removeRow = (rowIdx) => {
+        if (rows.length <= 1) return;
+        const nextRows = rows.filter((_, i) => i !== rowIdx);
+        update({ rows: nextRows });
+      };
+
+      return (
+        <div className={fieldGroup}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className={fieldRow}>
+              <label className={label}>Table Caption <span className={hint}>(optional)</span></label>
+              <input
+                type="text"
+                value={block.caption || ""}
+                onChange={(e) => update({ caption: e.target.value })}
+                placeholder="e.g. Time Complexity Comparison"
+                className={inputCls}
+              />
+            </div>
+            <div className="flex items-center gap-4 pt-4 sm:pt-6">
+              <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer select-none text-[var(--ink)]">
+                <input
+                  type="checkbox"
+                  checked={block.striped !== false}
+                  onChange={(e) => update({ striped: e.target.checked })}
+                  className="rounded accent-[var(--accent)] cursor-pointer"
+                />
+                Striped Rows
+              </label>
+              <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer select-none text-[var(--ink)]">
+                <input
+                  type="checkbox"
+                  checked={block.bordered !== false}
+                  onChange={(e) => update({ bordered: e.target.checked })}
+                  className="rounded accent-[var(--accent)] cursor-pointer"
+                />
+                Bordered Grid
+              </label>
+            </div>
+          </div>
+
+          {/* Table Column Headers */}
+          <div className={fieldRow}>
+            <div className="flex items-center justify-between mb-1">
+              <label className={label}>Column Headers ({headers.length})</label>
+              <button
+                type="button"
+                onClick={addColumn}
+                className="text-[11px] font-bold text-[var(--accent)] hover:underline flex items-center gap-1 bg-transparent border-none cursor-pointer"
+              >
+                <Plus size={13} /> Add Column
+              </button>
+            </div>
+            <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${headers.length}, minmax(100px, 1fr))` }}>
+              {headers.map((h, ci) => (
+                <div key={ci} className="flex items-center gap-1">
+                  <input
+                    type="text"
+                    value={h}
+                    onChange={(e) => updateHeader(ci, e.target.value)}
+                    placeholder={`Header ${ci + 1}`}
+                    className={`${inputCls} font-bold text-xs`}
+                  />
+                  {headers.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeColumn(ci)}
+                      className="p-1 rounded text-rose-400 hover:bg-rose-500/10 cursor-pointer border-none bg-transparent"
+                      title="Delete column"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Table Data Rows */}
+          <div className={fieldRow}>
+            <div className="flex items-center justify-between mb-1">
+              <label className={label}>Data Rows ({rows.length})</label>
+              <button
+                type="button"
+                onClick={addRow}
+                className="text-[11px] font-bold text-[var(--accent)] hover:underline flex items-center gap-1 bg-transparent border-none cursor-pointer"
+              >
+                <Plus size={13} /> Add Row
+              </button>
+            </div>
+            <div className="space-y-2">
+              {rows.map((row, ri) => (
+                <div key={ri} className="flex items-center gap-2">
+                  <span className="font-mono text-[11px] text-[var(--muted)] w-5 shrink-0 text-right">{ri + 1}.</span>
+                  <div className="grid gap-2 flex-1" style={{ gridTemplateColumns: `repeat(${headers.length}, minmax(100px, 1fr))` }}>
+                    {headers.map((_, ci) => (
+                      <input
+                        key={ci}
+                        type="text"
+                        value={(Array.isArray(row) ? row[ci] : "") || ""}
+                        onChange={(e) => updateCell(ri, ci, e.target.value)}
+                        placeholder={`Cell (${ri + 1}, ${ci + 1})`}
+                        className={`${inputCls} text-xs`}
+                      />
+                    ))}
+                  </div>
+                  {rows.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeRow(ri)}
+                      className="p-1 rounded text-rose-400 hover:bg-rose-500/10 cursor-pointer border-none bg-transparent"
+                      title="Delete row"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    case "quiz": {
+      const options = Array.isArray(block.options) && block.options.length > 0 ? block.options : ["Option A", "Option B", "Option C", "Option D"];
+      const answer = block.answer ?? 0;
+
+      const updateOption = (idx, val) => {
+        const next = [...options];
+        next[idx] = val;
+        update({ options: next });
+      };
+
+      const addOption = () => {
+        update({ options: [...options, `Option ${String.fromCharCode(65 + options.length)}`] });
+      };
+
+      const removeOption = (idx) => {
+        if (options.length <= 2) return;
+        const next = options.filter((_, i) => i !== idx);
+        const newAnswer = answer >= next.length ? next.length - 1 : answer;
+        update({ options: next, answer: newAnswer });
+      };
+
+      return (
+        <div className={fieldGroup}>
+          <div className={fieldRow}>
+            <label className={label}>Quiz Question</label>
+            <input
+              type="text"
+              value={block.question || ""}
+              onChange={(e) => update({ question: e.target.value })}
+              placeholder="e.g. What is the time complexity of Binary Search?"
+              className={inputCls}
+            />
+          </div>
+
+          <div className={fieldRow}>
+            <div className="flex items-center justify-between mb-1">
+              <label className={label}>Multiple Choice Options (Select radio for correct answer)</label>
+              {options.length < 6 && (
+                <button
+                  type="button"
+                  onClick={addOption}
+                  className="text-[11px] font-bold text-[var(--accent)] hover:underline flex items-center gap-1 bg-transparent border-none cursor-pointer"
+                >
+                  <Plus size={13} /> Add Option
+                </button>
+              )}
+            </div>
+            <div className="space-y-2">
+              {options.map((opt, oi) => (
+                <div key={oi} className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name={`quiz-correct-${block.id || 'current'}`}
+                    checked={answer === oi}
+                    onChange={() => update({ answer: oi })}
+                    className="accent-[var(--accent)] cursor-pointer"
+                    title="Mark as correct answer"
+                  />
+                  <span className="font-mono text-xs font-bold text-[var(--accent)] w-4 text-center">
+                    {String.fromCharCode(65 + oi)}
+                  </span>
+                  <input
+                    type="text"
+                    value={opt}
+                    onChange={(e) => updateOption(oi, e.target.value)}
+                    placeholder={`Option ${String.fromCharCode(65 + oi)}`}
+                    className={`${inputCls} flex-1`}
+                  />
+                  {options.length > 2 && (
+                    <button
+                      type="button"
+                      onClick={() => removeOption(oi)}
+                      className="p-1 rounded text-rose-400 hover:bg-rose-500/10 cursor-pointer border-none bg-transparent"
+                      title="Remove option"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className={fieldRow}>
+            <label className={label}>Answer Explanation <span className={hint}>(shown after user submits answer)</span></label>
+            <textarea
+              value={block.explanation || ""}
+              onChange={(e) => update({ explanation: e.target.value })}
+              placeholder="Explain why this answer is correct..."
+              rows={3}
+              className={textareaCls}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    case "steps": {
+      const items = Array.isArray(block.items) && block.items.length > 0 ? block.items : ["Step 1", "Step 2", "Step 3"];
+      const updateStep = (idx, val) => {
+        const next = [...items];
+        next[idx] = val;
+        update({ items: next });
+      };
+      const addStep = () => {
+        update({ items: [...items, "Next step"] });
+      };
+      const removeStep = (idx) => {
+        if (items.length <= 1) return;
+        update({ items: items.filter((_, i) => i !== idx) });
+      };
+
+      return (
+        <div className={fieldGroup}>
+          <div className={fieldRow}>
+            <label className={label}>Steps Title <span className={hint}>(optional)</span></label>
+            <input
+              type="text"
+              value={block.title || ""}
+              onChange={(e) => update({ title: e.target.value })}
+              placeholder="e.g. Implementation Steps"
+              className={inputCls}
+            />
+          </div>
+          <div className={fieldRow}>
+            <div className="flex items-center justify-between mb-1">
+              <label className={label}>Numbered Steps ({items.length})</label>
+              <button
+                type="button"
+                onClick={addStep}
+                className="text-[11px] font-bold text-[var(--accent)] hover:underline flex items-center gap-1 bg-transparent border-none cursor-pointer"
+              >
+                <Plus size={13} /> Add Step
+              </button>
+            </div>
+            <div className="space-y-2">
+              {items.map((step, si) => (
+                <div key={si} className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-bold text-[var(--accent)] w-6 text-center">{si + 1}.</span>
+                  <input
+                    type="text"
+                    value={step}
+                    onChange={(e) => updateStep(si, e.target.value)}
+                    placeholder={`Step ${si + 1} description`}
+                    className={`${inputCls} flex-1`}
+                  />
+                  {items.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeStep(si)}
+                      className="p-1 rounded text-rose-400 hover:bg-rose-500/10 cursor-pointer border-none bg-transparent"
+                      title="Remove step"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    case "keyvalue": {
+      const pairs = Array.isArray(block.pairs) && block.pairs.length > 0 ? block.pairs : [{ key: "Term", value: "Definition" }];
+      const updatePair = (idx, field, val) => {
+        const next = pairs.map((p, i) => i === idx ? { ...p, [field]: val } : p);
+        update({ pairs: next });
+      };
+      const addPair = () => {
+        update({ pairs: [...pairs, { key: "", value: "" }] });
+      };
+      const removePair = (idx) => {
+        if (pairs.length <= 1) return;
+        update({ pairs: pairs.filter((_, i) => i !== idx) });
+      };
+
+      return (
+        <div className={fieldGroup}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className={fieldRow}>
+              <label className={label}>Section Title <span className={hint}>(optional)</span></label>
+              <input
+                type="text"
+                value={block.title || ""}
+                onChange={(e) => update({ title: e.target.value })}
+                placeholder="e.g. Key Terminology"
+                className={inputCls}
+              />
+            </div>
+            <div className={fieldRow}>
+              <label className={label}>Display Layout</label>
+              <CustomSelect
+                value={block.layout || "list"}
+                onValueChange={(val) => update({ layout: val })}
+                options={[
+                  { value: "list", label: "List View (Key on Left, Value on Right)" },
+                  { value: "grid", label: "Grid View (Card Tiles)" },
+                ]}
+              />
+            </div>
+          </div>
+          <div className={fieldRow}>
+            <div className="flex items-center justify-between mb-1">
+              <label className={label}>Key / Value Pairs ({pairs.length})</label>
+              <button
+                type="button"
+                onClick={addPair}
+                className="text-[11px] font-bold text-[var(--accent)] hover:underline flex items-center gap-1 bg-transparent border-none cursor-pointer"
+              >
+                <Plus size={13} /> Add Pair
+              </button>
+            </div>
+            <div className="space-y-2">
+              {pairs.map((pair, pi) => (
+                <div key={pi} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={pair.key}
+                    onChange={(e) => updatePair(pi, 'key', e.target.value)}
+                    placeholder="Key / Term"
+                    className={`${inputCls} w-1/3 font-semibold text-xs`}
+                  />
+                  <input
+                    type="text"
+                    value={pair.value}
+                    onChange={(e) => updatePair(pi, 'value', e.target.value)}
+                    placeholder="Value / Definition"
+                    className={`${inputCls} flex-1 text-xs`}
+                  />
+                  {pairs.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removePair(pi)}
+                      className="p-1 rounded text-rose-400 hover:bg-rose-500/10 cursor-pointer border-none bg-transparent"
+                      title="Remove pair"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     default:
       return <p className="text-xs text-muted-foreground">Editing default fields for block type: {block.type}</p>;

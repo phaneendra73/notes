@@ -2,14 +2,14 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '../ui/Button.jsx';
 import {
-  FiGrid,
-  FiPlus,
-  FiChevronUp,
-  FiChevronDown,
-  FiCopy,
-  FiTrash2,
-  FiClock,
-} from 'react-icons/fi';
+  Grid,
+  Plus,
+  ArrowUp,
+  ArrowDown,
+  Copy,
+  Trash2,
+  Clock,
+} from 'lucide-react';
 import { calculateSlideReadingTime } from '../../utils/contentModel.js';
 
 export default function SlideListSidebar({
@@ -22,19 +22,19 @@ export default function SlideListSidebar({
   onRemoveSlide,
 }) {
   return (
-    <div className="md:col-span-4 rounded-[24px] border border-border bg-card p-4 flex flex-col gap-3.5 shadow-sm md:sticky md:top-6 max-h-[80vh]">
+    <div className="md:col-span-4 rounded-[var(--radius-md)] border border-border bg-card p-4 flex flex-col gap-3.5 shadow-sm md:sticky md:top-6 max-h-[80vh]">
       {/* Sidebar Header */}
       <div className="flex items-center justify-between pb-3 border-b border-border">
         <div className="flex items-center gap-2 font-heading font-extrabold text-sm text-foreground">
-          <FiGrid size={16} className="text-primary" /> Slide Sequence ({slides.length})
+          <Grid size={16} className="text-primary" /> Slide Sequence ({slides.length})
         </div>
         <Button
           size="xs"
           variant="default"
           onClick={onAddSlide}
-          className="rounded-xl gap-1 font-extrabold text-[11px] shadow-sm"
+          className="rounded-[var(--radius-sm)] gap-1 font-extrabold text-[11px] shadow-sm"
         >
-          <FiPlus size={13} /> Add Slide
+          <Plus size={13} /> Add Slide
         </Button>
       </div>
 
@@ -50,7 +50,7 @@ export default function SlideListSidebar({
               key={idx}
               onClick={() => onSelectSlide(idx)}
               whileHover={{ scale: 1.01 }}
-              className={`flex flex-col gap-2 p-3.5 rounded-2xl border cursor-pointer transition-all duration-200 ${
+              className={`flex flex-col gap-2 p-3.5 rounded-[var(--radius-md)] border cursor-pointer transition-all duration-200 ${
                 isActive
                   ? 'border-primary bg-gradient-to-r from-primary/15 via-primary/5 to-transparent text-foreground shadow-sm'
                   : 'border-border/70 hover:border-primary/40 hover:bg-muted/30 text-muted-foreground'
@@ -71,37 +71,37 @@ export default function SlideListSidebar({
                 </div>
 
                 {/* Slide Quick Controls */}
-                <div className="flex items-center gap-0.5 shrink-0">
+                <div className="flex items-center gap-1 shrink-0">
                   <button
                     disabled={idx === 0}
                     onClick={(e) => { e.stopPropagation(); onMoveSlide(idx, -1); }}
-                    className="p-1 hover:text-primary disabled:opacity-20 cursor-pointer"
+                    className="p-1 rounded-[var(--radius-sm)] hover:bg-muted/60 hover:text-primary disabled:opacity-20 cursor-pointer transition-colors"
                     title="Move Up"
                   >
-                    <FiChevronUp size={13} />
+                    <ArrowUp size={13} />
                   </button>
                   <button
                     disabled={idx === slides.length - 1}
                     onClick={(e) => { e.stopPropagation(); onMoveSlide(idx, 1); }}
-                    className="p-1 hover:text-primary disabled:opacity-20 cursor-pointer"
+                    className="p-1 rounded-[var(--radius-sm)] hover:bg-muted/60 hover:text-primary disabled:opacity-20 cursor-pointer transition-colors"
                     title="Move Down"
                   >
-                    <FiChevronDown size={13} />
+                    <ArrowDown size={13} />
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); onDuplicateSlide(idx); }}
-                    className="p-1 hover:text-primary cursor-pointer"
+                    className="p-1 rounded-[var(--radius-sm)] hover:bg-muted/60 hover:text-primary cursor-pointer transition-colors"
                     title="Duplicate Slide"
                   >
-                    <FiCopy size={12} />
+                    <Copy size={12} />
                   </button>
                   {slides.length > 1 && (
                     <button
                       onClick={(e) => { e.stopPropagation(); onRemoveSlide(idx); }}
-                      className="p-1 text-red-400 hover:text-red-500 cursor-pointer"
+                      className="p-1 rounded-[var(--radius-sm)] text-rose-400 hover:bg-rose-500/10 hover:text-rose-500 cursor-pointer transition-colors"
                       title="Delete Slide"
                     >
-                      <FiTrash2 size={13} />
+                      <Trash2 size={13} />
                     </button>
                   )}
                 </div>
