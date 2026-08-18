@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowUp, Terminal } from 'lucide-react';
+import { ArrowUp, Terminal, Coffee, Heart } from 'lucide-react';
 import useTags from '../../hooks/useTags.js';
 import phaneendraLogo from '../../../assets/phaneendramarri.svg';
 
@@ -43,6 +43,29 @@ export default function Footer() {
             <p className="font-sans text-xs text-[var(--ink-2)] leading-relaxed max-w-sm font-normal">
               Engineering study notes and technical deep dives covering C#, .NET Core 8, Data Structures, SQL Indexing, and System Design created by <strong className="text-[var(--ink)]">Phaneendra Marri</strong>.
             </p>
+
+            {/* Support author actions */}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <a
+                href="https://github.com/sponsors/phaneendramarri"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-md)] bg-pink-500/10 border border-pink-500/30 text-pink-600 dark:text-pink-400 text-xs font-semibold hover:bg-pink-500/20 hover:border-pink-500/50 transition-all group"
+              >
+                <Heart size={13} className="fill-current group-hover:scale-110 transition-transform" />
+                <span>Sponsor on GitHub</span>
+              </a>
+
+              <a
+                href="https://buymeacoffee.com/phaneendramarri"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-md)] bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-semibold hover:bg-amber-500/20 hover:border-amber-500/50 transition-all group"
+              >
+                <Coffee size={13} className="group-hover:scale-110 transition-transform" />
+                <span>Buy Me a Coffee</span>
+              </a>
+            </div>
 
             {/* Author Social Links (GitHub, Twitter/X, YouTube, LinkedIn) */}
             <div className="flex items-center gap-2 pt-1">

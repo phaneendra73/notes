@@ -18,7 +18,6 @@ import {
   Search,
   Lock,
 } from "lucide-react";
-import { FaGithub } from "react-icons/fa";
 
 import useTags from "../../hooks/useTags.js";
 
@@ -168,21 +167,6 @@ export default function Navbar() {
               <Search size={15} />
             </button>
 
-            {/* GitHub Repository Link */}
-            <a
-              href="https://github.com/phaneendramarri/notes"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-2)] text-xs font-medium text-[var(--ink-2)] hover:text-[var(--ink)] hover:border-[var(--accent)] transition-all cursor-pointer group"
-              title="GitHub Repository"
-            >
-              <FaGithub
-                size={14}
-                className="text-[var(--ink-2)] group-hover:text-[var(--ink)] transition-colors"
-              />
-              <span className="hidden xl:inline">GitHub</span>
-            </a>
-
             {/* Theme Toggle Button */}
             <button
               onClick={() => setTheme(isDark ? "light" : "dark")}
@@ -287,17 +271,7 @@ export default function Navbar() {
               </div>
 
               {/* Navigation Links */}
-              <div className="pt-2 border-t border-[var(--line)] flex flex-col gap-1">
-                <a
-                  href="https://github.com/phaneendramarri/notes"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full p-2.5 rounded-[var(--radius-md)] text-left text-xs font-semibold flex items-center gap-2.5 hover:bg-[var(--surface-2)] text-[var(--ink)] transition-colors cursor-pointer"
-                >
-                  <FaGithub size={15} className="text-[var(--ink-2)]" />
-                  <span>GitHub Repository</span>
-                </a>
-
+              <div className="pt-2 border-t border-[var(--line)] flex flex-col gap-1.5">
                 {/* Authenticated Links */}
                 {isAuthenticated && (
                   <>

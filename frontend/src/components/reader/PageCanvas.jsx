@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import BlockRenderer from "../blocks/BlockRenderer.jsx";
 import ImageZoomModal from "./ImageZoomModal.jsx";
-import { Sliders, ChevronRight, ChevronLeft, BookOpen } from "lucide-react";
+import { Sliders, ChevronRight, ChevronLeft, BookOpen, Heart, Coffee, Share2 } from "lucide-react";
 
 /* ─────────────────────────────────────────────────────────────────────────────
  * TRANSITION PHILOSOPHY
@@ -156,6 +156,68 @@ export default function PageCanvas({
                 onImageClick={(src) => setZoomedImage(src)}
               />
             </div>
+
+            {/* Final Page Author Support & Completion Card */}
+            {pageIndex === count - 1 && count > 0 && (
+              <div className="mt-12 sm:mt-16 pt-8 border-t border-[var(--line)] space-y-6">
+                <div className="p-6 sm:p-8 rounded-[var(--radius-xl)] bg-gradient-to-b from-[var(--surface-2)]/80 to-[var(--surface-2)]/40 border border-[var(--line)] shadow-sm text-center space-y-5">
+                  <div className="w-12 h-12 rounded-full bg-pink-500/15 border border-pink-500/30 flex items-center justify-center mx-auto text-pink-500">
+                    <Heart size={22} className="fill-current animate-pulse" />
+                  </div>
+
+                  <div className="max-w-lg mx-auto space-y-1.5">
+                    <h3 className="font-serif font-bold text-lg sm:text-2xl text-[var(--ink)]">
+                      Support Free & Open Engineering Notes
+                    </h3>
+                    <p className="text-xs sm:text-sm text-[var(--muted)] leading-relaxed font-normal">
+                      These interactive visual notes are crafted to make complex software engineering, .NET, and system design intuitive and free for everyone. If this helped you, consider sponsoring or buying me a coffee!
+                    </p>
+                  </div>
+
+                  {/* Dual Support Action Buttons */}
+                  <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                    {/* GitHub Sponsors Button */}
+                    <a
+                      href="https://github.com/sponsors/phaneendramarri"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[var(--radius-md)] bg-[#db61a2] hover:bg-[#c94a90] text-white font-bold text-xs transition-all shadow-sm hover:scale-105"
+                    >
+                      <Heart size={15} className="fill-white" />
+                      <span>Sponsor on GitHub</span>
+                    </a>
+
+                    {/* Buy Me a Coffee Button */}
+                    <a
+                      href="https://buymeacoffee.com/phaneendramarri"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[var(--radius-md)] bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-all shadow-sm hover:scale-105"
+                    >
+                      <Coffee size={15} />
+                      <span>Buy Me a Coffee</span>
+                    </a>
+
+                    {/* Share Button */}
+                    <button
+                      onClick={() => {
+                        const url = window.location.href;
+                        if (navigator.share) {
+                          navigator.share({ title: note?.title || "Notes", url }).catch(() => {});
+                        } else {
+                          navigator.clipboard.writeText(url);
+                          alert("Note link copied to clipboard!");
+                        }
+                      }}
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[var(--radius-md)] bg-[var(--surface)] border border-[var(--line)] text-[var(--ink)] font-semibold text-xs hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all cursor-pointer shadow-2xs"
+                    >
+                      <Share2 size={14} />
+                      <span>Share</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Mobile Bottom Navigation */}
