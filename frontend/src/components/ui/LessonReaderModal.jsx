@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import client from '../../api/client.js';
+import { Skeleton } from './Skeleton.jsx';
 import { X, ArrowRight, Layers, Loader2, Clock } from 'lucide-react';
 
 function formatRelativeTime(dateString) {
@@ -38,6 +39,7 @@ export default function LessonReaderModal({ lesson, isOpen, onClose }) {
   const [slides, setSlides] = useState([]);
   const [loading, setLoading] = useState(true);
   const [totalSlidesCount, setTotalSlidesCount] = useState(0);
+  const [imageError, setImageError] = useState(false);
 
   // Close on Escape key
   useEffect(() => {
@@ -50,35 +52,46 @@ export default function LessonReaderModal({ lesson, isOpen, onClose }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Fetch all slides for the lesson
+  // Fetch all slides when opened with a new lesson
   useEffect(() => {
     if (isOpen && lesson?.id) {
+      setSlides([]);
+      setTotalSlidesCount(0);
+      setImageError(false);
+      setLoading(true);
+      
+      let cancelled = false;
+
+      const fetchLessonDetails = async () => {
+        try {
+          const res = await client.get(`/api/lessons/${lesson.id}`, {
+            params: { offset: 0, limit: 0 }, // limit=0 fetches all slides
+          });
+          if (cancelled) return;
+          const lessonData = res.data.lesson || res.data;
+          const fetchedSlides = lessonData.slides || [];
+          setSlides(fetchedSlides);
+          setTotalSlidesCount(lessonData.totalSlidesCount || fetchedSlides.length || 1);
+        } catch (error) {
+          if (cancelled) return;
+          console.error('Failed to fetch lesson chapters:', error);
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
+      };
+
       fetchLessonDetails();
+
+      return () => {
+        cancelled = true;
+      };
     }
   }, [isOpen, lesson?.id]);
 
-  const fetchLessonDetails = async () => {
-    try {
-      setLoading(true);
-      const res = await client.get(`/api/lessons/${lesson.id}`, {
-        params: { offset: 0, limit: 0 }, // limit=0 fetches all slides
-      });
-      const lessonData = res.data.lesson || res.data;
-      const fetchedSlides = lessonData.slides || [];
-      setSlides(fetchedSlides);
-      setTotalSlidesCount(lessonData.totalSlidesCount || fetchedSlides.length || 1);
-    } catch (error) {
-      console.error('Failed to fetch lesson chapters:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (!isOpen || !lesson) return null;
 
-  const fallbackImage =
-    'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=1200';
-  const cover = lesson.coverUrl || lesson.imageUrl || fallbackImage;
+  const rawCover = (lesson.coverUrl || lesson.imageUrl || '').trim();
+  const hasCover = Boolean(rawCover) && !imageError;
   const tags = lesson.tagObjects || lesson.tags || [];
   const chaptersCount = totalSlidesCount || (slides.length > 0 ? slides.length : (lesson.totalSlidesCount || lesson.slidesCount || 1));
   const relativeDate = formatRelativeTime(lesson.createdAt);
@@ -126,28 +139,44 @@ export default function LessonReaderModal({ lesson, isOpen, onClose }) {
 
           {/* Modal Body Container */}
           <div className="flex flex-col gap-4 p-5 sm:p-6 overflow-y-auto w-full custom-scrollbar">
-            {/* 1. Cover Image */}
-            <div className="relative w-full h-[22vh] sm:h-[24vh] min-h-[160px] rounded-[var(--radius-sm)] overflow-hidden bg-[var(--surface-2)] shrink-0 border border-[var(--line)]">
-              <img
-                src={cover}
-                alt={lesson.title || 'Track Cover'}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = fallbackImage;
-                }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-              {tags.length > 0 && (
-                <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5 z-10">
-                  {tags.slice(0, 3).map((tag, idx) => (
-                    <span
-                      key={tag.id || idx}
-                      className="px-2.5 py-0.5 rounded-[var(--radius-sm)] text-[11px] font-semibold bg-black/60 text-white backdrop-blur-md border border-white/10"
-                    >
-                      {tag.name || tag}
+            {/* 1. Cover Image or Typographic Header */}
+            <div className="relative w-full h-[20vh] sm:h-[22vh] min-h-[140px] rounded-[var(--radius-sm)] overflow-hidden bg-[var(--surface-2)] shrink-0 border border-[var(--line)] flex flex-col justify-between">
+              {hasCover ? (
+                <>
+                  <img
+                    src={rawCover}
+                    alt={lesson.title || 'Track Cover'}
+                    className="w-full h-full object-cover"
+                    onError={() => setImageError(true)}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  {tags.length > 0 && (
+                    <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5 z-10">
+                      {tags.slice(0, 3).map((tag, idx) => (
+                        <span
+                          key={tag.id || idx}
+                          className="px-2.5 py-0.5 rounded-[var(--radius-sm)] text-[11px] font-semibold bg-black/60 text-white backdrop-blur-md border border-white/10"
+                        >
+                          {tag.name || tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="w-full h-full p-5 flex flex-col justify-between bg-gradient-to-br from-[var(--surface-2)] via-[var(--surface-2)] to-[var(--accent-soft)]/60 relative overflow-hidden select-none">
+                  <div className="flex items-center justify-between relative z-10">
+                    <span className="font-mono text-[10px] font-bold text-[var(--accent)] tracking-wider px-2 py-0.5 rounded bg-[var(--surface)] border border-[var(--line)] shadow-xs">
+                      {tags[0]?.name || 'VISUAL NOTE'}
                     </span>
-                  ))}
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--radius-sm)] text-[10px] font-semibold bg-[var(--surface)] text-[var(--ink-2)] border border-[var(--line)] shadow-xs">
+                      <Layers size={12} className="text-[var(--accent)]" />
+                      <span>{chaptersCount} {chaptersCount === 1 ? 'Chapter' : 'Chapters'}</span>
+                    </span>
+                  </div>
+                  <h3 className="font-serif font-bold text-xl sm:text-2xl text-[var(--ink)] leading-snug line-clamp-2 relative z-10">
+                    {lesson.title}
+                  </h3>
                 </div>
               )}
             </div>
@@ -167,10 +196,14 @@ export default function LessonReaderModal({ lesson, isOpen, onClose }) {
             {/* 3. Chapters Header & Date */}
             <div className="flex flex-col gap-3 w-full">
               <div className="flex items-center justify-between gap-2 px-0.5">
-                <p className="flex items-center gap-2 text-[var(--ink)] text-base sm:text-lg font-bold">
-                  <Layers size={18} className="text-[var(--accent)]" />
-                  <span>{chaptersCount} {chaptersCount === 1 ? 'Chapter' : 'Chapters'}</span>
-                </p>
+                {loading ? (
+                  <Skeleton className="h-5 w-28 rounded-[var(--radius-sm)]" />
+                ) : (
+                  <p className="flex items-center gap-2 text-[var(--ink)] text-base sm:text-lg font-bold">
+                    <Layers size={18} className="text-[var(--accent)]" />
+                    <span>{chaptersCount} {chaptersCount === 1 ? 'Chapter' : 'Chapters'}</span>
+                  </p>
+                )}
                 {relativeDate && (
                   <p className="flex items-center gap-1.5 text-xs sm:text-sm text-[var(--muted)] font-medium">
                     <Clock size={13} />
@@ -182,9 +215,19 @@ export default function LessonReaderModal({ lesson, isOpen, onClose }) {
               {/* 4. Scrollable Chapters / Slides List */}
               <div className="max-h-[24vh] overflow-y-auto flex flex-col gap-2.5 w-full py-1 pr-1 custom-scrollbar">
                 {loading ? (
-                  <div className="py-8 flex flex-col items-center justify-center gap-2 text-xs text-[var(--muted)]">
-                    <Loader2 size={20} className="animate-spin text-[var(--accent)]" />
-                    <span>Loading chapters...</span>
+                  <div className="flex flex-col gap-2.5 w-full">
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between bg-[var(--surface-2)]/60 border border-[var(--line)] rounded-[var(--radius-sm)] px-4 py-3 w-full animate-pulse"
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1 mr-3">
+                          <div className="w-6 h-5 rounded-[var(--radius-sm)] bg-[var(--surface-3)]" />
+                          <div className="h-4 bg-[var(--surface-3)] rounded w-2/3" />
+                        </div>
+                        <div className="w-4 h-4 rounded-full bg-[var(--surface-3)]" />
+                      </div>
+                    ))}
                   </div>
                 ) : slides.length > 0 ? (
                   slides.map((slide, index) => {

@@ -12,11 +12,13 @@ import BlockListEditor from '../components/editor/BlockListEditor.jsx';
 import SlideCanvas from '../components/reader/SlideCanvas.jsx';
 import MediaLibraryModal from '../components/MediaLibraryModal.jsx';
 import TemplateSelectorModal from '../components/editor/TemplateSelectorModal.jsx';
+import SlideJsonImportModal from '../components/editor/SlideJsonImportModal.jsx';
 import useTags from '../hooks/useTags.js';
 import {
   ArrowLeft, Save, Plus, Trash2, Tag,
   Eye, Loader2, ChevronDown, ChevronUp,
-  Sliders, Sparkles, Layout, Monitor, Sun, Moon
+  Sliders, Sparkles, Layout, Monitor, Sun, Moon,
+  FileJson
 } from 'lucide-react';
 import { createDefaultBlock } from '../lib/blocks.js';
 
@@ -58,6 +60,7 @@ export default function LessonEditorPage() {
   const [mediaModalOpen, setMediaModalOpen] = useState(false);
   const [mediaTargetMode, setMediaTargetMode] = useState('slide'); // 'slide' | 'cover'
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
+  const [jsonModalOpen, setJsonModalOpen] = useState(false);
 
   // Auth guard
   useEffect(() => {
@@ -253,6 +256,118 @@ export default function LessonEditorPage() {
     toast.success(`Template applied: ${tmpl.title}`);
   };
 
+  const handleApplyJsonImport = ({ targetMode, data, activeSlideIdx: targetIdx }) => {
+    if (!data) return;
+
+    if (data.type === 'blocks') {
+      if (targetMode === 'append') {
+        const newSlide = {
+          orderNumber: slides.length + 1,
+          title: `Slide ${slides.length + 1}`,
+          blocks: data.blocks,
+        };
+        setSlides((prev) => [...prev, newSlide]);
+        setActiveSlideIdx(slides.length);
+        toast.success(`Slide ${slides.length + 1} added with ${data.blocks.length} blocks!`);
+      } else {
+        setSlides((prev) => {
+          const next = [...prev];
+          if (next[targetIdx]) {
+            next[targetIdx] = { ...next[targetIdx], blocks: data.blocks };
+          }
+          return next;
+        });
+        toast.success(`Slide ${targetIdx + 1} updated with ${data.blocks.length} blocks!`);
+      }
+    } else if (data.type === 'single_slide') {
+      if (targetMode === 'append') {
+        const newSlide = {
+          orderNumber: slides.length + 1,
+          title: data.slide.title,
+          blocks: data.slide.blocks,
+        };
+        setSlides((prev) => [...prev, newSlide]);
+        setActiveSlideIdx(slides.length);
+        toast.success(`New slide "${data.slide.title}" added!`);
+      } else {
+        setSlides((prev) => {
+          const next = [...prev];
+          if (next[targetIdx]) {
+            next[targetIdx] = {
+              ...next[targetIdx],
+              title: data.slide.title || next[targetIdx].title,
+              blocks: data.slide.blocks,
+            };
+          }
+          return next;
+        });
+        toast.success(`Slide ${targetIdx + 1} updated successfully!`);
+      }
+    } else if (data.type === 'slides') {
+      if (targetMode === 'replace_all') {
+        setSlides(data.slides);
+        setActiveSlideIdx(0);
+        toast.success(`Replaced all slides (${data.slides.length} slides loaded)!`);
+      } else if (targetMode === 'append') {
+        setSlides((prev) => [
+          ...prev,
+          ...data.slides.map((s, i) => ({ ...s, orderNumber: prev.length + i + 1 })),
+        ]);
+        setActiveSlideIdx(slides.length);
+        toast.success(`Appended ${data.slides.length} slides!`);
+      } else {
+        const first = data.slides[0];
+        const remaining = data.slides.slice(1);
+        setSlides((prev) => {
+          const next = [...prev];
+          if (next[targetIdx]) {
+            next[targetIdx] = { ...next[targetIdx], title: first.title, blocks: first.blocks };
+          }
+          if (remaining.length > 0) {
+            remaining.forEach((s) => next.push(s));
+          }
+          return next.map((s, i) => ({ ...s, orderNumber: i + 1 }));
+        });
+        toast.success(`Applied ${data.slides.length} slide(s)!`);
+      }
+    } else if (data.type === 'lesson') {
+      if (targetMode === 'replace_all') {
+        if (data.lesson.title) setTitle(data.lesson.title);
+        if (data.lesson.excerpt) setExcerpt(data.lesson.excerpt);
+        if (data.lesson.coverUrl) setCoverUrl(data.lesson.coverUrl);
+        if (data.lesson.slides?.length) {
+          setSlides(data.lesson.slides);
+          setActiveSlideIdx(0);
+        }
+        if (data.lesson.tagIds?.length) {
+          setSelectedTagIds(data.lesson.tagIds);
+        }
+        toast.success(`Full note loaded (${data.lesson.slides?.length || 0} slides)!`);
+      } else if (targetMode === 'append') {
+        if (data.lesson.slides?.length) {
+          setSlides((prev) => [
+            ...prev,
+            ...data.lesson.slides.map((s, i) => ({ ...s, orderNumber: prev.length + i + 1 })),
+          ]);
+          setActiveSlideIdx(slides.length);
+          toast.success(`Appended ${data.lesson.slides.length} slides from note JSON!`);
+        }
+      } else {
+        if (data.lesson.slides?.[0]) {
+          const first = data.lesson.slides[0];
+          setSlides((prev) => {
+            const next = [...prev];
+            if (next[targetIdx]) {
+              next[targetIdx] = { ...next[targetIdx], title: first.title, blocks: first.blocks };
+            }
+            return next;
+          });
+          toast.success(`Slide ${targetIdx + 1} updated from note JSON!`);
+        }
+      }
+    }
+  };
+
   const activeSlide = slides[activeSlideIdx] || slides[0];
 
   if (loading) {
@@ -307,6 +422,16 @@ export default function LessonEditorPage() {
 
         {/* Right Actions */}
         <div className="flex items-center gap-2">
+          {/* Paste JSON Modal Trigger */}
+          <button
+            onClick={() => setJsonModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink)] text-xs font-semibold hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors cursor-pointer shadow-xs"
+            title="Import raw JSON or copy AI prompt template"
+          >
+            <FileJson size={13} className="text-[var(--accent)]" />
+            <span>Paste JSON</span>
+          </button>
+
           {/* Templates Selector Button */}
           <button
             onClick={() => setTemplateModalOpen(true)}
@@ -509,13 +634,23 @@ export default function LessonEditorPage() {
             </div>
           </div>
 
-          <Button
-            size="sm"
-            onClick={addSlide}
-            className="w-full rounded-[var(--radius-md)] font-semibold text-xs gap-1.5 bg-[var(--accent-soft)] border border-[var(--accent-soft)] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--accent-on)] transition-all cursor-pointer"
-          >
-            <Plus size={14} /> Add New Slide
-          </Button>
+          <div className="space-y-1.5 pt-2">
+            <Button
+              size="sm"
+              onClick={addSlide}
+              className="w-full rounded-[var(--radius-md)] font-semibold text-xs gap-1.5 bg-[var(--accent-soft)] border border-[var(--accent-soft)] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--accent-on)] transition-all cursor-pointer"
+            >
+              <Plus size={14} /> Add New Slide
+            </Button>
+            <button
+              type="button"
+              onClick={() => setJsonModalOpen(true)}
+              className="w-full py-1.5 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] text-[var(--ink-2)] hover:border-[var(--accent)] hover:text-[var(--accent)] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              title="Import JSON or paste slide blocks"
+            >
+              <FileJson size={13} /> Import JSON
+            </button>
+          </div>
         </aside>
 
         {/* Center / Right: Form Editor & Split-Screen Live Preview */}
@@ -523,9 +658,20 @@ export default function LessonEditorPage() {
           {/* Slide Form Editor */}
           <div className={`${showLivePreview ? 'w-full lg:w-1/2' : 'w-full max-w-4xl mx-auto'} space-y-6`}>
             <div className="p-4 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] space-y-2">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--accent)]">
-                Slide {activeSlideIdx + 1} Title
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--accent)]">
+                  Slide {activeSlideIdx + 1} Title
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setJsonModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--accent)] hover:underline cursor-pointer bg-[var(--accent-soft)]/50 px-2.5 py-1 rounded-[var(--radius-sm)] border border-[var(--accent)]/30 hover:bg-[var(--accent-soft)] transition-all"
+                  title="Paste raw JSON for this slide"
+                >
+                  <FileJson size={13} />
+                  <span>Paste Slide JSON</span>
+                </button>
+              </div>
               <input
                 type="text"
                 value={activeSlide.title || ''}
@@ -574,6 +720,15 @@ export default function LessonEditorPage() {
         isOpen={templateModalOpen}
         onClose={() => setTemplateModalOpen(false)}
         onSelectTemplate={handleApplyTemplate}
+      />
+
+      <SlideJsonImportModal
+        isOpen={jsonModalOpen}
+        onClose={() => setJsonModalOpen(false)}
+        activeSlideIdx={activeSlideIdx}
+        totalSlides={slides.length}
+        currentSlideData={activeSlide}
+        onApply={handleApplyJsonImport}
       />
     </div>
   );

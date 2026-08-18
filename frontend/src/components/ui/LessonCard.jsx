@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Layers, Clock, Eye } from 'lucide-react';
+import { ArrowRight, Layers, Clock, Eye, BookOpen, Sparkles } from 'lucide-react';
 
 function formatRelativeTime(dateString) {
   if (!dateString) return '';
@@ -37,14 +37,13 @@ export default function LessonCard({
   onReadClick,
 }) {
   const navigate = useNavigate();
+  const [imageError, setImageError] = useState(false);
   const item = lesson;
   if (!item) return null;
 
-  const fallbackImage =
-    'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=800';
-
   const tags = item.tagObjects || item.tags || [];
-  const cover = item.coverUrl || item.imageUrl || fallbackImage;
+  const rawCover = (item.coverUrl || item.imageUrl || '').trim();
+  const hasCover = Boolean(rawCover) && !imageError;
   const slidesCount = item.totalSlidesCount || item.slidesCount || item.slides?.length || 1;
   const viewsCount = item.viewsCount ?? item.views ?? 0;
   const relativeDate = formatRelativeTime(item.createdAt);
@@ -77,17 +76,27 @@ export default function LessonCard({
           <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent-soft)]/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
           <div className="flex items-start sm:items-center gap-4 min-w-0 flex-1 relative z-10">
-            <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-[var(--radius-sm)] overflow-hidden shrink-0 border border-[var(--line)] bg-[var(--surface-2)] shadow-sm">
-              <img
-                src={cover}
-                alt={item.title || 'Note'}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                loading="lazy"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = fallbackImage;
-                }}
-              />
+            {/* Thumbnail: Image or Stylized Typographic Tile */}
+            <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-[var(--radius-sm)] overflow-hidden shrink-0 border border-[var(--line)] bg-[var(--surface-2)] shadow-sm flex items-center justify-center">
+              {hasCover ? (
+                <img
+                  src={rawCover}
+                  alt={item.title || 'Note'}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <div className="w-full h-full p-2.5 flex flex-col justify-between bg-gradient-to-br from-[var(--surface-2)] via-[var(--surface-2)] to-[var(--accent-soft)]/50 group-hover:to-[var(--accent-soft)] transition-colors select-none">
+                  <div className="flex items-center justify-between">
+                    <BookOpen size={13} className="text-[var(--accent)]" />
+                    <span className="font-mono text-[9px] font-bold text-[var(--accent)] opacity-80">NOTE</span>
+                  </div>
+                  <span className="font-serif font-bold text-[11px] sm:text-xs text-[var(--ink)] leading-tight line-clamp-2 group-hover:text-[var(--accent)] transition-colors">
+                    {item.title}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="min-w-0 flex-1 space-y-1.5">
@@ -165,31 +174,50 @@ export default function LessonCard({
       className="h-full select-none cursor-pointer group"
     >
       <div className="h-full flex flex-col rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--accent)] hover:shadow-[var(--shadow-lg)] transition-all duration-300 overflow-hidden">
-        <div className="relative h-44 sm:h-48 w-full bg-[var(--surface-2)] overflow-hidden shrink-0">
-          <img
-            src={cover}
-            alt={item.title || 'Note'}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = fallbackImage;
-            }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+        {/* Header / Cover Area: Image or Typographic Header */}
+        <div className="relative h-44 sm:h-48 w-full bg-[var(--surface-2)] overflow-hidden shrink-0 border-b border-[var(--line)] flex flex-col justify-between">
+          {hasCover ? (
+            <>
+              <img
+                src={rawCover}
+                alt={item.title || 'Note'}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                loading="lazy"
+                onError={() => setImageError(true)}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 z-10">
+                {tags.length > 0 ? (
+                  <span className="px-2.5 py-1 rounded-[var(--radius-sm)] text-[10px] font-bold bg-black/60 text-white backdrop-blur-md border border-white/10 truncate">
+                    {tags[0].name || tags[0]}
+                  </span>
+                ) : <span />}
 
-          <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 z-10">
-            {tags.length > 0 ? (
-              <span className="px-2.5 py-1 rounded-[var(--radius-sm)] text-[10px] font-bold bg-black/60 text-white backdrop-blur-md border border-white/10 truncate">
-                {tags[0].name || tags[0]}
-              </span>
-            ) : <span />}
-
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--radius-sm)] text-[10px] font-semibold bg-black/60 text-white backdrop-blur-md border border-white/10 shrink-0">
-              <Layers size={12} className="text-[var(--accent-soft)]" />
-              <span>{slidesCount} {slidesCount === 1 ? 'Chapter' : 'Chapters'}</span>
-            </span>
-          </div>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--radius-sm)] text-[10px] font-semibold bg-black/60 text-white backdrop-blur-md border border-white/10 shrink-0">
+                  <Layers size={12} className="text-[var(--accent-soft)]" />
+                  <span>{slidesCount} {slidesCount === 1 ? 'Chapter' : 'Chapters'}</span>
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="w-full h-full p-5 flex flex-col justify-between bg-gradient-to-br from-[var(--surface-2)] via-[var(--surface-2)] to-[var(--accent-soft)]/60 group-hover:to-[var(--accent-soft)]/90 transition-all duration-300 relative overflow-hidden select-none">
+              <div className="absolute -right-6 -bottom-6 text-[var(--accent)] opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
+                <BookOpen size={130} />
+              </div>
+              <div className="flex items-center justify-between relative z-10">
+                <span className="font-mono text-[10px] font-bold text-[var(--accent)] tracking-wider px-2 py-0.5 rounded bg-[var(--surface)] border border-[var(--line)] shadow-xs">
+                  {tags[0]?.name || 'VISUAL NOTE'}
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--radius-sm)] text-[10px] font-semibold bg-[var(--surface)] text-[var(--ink-2)] border border-[var(--line)] shrink-0 shadow-xs">
+                  <Layers size={12} className="text-[var(--accent)]" />
+                  <span>{slidesCount} {slidesCount === 1 ? 'Chapter' : 'Chapters'}</span>
+                </span>
+              </div>
+              <h4 className="font-serif font-bold text-base sm:text-lg text-[var(--ink)] leading-snug line-clamp-2 relative z-10 group-hover:text-[var(--accent)] transition-colors">
+                {item.title}
+              </h4>
+            </div>
+          )}
         </div>
 
         <div className="p-5 flex-1 flex flex-col justify-between gap-4">
