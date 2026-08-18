@@ -1,8 +1,8 @@
 export { default as Navbar } from '../layout/Navbar.jsx';
 export { default as Footer } from '../layout/Footer.jsx';
-export { default as LessonCard } from './LessonCard.jsx';
-export { default as LessonCatalog } from './LessonCatalog.jsx';
-export { default as LessonReaderModal } from './LessonReaderModal.jsx';
+export { default as NoteCard } from './NoteCard.jsx';
+export { default as NoteCatalog } from './NoteCatalog.jsx';
+export { default as NoteReaderModal } from './NoteReaderModal.jsx';
 export { default as SearchCommandModal } from './SearchCommandModal.jsx';
 
 // UI Primitives

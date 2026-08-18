@@ -76,7 +76,7 @@ export default function BlockPicker({ onAddBlock }) {
         className="w-full py-3.5 rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 text-primary font-black text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all hover:border-primary hover:bg-primary/15 hover:shadow-[0_0_20px_var(--neon-glow)]"
       >
         <Plus size={18} />
-        Add Slide Content Block
+        Add Page Content Block
       </button>
 
       <AnimatePresence>

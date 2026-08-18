@@ -19,7 +19,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('edit'); // 'edit' | 'password' | 'addAuthor'
   const [profile, setProfile] = useState(null);
-  const [stats, setStats] = useState({ totalLessons: 0, totalViews: 0 });
+  const [stats, setStats] = useState({ totalNotes: 0, totalViews: 0 });
 
   // Edit Profile Form State
   const [editName, setEditName] = useState('');
@@ -53,7 +53,7 @@ export default function ProfilePage() {
       .then((res) => {
         const u = res.data.user;
         setProfile(u);
-        setStats(res.data.stats || { totalLessons: 0, totalViews: 0 });
+        setStats(res.data.stats || { totalNotes: 0, totalViews: 0 });
         setEditName(u.name || '');
         setEditAvatar(u.avatarUrl || u.profileUrl || '');
         setEditBio(u.bio || '');
@@ -210,7 +210,7 @@ export default function ProfilePage() {
             <div className="grid grid-cols-2 gap-3 pt-4 border-t border-[var(--line)]">
               <div className="p-3 rounded-[var(--radius-md)] bg-[var(--surface-2)] border border-[var(--line)] text-center">
                 <div className="text-lg font-mono font-bold text-[var(--accent)]">
-                  {stats.totalLessons}
+                  {stats.totalNotes || 0}
                 </div>
                 <div className="text-[11px] text-[var(--muted)] font-medium">Notes Written</div>
               </div>

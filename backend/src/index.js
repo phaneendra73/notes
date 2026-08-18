@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { authRoutes } from "./routes/auth.js";
-import { lessonRoutes } from "./routes/lessons.js";
+import { noteRoutes } from "./routes/notes.js";
 import { tagRoutes } from "./routes/tags.js";
 import { mediaRoutes } from "./routes/media.js";
 import { createRateLimiter } from "./middleware/rateLimit.js";
@@ -10,10 +10,6 @@ const app = new Hono();
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
 // CORS_ORIGINS is a comma-separated list of allowed origins set via env config.
-// Example: "https://example.github.io,http://localhost:3000,http://localhost:5173"
-// Defined in:
-//   - Local dev:    backend/.dev.vars  (CORS_ORIGINS=...)
-//   - Production:   wrangler.jsonc     [vars] section  (or Cloudflare dashboard secrets)
 function getAllowedOrigins(env) {
   const raw = env?.CORS_ORIGINS || '';
   return raw
@@ -29,7 +25,7 @@ app.use(
     return cors({
       origin: (origin) => {
         if (!origin) return '*';
-        if (allowedOrigins.length === 0) return origin; // no restriction set — open
+        if (allowedOrigins.length === 0) return origin;
         return allowedOrigins.includes(origin) ? origin : (allowedOrigins[0] || null);
       },
       allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -56,14 +52,15 @@ app.use("/api/*", globalLimiter);
 
 // ── ROUTES ────────────────────────────────────────────────────────────────────
 app.route("/api/auth", authRoutes);
-app.route("/api/lessons", lessonRoutes);
+app.route("/api/notes", noteRoutes);
+app.route("/api/lessons", noteRoutes); // backward compatibility
 app.route("/api/tags", tagRoutes);
 app.route("/api/media", mediaRoutes);
 
 // ── HEALTH ────────────────────────────────────────────────────────────────────
 app.get("/", (c) =>
   c.json({
-    name: "Kadha API",
+    name: "Notes API",
     status: "online",
     version: "3.0.0",
   }),

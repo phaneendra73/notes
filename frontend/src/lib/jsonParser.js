@@ -1,94 +1,78 @@
 import { BLOCK_TYPES, createDefaultBlock } from './blocks.js';
 
-export const AI_PROMPT_TEMPLATE = `You are a visual note and slide generator for an engineering learning platform.
-Your task is to take my raw notes/text and convert them into a structured JSON slide deck.
+export const AI_PROMPT_TEMPLATE = `You are an expert technical writer and software educator.
+Generate a structured JSON note for an interactive visual learning platform.
 
-OUTPUT REQUIREMENTS:
-- Return ONLY valid JSON (no markdown wrapping, or inside a \`\`\`json block).
-- Make each slide focused, crisp, and high-impact.
-- Use diverse visual blocks for maximum clarity: headings, paragraphs, callouts (tip/warning/info/note), code blocks, key-value pairs, numbered steps, diagrams (Mermaid), and interactive quizzes.
+Requirements:
+- Structure content into coherent "pages" (each page represents one focused concept).
+- Use interactive block types: 'heading', 'paragraph', 'code', 'callout', 'quiz', 'diagram', 'image', 'table', 'steps', 'keyvalue', 'divider'.
+- Return strictly valid JSON with no markdown wrapping or preamble.
 
-JSON SCHEMA:
+Expected JSON Structure:
 {
   "title": "Title of the Note",
-  "excerpt": "A crisp 1-2 sentence overview of the note.",
-  "slides": [
+  "excerpt": "A concise 1-2 sentence overview summary of this note.",
+  "coverUrl": "https://images.unsplash.com/...",
+  "pages": [
     {
-      "title": "Slide Title",
+      "title": "Page 1: Title",
       "blocks": [
         { "type": "heading", "level": 2, "content": "Section Title" },
-        { "type": "paragraph", "content": "Crisp explanation. You can use **bold**, *italic*, and \`code\` formatting." },
-        { "type": "callout", "variant": "tip", "content": "Key takeaway or best practice." },
-        { "type": "code", "language": "csharp", "content": "// Code snippet here" },
-        { "type": "keyvalue", "title": "Trade-offs", "layout": "list", "pairs": [
-          { "key": "Advantage", "value": "High performance and lower memory usage." },
-          { "key": "Drawback", "value": "Increased initial implementation complexity." }
-        ]},
-        { "type": "steps", "title": "Execution Steps", "items": ["Step 1 description", "Step 2 description"] },
-        { "type": "quiz", "question": "Question text?", "options": ["Option A", "Option B", "Option C", "Option D"], "answer": 0, "explanation": "Why Option A is correct." }
+        { "type": "paragraph", "content": "Explanatory paragraph with **bold** or \`code\` terms." },
+        { "type": "code", "language": "csharp", "content": "public async Task RunAsync() { }" },
+        { "type": "callout", "variant": "tip", "content": "Key takeaway tip." },
+        {
+          "type": "quiz",
+          "question": "What is the primary benefit of ...?",
+          "options": ["Option A", "Option B", "Option C", "Option D"],
+          "answer": 0,
+          "explanation": "Option A is correct because..."
+        }
       ]
     }
   ]
-}
+}`;
 
-SUPPORTED BLOCK TYPES & ATTRIBUTES:
-- "heading": { "type": "heading", "level": 2 or 3, "content": "string" }
-- "paragraph": { "type": "paragraph", "content": "string with markdown bold/italic/code" }
-- "code": { "type": "code", "language": "csharp|javascript|typescript|python|sql|bash|json|yaml|go|rust|text", "content": "string" }
-- "callout": { "type": "callout", "variant": "tip|warning|info|note", "content": "string" }
-- "keyvalue": { "type": "keyvalue", "title": "string", "layout": "list|grid", "pairs": [{"key": "string", "value": "string"}] }
-- "steps": { "type": "steps", "title": "string", "items": ["string"] }
-- "table": { "type": "table", "caption": "string", "headers": ["Col 1", "Col 2"], "rows": [["Val 1", "Val 2"]] }
-- "diagram": { "type": "diagram", "content": "graph TD\\n  A[Start] --> B[Process]\\n  B --> C[End]" }
-- "quiz": { "type": "quiz", "question": "string", "options": ["A", "B", "C", "D"], "answer": 0, "explanation": "string" }
-- "divider": { "type": "divider", "label": "string", "style": "solid" }
-
-Convert the following raw notes:
-`;
-
-export const SAMPLE_SLIDE_JSON = {
-  title: "Distributed Caching & Cache-Aside",
-  blocks: [
+export const SAMPLE_PAGE_JSON = {
+  title: "Caching Strategies & Architecture",
+  excerpt: "Deep dive into Cache-Aside, Read-Through, and Write-Behind caching patterns.",
+  coverUrl: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&q=80&w=1200",
+  pages: [
     {
-      type: "heading",
-      level: 2,
-      content: "Cache-Aside Architecture"
-    },
-    {
-      type: "paragraph",
-      content: "In the **Cache-Aside** pattern, the application is responsible for coordinating reads and writes with both the cache and the primary database."
-    },
-    {
-      type: "callout",
-      variant: "tip",
-      content: "Best suited for read-heavy workloads where data doesn't change every second."
-    },
-    {
-      type: "keyvalue",
-      title: "Key Characteristics",
-      layout: "list",
-      pairs: [
-        { key: "Read Flow", value: "Check cache -> On miss, read DB & write back to cache." },
-        { key: "Write Flow", value: "Update DB directly -> Invalidate or update cache entry." },
-        { key: "Resilience", value: "If cache fails, requests can still fallback to the primary DB." }
+      title: "Cache-Aside Pattern",
+      blocks: [
+        {
+          type: "heading",
+          level: 2,
+          content: "Cache-Aside (Lazy Loading)"
+        },
+        {
+          type: "paragraph",
+          content: "The application code directly manages reads and writes to the cache. If data is not present in cache, the application reads from the database and populates the cache for subsequent requests."
+        },
+        {
+          type: "code",
+          language: "csharp",
+          content: "public async Task<User> GetUserAsync(int id)\n{\n    var cached = await _cache.GetAsync<User>($\"user:{id}\");\n    if (cached != null) return cached;\n\n    var user = await _db.Users.FindAsync(id);\n    await _cache.SetAsync($\"user:{id}\", user, TimeSpan.FromMinutes(10));\n    return user;\n}"
+        },
+        {
+          type: "callout",
+          variant: "tip",
+          content: "Best suited for read-heavy workloads where data does not change frequently."
+        },
+        {
+          type: "quiz",
+          question: "What happens in Cache-Aside when a cache miss occurs?",
+          options: [
+            "The application queries the DB and populates the cache",
+            "The cache automatically fetches data from the DB",
+            "An exception is immediately thrown to the client",
+            "The request fails with HTTP 404"
+          ],
+          answer: 0,
+          explanation: "In Cache-Aside, the application code handles fetching from the DB on a miss and inserting it into the cache."
+        }
       ]
-    },
-    {
-      type: "code",
-      language: "csharp",
-      content: "public async Task<UserProfile> GetUserAsync(string userId)\n{\n    var cached = await _redis.GetStringAsync($\"user:{userId}\");\n    if (cached != null) return JsonSerializer.Deserialize<UserProfile>(cached);\n\n    var user = await _db.Users.FindAsync(userId);\n    if (user != null)\n        await _redis.SetStringAsync($\"user:{userId}\", JsonSerializer.Serialize(user), new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30) });\n\n    return user;\n}"
-    },
-    {
-      type: "quiz",
-      question: "What happens in Cache-Aside when a cache miss occurs?",
-      options: [
-        "The application queries the DB and populates the cache",
-        "The cache automatically fetches data from the DB",
-        "An exception is immediately thrown to the client",
-        "The request fails with HTTP 404"
-      ],
-      answer: 0,
-      explanation: "In Cache-Aside, the application code handles fetching from the DB on a miss and inserting it into the cache."
     }
   ]
 };
@@ -122,31 +106,31 @@ export function normalizeBlocks(blocks) {
 }
 
 /**
- * Normalizes a slide object.
+ * Normalizes a page object.
  */
-export function normalizeSlide(rawSlide, index = 0) {
-  if (!rawSlide || typeof rawSlide !== 'object') {
+export function normalizePage(rawPage, index = 0) {
+  if (!rawPage || typeof rawPage !== 'object') {
     return {
       orderNumber: index + 1,
-      title: `Slide ${index + 1}`,
+      title: `Page ${index + 1}`,
       blocks: [createDefaultBlock('paragraph')],
     };
   }
 
-  const title = typeof rawSlide.title === 'string' && rawSlide.title.trim()
-    ? rawSlide.title.trim()
-    : `Slide ${index + 1}`;
+  const title = typeof rawPage.title === 'string' && rawPage.title.trim()
+    ? rawPage.title.trim()
+    : `Page ${index + 1}`;
 
-  const rawBlocks = Array.isArray(rawSlide.blocks)
-    ? rawSlide.blocks
-    : (Array.isArray(rawSlide.content) ? rawSlide.content : []);
+  const rawBlocks = Array.isArray(rawPage.blocks)
+    ? rawPage.blocks
+    : (Array.isArray(rawPage.content) ? rawPage.content : []);
 
   const blocks = rawBlocks.length > 0
     ? normalizeBlocks(rawBlocks)
     : [createDefaultBlock('paragraph')];
 
   return {
-    orderNumber: rawSlide.orderNumber || index + 1,
+    orderNumber: rawPage.orderNumber || index + 1,
     title,
     blocks,
   };
@@ -155,9 +139,9 @@ export function normalizeSlide(rawSlide, index = 0) {
 /**
  * Parses raw JSON and detects payload structure:
  * - 'blocks': Array of blocks
- * - 'single_slide': Single slide object with { title, blocks }
- * - 'slides': Array of slide objects
- * - 'lesson': Full lesson object with { title, excerpt, slides }
+ * - 'single_page': Single page object with { title, blocks }
+ * - 'pages': Array of page objects
+ * - 'note': Full note object with { title, excerpt, pages }
  */
 export function parseAndNormalizeJson(jsonString) {
   if (!jsonString || typeof jsonString !== 'string') {
@@ -177,48 +161,54 @@ export function parseAndNormalizeJson(jsonString) {
       throw new Error('JSON array is empty');
     }
 
-    // Check if it's an array of blocks vs array of slides
+    // Check if it's an array of blocks vs array of pages
     const hasBlockTypes = parsed.some((item) => item && typeof item === 'object' && item.type);
-    const hasSlideTitles = parsed.some((item) => item && typeof item === 'object' && (item.title || Array.isArray(item.blocks)));
+    const hasItemTitles = parsed.some((item) => item && typeof item === 'object' && (item.title || Array.isArray(item.blocks)));
 
-    if (hasBlockTypes && !hasSlideTitles) {
-      // It's an array of blocks for 1 slide
+    if (hasBlockTypes && !hasItemTitles) {
+      // It's an array of blocks for 1 page
       return {
         type: 'blocks',
         blocks: normalizeBlocks(parsed),
         count: parsed.length,
       };
     } else {
-      // It's an array of slides
+      // It's an array of pages
+      const pages = parsed.map((p, i) => normalizePage(p, i));
       return {
-        type: 'slides',
-        slides: parsed.map((s, i) => normalizeSlide(s, i)),
+        type: 'pages',
+        pages,
         count: parsed.length,
       };
     }
   }
 
   if (parsed && typeof parsed === 'object') {
-    // Check if it's a full lesson with .slides
-    if (Array.isArray(parsed.slides)) {
+    const rawPagesList = Array.isArray(parsed.pages) ? parsed.pages : null;
+
+    // Check if it's a full note with .pages
+    if (rawPagesList) {
+      const pages = rawPagesList.map((p, i) => normalizePage(p, i));
+      const noteObj = {
+        title: typeof parsed.title === 'string' ? parsed.title.trim() : '',
+        excerpt: typeof parsed.excerpt === 'string' ? parsed.excerpt.trim() : '',
+        coverUrl: typeof parsed.coverUrl === 'string' ? parsed.coverUrl : (parsed.imageUrl || ''),
+        pages,
+        tagIds: Array.isArray(parsed.tagIds) ? parsed.tagIds : [],
+      };
       return {
-        type: 'lesson',
-        lesson: {
-          title: typeof parsed.title === 'string' ? parsed.title.trim() : '',
-          excerpt: typeof parsed.excerpt === 'string' ? parsed.excerpt.trim() : '',
-          coverUrl: typeof parsed.coverUrl === 'string' ? parsed.coverUrl : (parsed.imageUrl || ''),
-          slides: parsed.slides.map((s, i) => normalizeSlide(s, i)),
-          tagIds: Array.isArray(parsed.tagIds) ? parsed.tagIds : [],
-        },
-        slideCount: parsed.slides.length,
+        type: 'note',
+        note: noteObj,
+        pageCount: pages.length,
       };
     }
 
-    // Check if it's a single slide with .blocks or .title
+    // Check if it's a single page with .blocks or .title
     if (Array.isArray(parsed.blocks) || typeof parsed.title === 'string') {
+      const pageObj = normalizePage(parsed, 0);
       return {
-        type: 'single_slide',
-        slide: normalizeSlide(parsed, 0),
+        type: 'single_page',
+        page: pageObj,
         blockCount: Array.isArray(parsed.blocks) ? parsed.blocks.length : 0,
       };
     }
@@ -233,5 +223,5 @@ export function parseAndNormalizeJson(jsonString) {
     }
   }
 
-  throw new Error('JSON structure not recognized. Expected slide object, blocks array, or slides array.');
+  throw new Error('JSON structure not recognized. Expected page object, blocks array, or pages array.');
 }

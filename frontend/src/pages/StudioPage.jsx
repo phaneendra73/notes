@@ -10,12 +10,12 @@ import { Pagination } from '../components/ui/Pagination.jsx';
 import { useToast } from '../components/ui/Toast.jsx';
 import {
   Plus, Edit2, Eye, Trash2, X, AlertCircle, Search,
-  BookOpen, Loader2, ShieldAlert, Sliders, CheckCircle2,
-  Clock, Globe, Lock
+  BookOpen, Loader2, ShieldAlert, Sliders,
+  Globe, Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDebounce } from 'use-debounce';
-import useLessons from '../hooks/useLessons.js';
+import useNotes from '../hooks/useNotes.js';
 
 export default function StudioPage() {
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ export default function StudioPage() {
   const [deleteTargetId, setDeleteTargetId] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  const { lessons, loading, isFetching, error, pagination, refetch } = useLessons(
+  const { notes, loading, isFetching, error, pagination, refetch } = useNotes(
     null,
     debouncedQuery,
     page,
@@ -40,11 +40,12 @@ export default function StudioPage() {
     if (!localStorage.getItem('jwt')) navigate('/signin');
   }, [navigate]);
 
-  const handleTogglePublish = async (lesson) => {
+  const handleTogglePublish = async (note) => {
     try {
-      await client.put(`/api/lessons/${lesson.id}`, { published: !lesson.published });
+      const newStatus = !(note.published !== undefined ? note.published : note.isPublished);
+      await client.put(`/api/notes/${note.id}`, { published: newStatus, isPublished: newStatus ? 1 : 0 });
       refetch(page);
-      toast.success(lesson.published ? 'Note set to Draft' : 'Note Published Live!');
+      toast.success(newStatus ? 'Note Published Live!' : 'Note set to Draft');
     } catch {
       toast.error('Failed to update note status');
     }
@@ -54,7 +55,7 @@ export default function StudioPage() {
     if (!deleteTargetId) return;
     setDeleting(true);
     try {
-      await client.delete(`/api/lessons/${deleteTargetId}`);
+      await client.delete(`/api/notes/${deleteTargetId}`);
       refetch(page);
       toast.success('Note deleted permanently');
       setDeleteTargetId(null);
@@ -131,7 +132,7 @@ export default function StudioPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {lessons.length === 0 ? (
+            {notes.length === 0 ? (
               <div className="p-12 text-center rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] space-y-3">
                 <BookOpen size={36} className="mx-auto text-[var(--muted)] opacity-50" />
                 <h3 className="font-serif font-bold text-lg text-[var(--ink)]">No Notes Found</h3>
@@ -148,84 +149,88 @@ export default function StudioPage() {
                 </Button>
               </div>
             ) : (
-              lessons.map((lesson) => (
-                <div
-                  key={lesson.id}
-                  className="p-4 sm:p-5 rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-[var(--line-strong)] hover:shadow-[var(--shadow-sm)]"
-                >
-                  {/* Left: Title & Overview */}
-                  <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {/* Status Badge */}
-                        <button
-                          onClick={() => handleTogglePublish(lesson)}
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-[var(--radius-sm)] text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer border ${
-                            lesson.published
-                              ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent-soft)] hover:border-[var(--accent)]'
-                              : 'bg-[var(--surface-2)] text-[var(--muted)] border-[var(--line)] hover:text-[var(--ink)]'
-                          }`}
-                          title="Click to toggle Published / Draft"
-                        >
-                          {lesson.published ? <Globe size={10} /> : <Lock size={10} />}
-                          <span>{lesson.published ? 'Published' : 'Draft'}</span>
-                        </button>
+              notes.map((note) => {
+                const isPub = note.published !== undefined ? Boolean(note.published) : (note.isPublished !== undefined ? Boolean(note.isPublished) : true);
+                const pageCount = note.totalPagesCount || note.pagesCount || 1;
+                return (
+                  <div
+                    key={note.id}
+                    className="p-4 sm:p-5 rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-[var(--line-strong)] hover:shadow-[var(--shadow-sm)]"
+                  >
+                    {/* Left: Title & Overview */}
+                    <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {/* Status Badge */}
+                          <button
+                            onClick={() => handleTogglePublish(note)}
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-[var(--radius-sm)] text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer border ${
+                              isPub
+                                ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent-soft)] hover:border-[var(--accent)]'
+                                : 'bg-[var(--surface-2)] text-[var(--muted)] border-[var(--line)] hover:text-[var(--ink)]'
+                            }`}
+                            title="Click to toggle Published / Draft"
+                          >
+                            {isPub ? <Globe size={10} /> : <Lock size={10} />}
+                            <span>{isPub ? 'Published' : 'Draft'}</span>
+                          </button>
 
-                        <span className="text-xs font-mono text-[var(--muted)] flex items-center gap-1 font-medium">
-                          <Sliders size={11} className="text-[var(--accent)]" /> {lesson.totalSlidesCount || lesson.slidesCount || 1} slides
-                        </span>
-
-                        {lesson.viewsCount !== undefined && (
-                          <span className="text-xs font-mono text-[var(--muted)] flex items-center gap-1">
-                            <Eye size={11} /> {lesson.viewsCount} reads
+                          <span className="text-xs font-mono text-[var(--muted)] flex items-center gap-1 font-medium">
+                            <Sliders size={11} className="text-[var(--accent)]" /> {pageCount} {pageCount === 1 ? 'page' : 'pages'}
                           </span>
+
+                          {note.viewsCount !== undefined && (
+                            <span className="text-xs font-mono text-[var(--muted)] flex items-center gap-1">
+                              <Eye size={11} /> {note.viewsCount} reads
+                            </span>
+                          )}
+                        </div>
+
+                        <h3
+                          onClick={() => navigate(`/editor?id=${note.id}`)}
+                          className="font-serif font-bold text-base sm:text-lg text-[var(--ink)] truncate cursor-pointer hover:text-[var(--accent)] transition-colors"
+                        >
+                          {note.title}
+                        </h3>
+
+                        {note.excerpt && (
+                          <p className="text-xs text-[var(--muted)] line-clamp-1 font-normal">
+                            {note.excerpt}
+                          </p>
                         )}
                       </div>
+                    </div>
 
-                      <h3
-                        onClick={() => navigate(`/editor?id=${lesson.id}`)}
-                        className="font-serif font-bold text-base sm:text-lg text-[var(--ink)] truncate cursor-pointer hover:text-[var(--accent)] transition-colors"
+                    {/* Right: Actions */}
+                    <div className="flex items-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[var(--line)]">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/read?id=${note.id}`)}
+                        className="rounded-[var(--radius-md)] text-xs font-semibold gap-1.5 px-3 border-[var(--line)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] bg-[var(--surface)] cursor-pointer"
                       >
-                        {lesson.title}
-                      </h3>
+                        <Eye size={13} /> Read
+                      </Button>
 
-                      {lesson.excerpt && (
-                        <p className="text-xs text-[var(--muted)] line-clamp-1 font-normal">
-                          {lesson.excerpt}
-                        </p>
-                      )}
+                      <Button
+                        size="sm"
+                        onClick={() => navigate(`/editor?id=${note.id}`)}
+                        className="rounded-[var(--radius-md)] text-xs font-bold gap-1.5 px-3.5 bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] hover:bg-[var(--accent-strong)] cursor-pointer"
+                      >
+                        <Edit2 size={13} /> Edit
+                      </Button>
+
+                      <button
+                        onClick={() => setDeleteTargetId(note.id)}
+                        className="p-2 rounded-[var(--radius-md)] border border-[var(--line)] text-[var(--muted)] hover:text-[var(--err)] hover:border-[var(--err-soft)] hover:bg-[var(--err-soft)] transition-colors cursor-pointer"
+                        title="Delete Note"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   </div>
-
-                  {/* Right: Actions */}
-                  <div className="flex items-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[var(--line)]">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/read?id=${lesson.id}`)}
-                      className="rounded-[var(--radius-md)] text-xs font-semibold gap-1.5 px-3 border-[var(--line)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] bg-[var(--surface)] cursor-pointer"
-                    >
-                      <Eye size={13} /> Read
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      onClick={() => navigate(`/editor?id=${lesson.id}`)}
-                      className="rounded-[var(--radius-md)] text-xs font-bold gap-1.5 px-3.5 bg-[var(--accent)] text-[var(--accent-on)] border border-[var(--accent-strong)] hover:bg-[var(--accent-strong)] cursor-pointer"
-                    >
-                      <Edit2 size={13} /> Edit
-                    </Button>
-
-                    <button
-                      onClick={() => setDeleteTargetId(lesson.id)}
-                      className="p-2 rounded-[var(--radius-md)] border border-[var(--line)] text-[var(--muted)] hover:text-[var(--err)] hover:border-[var(--err-soft)] hover:bg-[var(--err-soft)] transition-colors cursor-pointer"
-                      title="Delete Note"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         )}
@@ -270,7 +275,7 @@ export default function StudioPage() {
               </div>
 
               <p className="text-xs text-[var(--muted)] leading-relaxed font-normal mb-6">
-                This action is permanent and cannot be undone. All slide content and blocks inside this note will be deleted forever.
+                This action is permanent and cannot be undone. All page content and blocks inside this note will be deleted forever.
               </p>
 
               <div className="flex justify-end gap-2">

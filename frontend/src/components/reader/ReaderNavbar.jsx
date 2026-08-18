@@ -9,14 +9,14 @@ import {
 import { useToast } from "../ui/Toast.jsx";
 
 export default function ReaderNavbar({
-  lesson,
-  currentSlideIndex,
-  totalSlides,
-  slides = [],
-  onSelectSlide,
+  note,
+  currentPageIndex = 0,
+  totalPages = 1,
+  pages = [],
+  onSelectPage,
   onToggleFullscreen,
   onOpenHelp,
-  visitedSlides = new Set(),
+  visitedPages = new Set(),
 }) {
   const navigate = useNavigate();
   const toast    = useToast();
@@ -27,7 +27,8 @@ export default function ReaderNavbar({
   const [visible, setVisible] = useState(true);
   const lastScrollY = useRef(0);
 
-  const progress = Math.round(((currentSlideIndex + 1) / Math.max(1, totalSlides)) * 100);
+  const count = totalPages || 1;
+  const progress = Math.round(((currentPageIndex + 1) / Math.max(1, count)) * 100);
 
   useEffect(() => {
     const onScroll = () => {
@@ -43,7 +44,7 @@ export default function ReaderNavbar({
   const handleShare = () => {
     const url = window.location.href;
     if (navigator.share) {
-      navigator.share({ title: lesson?.title || "Notes", url }).catch(() => {});
+      navigator.share({ title: note?.title || "Notes", url }).catch(() => {});
     } else {
       navigator.clipboard.writeText(url).then(() => toast.success("Note link copied to clipboard!"));
     }
@@ -67,26 +68,26 @@ export default function ReaderNavbar({
         className="sticky top-0 z-50 w-full bg-[var(--surface)] border-b border-[var(--line)] shadow-[var(--shadow-sm)]"
       >
         <div className="max-w-[var(--maxw)] mx-auto px-4 sm:px-6 h-[var(--header-h)] flex items-center justify-between gap-4">
-          {/* Left: Catalog Back + Lesson Title */}
+          {/* Left: Catalog Back + Note Title */}
           <div className="flex items-center gap-3 min-w-0">
             <button className={navBtn} onClick={() => navigate("/")} title="Back to Catalog">
               <Home size={15} />
             </button>
             <h2 className="font-serif font-bold text-sm sm:text-base text-[var(--ink)] truncate max-w-xs sm:max-w-md md:max-w-xl">
-              {lesson?.title || "Loading Study Notes..."}
+              {note?.title || "Loading Study Notes..."}
             </h2>
           </div>
 
           {/* Center: Progress Counter, Estimate & Bar */}
           <div className="hidden md:flex items-center gap-3 shrink-0">
             <span className="text-xs font-mono font-bold text-[var(--accent)]">
-              Slide {currentSlideIndex + 1} of {totalSlides}
+              Page {currentPageIndex + 1} of {count}
             </span>
             <div className="w-28 h-2 rounded-[var(--radius-sm)] bg-[var(--surface-2)] border border-[var(--line)] overflow-hidden p-[1px]">
               <div className="h-full bg-[var(--accent)] rounded-[var(--radius-sm)] transition-all duration-300" style={{ width: `${progress}%` }} />
             </div>
             <span className="text-[11px] font-medium text-[var(--muted)] pl-1">
-              ~{Math.max(1, Math.ceil((totalSlides - currentSlideIndex) * 1.5))}m left
+              ~{Math.max(1, Math.ceil((count - currentPageIndex) * 1.5))}m left
             </span>
           </div>
 
@@ -111,7 +112,7 @@ export default function ReaderNavbar({
             <button
               className={`${navBtn} ${outlineOpen ? "border-[var(--accent)] text-[var(--accent)] bg-[var(--accent-soft)]" : ""}`}
               onClick={() => setOutlineOpen((o) => !o)}
-              title="Slide Index Outline"
+              title="Pages Outline"
             >
               {outlineOpen ? <X size={15} /> : <List size={15} />}
             </button>
@@ -119,7 +120,7 @@ export default function ReaderNavbar({
         </div>
       </motion.header>
 
-      {/* Slide Outline Drawer */}
+      {/* Pages Outline Drawer */}
       <AnimatePresence>
         {outlineOpen && (
           <motion.div
@@ -137,19 +138,19 @@ export default function ReaderNavbar({
                 <X size={15} />
               </button>
             </div>
-            {lesson?.excerpt && (
+            {note?.excerpt && (
               <div className="px-3.5 py-2.5 bg-[var(--surface-2)]/50 border-b border-[var(--line)] text-xs text-[var(--ink-2)] leading-relaxed italic">
-                {lesson.excerpt}
+                {note.excerpt}
               </div>
             )}
             <div className="p-2 overflow-y-auto flex flex-col gap-1">
-              {slides.map((slide, idx) => {
-                const visited = visitedSlides.has(idx);
-                const active  = idx === currentSlideIndex;
+              {pages.map((page, idx) => {
+                const visited = visitedPages.has(idx);
+                const active  = idx === currentPageIndex;
                 return (
                   <button
-                    key={slide.id || idx}
-                    onClick={() => { onSelectSlide(idx); setOutlineOpen(false); }}
+                    key={page.id || idx}
+                    onClick={() => { onSelectPage?.(idx); setOutlineOpen(false); }}
                     className={`w-full p-2.5 rounded-[var(--radius-md)] border text-xs font-semibold text-left flex items-center gap-2.5 transition-colors cursor-pointer ${
                       active
                         ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] font-bold"
@@ -159,7 +160,7 @@ export default function ReaderNavbar({
                     }`}
                   >
                     <span className="font-mono text-[11px] w-4 shrink-0 text-[var(--accent)] font-bold">{idx + 1}</span>
-                    <span className="flex-1 truncate">{slide.title || `Slide ${idx + 1}`}</span>
+                    <span className="flex-1 truncate">{page.title || `Page ${idx + 1}`}</span>
                     {visited && !active && <CheckCircle2 size={13} className="text-[var(--accent)] shrink-0" />}
                   </button>
                 );

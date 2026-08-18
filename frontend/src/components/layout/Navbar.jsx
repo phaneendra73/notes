@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { FaGithub } from "react-icons/fa";
 
+import useTags from "../../hooks/useTags.js";
+
 export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,6 +30,7 @@ export default function Navbar() {
   const isAuthenticated = Boolean(localStorage.getItem("jwt"));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const { tags: dbTags } = useTags();
 
   // Sync body.dark-theme class for exact design system compliance
   useEffect(() => {
@@ -78,13 +81,7 @@ export default function Navbar() {
     { to: "/profile", icon: User, label: "Profile" },
   ];
 
-  const popularTopics = [
-    { name: "C#", tagId: 1 },
-    { name: ".NET Core", tagId: 2 },
-    { name: "DSA", tagId: 3 },
-    { name: "SQL", tagId: 4 },
-    { name: "System Design", tagId: 5 },
-  ];
+  const popularTopics = (dbTags || []).slice(0, 6);
 
   return (
     <>
@@ -270,18 +267,22 @@ export default function Navbar() {
                   Topics
                 </span>
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  {popularTopics.map((topic) => (
-                    <button
-                      key={topic.tagId}
-                      onClick={() => {
-                        navigate(`/?tag=${topic.tagId}`);
-                        setMobileOpen(false);
-                      }}
-                      className="px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--surface-2)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] text-[var(--ink-2)] border border-[var(--line)] cursor-pointer transition-colors"
-                    >
-                      {topic.name}
-                    </button>
-                  ))}
+                  {popularTopics.map((topic, idx) => {
+                    const tagId = topic.id || topic.tagId || idx + 1;
+                    const tagName = typeof topic === "string" ? topic : topic.name;
+                    return (
+                      <button
+                        key={tagId || idx}
+                        onClick={() => {
+                          navigate(`/?tag=${tagId}`);
+                          setMobileOpen(false);
+                        }}
+                        className="px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--surface-2)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] text-[var(--ink-2)] border border-[var(--line)] cursor-pointer transition-colors"
+                      >
+                        {tagName}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

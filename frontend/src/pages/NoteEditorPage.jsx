@@ -1,18 +1,16 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useSearchParams, useParams, Link } from 'react-router-dom';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
 import client from '../api/client.js';
 import SEO from '../components/SEO.jsx';
 import { useToast } from '../components/ui/Toast.jsx';
 import { Button } from '../components/ui/Button.jsx';
-import { Badge } from '../components/ui/Badge.jsx';
-import { Skeleton } from '../components/ui/Skeleton.jsx';
 import BlockListEditor from '../components/editor/BlockListEditor.jsx';
-import SlideCanvas from '../components/reader/SlideCanvas.jsx';
+import PageCanvas from '../components/reader/PageCanvas.jsx';
 import MediaLibraryModal from '../components/MediaLibraryModal.jsx';
 import TemplateSelectorModal from '../components/editor/TemplateSelectorModal.jsx';
-import SlideJsonImportModal from '../components/editor/SlideJsonImportModal.jsx';
+import PageJsonImportModal from '../components/editor/PageJsonImportModal.jsx';
 import useTags from '../hooks/useTags.js';
 import {
   ArrowLeft, Save, Plus, Trash2, Tag,
@@ -22,18 +20,19 @@ import {
 } from 'lucide-react';
 import { createDefaultBlock } from '../lib/blocks.js';
 
-const DEFAULT_SLIDE = {
+const DEFAULT_PAGE = {
   orderNumber: 1,
   title: 'Introduction',
   blocks: [
     { type: 'heading', level: 2, content: 'Introduction' },
-    { type: 'paragraph', content: 'Write your lesson content here.' },
+    { type: 'paragraph', content: 'Write your note content here.' },
   ],
 };
 
-export default function LessonEditorPage() {
+export default function NoteEditorPage() {
   const [searchParams] = useSearchParams();
-  const lessonId = searchParams.get('id');
+  const { id: paramId } = useParams();
+  const noteId = paramId || searchParams.get('id');
   const navigate = useNavigate();
   const toast = useToast();
   const { theme, setTheme } = useTheme();
@@ -41,24 +40,24 @@ export default function LessonEditorPage() {
 
   const { tags } = useTags();
 
-  // Lesson metadata
+  // Note metadata
   const [title, setTitle] = useState('');
   const [excerpt, setExcerpt] = useState('');
   const [coverUrl, setCoverUrl] = useState('');
   const [published, setPublished] = useState(true);
   const [selectedTagIds, setSelectedTagIds] = useState([]);
 
-  // Slides
-  const [slides, setSlides] = useState([{ ...DEFAULT_SLIDE }]);
-  const [activeSlideIdx, setActiveSlideIdx] = useState(0);
+  // Pages
+  const [pages, setPages] = useState([{ ...DEFAULT_PAGE }]);
+  const [activePageIdx, setActivePageIdx] = useState(0);
 
   // UI state
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [metaExpanded, setMetaExpanded] = useState(false);
-  const [showLivePreview, setShowLivePreview] = useState(true); // Split-screen preview
+  const [showLivePreview, setShowLivePreview] = useState(true);
   const [mediaModalOpen, setMediaModalOpen] = useState(false);
-  const [mediaTargetMode, setMediaTargetMode] = useState('slide'); // 'slide' | 'cover'
+  const [mediaTargetMode, setMediaTargetMode] = useState('page'); // 'page' | 'cover'
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const [jsonModalOpen, setJsonModalOpen] = useState(false);
 
@@ -76,32 +75,33 @@ export default function LessonEditorPage() {
     }
   }, [isDark]);
 
-  // Load existing lesson for editing
+  // Load existing note for editing
   useEffect(() => {
-    if (!lessonId) return;
+    if (!noteId) return;
 
-    const fetchLesson = async () => {
+    const fetchNote = async () => {
       try {
         setLoading(true);
-        const res = await client.get(`/api/lessons/${lessonId}`, { params: { offset: 0, limit: 0 } });
-        const { lesson } = res.data;
+        const res = await client.get(`/api/notes/${noteId}`, { params: { offset: 0, limit: 0 } });
+        const note = res.data.note || res.data;
 
-        setTitle(lesson.title || '');
-        setExcerpt(lesson.excerpt || '');
-        setCoverUrl(lesson.coverUrl || lesson.imageUrl || '');
-        setPublished(lesson.published !== undefined ? Boolean(lesson.published) : true);
+        setTitle(note.title || '');
+        setExcerpt(note.excerpt || '');
+        setCoverUrl(note.coverUrl || note.imageUrl || '');
+        setPublished(note.published !== undefined ? Boolean(note.published) : (note.isPublished !== undefined ? Boolean(note.isPublished) : true));
 
-        if (Array.isArray(lesson.tagObjects)) {
-          setSelectedTagIds(lesson.tagObjects.map((t) => t.id));
+        if (Array.isArray(note.tagObjects)) {
+          setSelectedTagIds(note.tagObjects.map((t) => t.id));
         }
 
-        if (Array.isArray(lesson.slides) && lesson.slides.length > 0) {
-          setSlides(lesson.slides.map((s, i) => ({
-            id: s.id,
-            orderNumber: s.orderNumber || i + 1,
-            title: s.title || `Slide ${i + 1}`,
-            blocks: Array.isArray(s.blocks) && s.blocks.length > 0
-              ? s.blocks
+        const rawPages = note.pages;
+        if (Array.isArray(rawPages) && rawPages.length > 0) {
+          setPages(rawPages.map((p, i) => ({
+            id: p.id,
+            orderNumber: p.orderNumber || i + 1,
+            title: p.title || `Page ${i + 1}`,
+            blocks: Array.isArray(p.blocks) && p.blocks.length > 0
+              ? p.blocks
               : [{ type: 'paragraph', content: '' }],
           })));
         }
@@ -113,63 +113,63 @@ export default function LessonEditorPage() {
       }
     };
 
-    fetchLesson();
-  }, [lessonId]);
+    fetchNote();
+  }, [noteId]);
 
-  // Update active slide's blocks
+  // Update active page's blocks
   const updateActiveBlocks = useCallback((newBlocks) => {
-    setSlides((prev) => {
+    setPages((prev) => {
       const next = [...prev];
-      if (next[activeSlideIdx]) {
-        next[activeSlideIdx] = { ...next[activeSlideIdx], blocks: newBlocks };
+      if (next[activePageIdx]) {
+        next[activePageIdx] = { ...next[activePageIdx], blocks: newBlocks };
       }
       return next;
     });
-  }, [activeSlideIdx]);
+  }, [activePageIdx]);
 
-  // Update active slide's title
+  // Update active page's title
   const updateActiveTitle = useCallback((newTitle) => {
-    setSlides((prev) => {
+    setPages((prev) => {
       const next = [...prev];
-      if (next[activeSlideIdx]) {
-        next[activeSlideIdx] = { ...next[activeSlideIdx], title: newTitle };
+      if (next[activePageIdx]) {
+        next[activePageIdx] = { ...next[activePageIdx], title: newTitle };
       }
       return next;
     });
-  }, [activeSlideIdx]);
+  }, [activePageIdx]);
 
-  // Add a new slide
-  const addSlide = () => {
-    const newSlide = {
-      orderNumber: slides.length + 1,
-      title: `Slide ${slides.length + 1}`,
+  // Add a new page
+  const addPage = () => {
+    const newPage = {
+      orderNumber: pages.length + 1,
+      title: `Page ${pages.length + 1}`,
       blocks: [createDefaultBlock('heading'), createDefaultBlock('paragraph')],
     };
-    setSlides((prev) => [...prev, newSlide]);
-    setActiveSlideIdx(slides.length);
-    toast.success(`Slide ${slides.length + 1} added`);
+    setPages((prev) => [...prev, newPage]);
+    setActivePageIdx(pages.length);
+    toast.success(`Page ${pages.length + 1} added`);
   };
 
-  // Delete a slide
-  const deleteSlide = (idx) => {
-    if (slides.length <= 1) {
-      toast.error('Note must have at least one slide');
+  // Delete a page
+  const deletePage = (idx) => {
+    if (pages.length <= 1) {
+      toast.error('Note must have at least one page');
       return;
     }
-    const next = slides.filter((_, i) => i !== idx);
-    setSlides(next.map((s, i) => ({ ...s, orderNumber: i + 1 })));
-    setActiveSlideIdx(Math.min(activeSlideIdx, next.length - 1));
-    toast.info('Slide removed');
+    const next = pages.filter((_, i) => i !== idx);
+    setPages(next.map((p, i) => ({ ...p, orderNumber: i + 1 })));
+    setActivePageIdx(Math.min(activePageIdx, next.length - 1));
+    toast.info('Page removed');
   };
 
-  // Move slide up/down
-  const moveSlide = (idx, dir) => {
+  // Move page up/down
+  const movePage = (idx, dir) => {
     const target = idx + dir;
-    if (target < 0 || target >= slides.length) return;
-    const next = [...slides];
+    if (target < 0 || target >= pages.length) return;
+    const next = [...pages];
     [next[idx], next[target]] = [next[target], next[idx]];
-    setSlides(next.map((s, i) => ({ ...s, orderNumber: i + 1 })));
-    setActiveSlideIdx(target);
+    setPages(next.map((p, i) => ({ ...p, orderNumber: i + 1 })));
+    setActivePageIdx(target);
   };
 
   // Toggle tag selection
@@ -179,7 +179,7 @@ export default function LessonEditorPage() {
     );
   };
 
-  const handleOpenMediaLibrary = (mode = 'slide') => {
+  const handleOpenMediaLibrary = (mode = 'page') => {
     setMediaTargetMode(mode);
     setMediaModalOpen(true);
   };
@@ -196,12 +196,12 @@ export default function LessonEditorPage() {
         size: size || 'medium',
         align: align || 'center',
       };
-      updateActiveBlocks([...(slides[activeSlideIdx]?.blocks || []), newBlock]);
-      toast.success('Image block added to slide!');
+      updateActiveBlocks([...(pages[activePageIdx]?.blocks || []), newBlock]);
+      toast.success('Image block added to page!');
     }
   };
 
-  // Save lesson and redirect to Studio page
+  // Save note and redirect to Studio page
   const handleSave = async () => {
     if (!title.trim()) {
       toast.error('Title is required');
@@ -216,19 +216,19 @@ export default function LessonEditorPage() {
         coverUrl,
         published,
         tagIds: selectedTagIds,
-        slides: slides.map((s, i) => ({
-          id: s.id,
+        pages: pages.map((p, i) => ({
+          id: p.id,
           orderNumber: i + 1,
-          title: s.title || `Slide ${i + 1}`,
-          blocks: s.blocks || [],
+          title: p.title || `Page ${i + 1}`,
+          blocks: p.blocks || [],
         })),
       };
 
-      if (lessonId) {
-        await client.put(`/api/lessons/${lessonId}`, payload);
+      if (noteId) {
+        await client.put(`/api/notes/${noteId}`, payload);
         toast.success('Visual note updated successfully!');
       } else {
-        await client.post('/api/lessons', payload);
+        await client.post('/api/notes', payload);
         toast.success('Visual note created successfully!');
       }
       navigate('/studio');
@@ -251,124 +251,130 @@ export default function LessonEditorPage() {
     if (Array.isArray(tmpl.defaultTagIds) && tmpl.defaultTagIds.length > 0) {
       setSelectedTagIds((prev) => [...new Set([...prev, ...tmpl.defaultTagIds])]);
     }
-    setSlides(tmpl.slides);
-    setActiveSlideIdx(0);
+    const templatePages = tmpl.pages || [];
+    setPages(templatePages);
+    setActivePageIdx(0);
     toast.success(`Template applied: ${tmpl.title}`);
   };
 
-  const handleApplyJsonImport = ({ targetMode, data, activeSlideIdx: targetIdx }) => {
+  const handleApplyJsonImport = ({ targetMode, data, activePageIdx: targetIdx }) => {
     if (!data) return;
+    const resolvedIdx = typeof targetIdx === 'number' ? targetIdx : 0;
 
     if (data.type === 'blocks') {
       if (targetMode === 'append') {
-        const newSlide = {
-          orderNumber: slides.length + 1,
-          title: `Slide ${slides.length + 1}`,
+        const newPage = {
+          orderNumber: pages.length + 1,
+          title: `Page ${pages.length + 1}`,
           blocks: data.blocks,
         };
-        setSlides((prev) => [...prev, newSlide]);
-        setActiveSlideIdx(slides.length);
-        toast.success(`Slide ${slides.length + 1} added with ${data.blocks.length} blocks!`);
+        setPages((prev) => [...prev, newPage]);
+        setActivePageIdx(pages.length);
+        toast.success(`Page ${pages.length + 1} added with ${data.blocks.length} blocks!`);
       } else {
-        setSlides((prev) => {
+        setPages((prev) => {
           const next = [...prev];
-          if (next[targetIdx]) {
-            next[targetIdx] = { ...next[targetIdx], blocks: data.blocks };
+          if (next[resolvedIdx]) {
+            next[resolvedIdx] = { ...next[resolvedIdx], blocks: data.blocks };
           }
           return next;
         });
-        toast.success(`Slide ${targetIdx + 1} updated with ${data.blocks.length} blocks!`);
+        toast.success(`Page ${resolvedIdx + 1} updated with ${data.blocks.length} blocks!`);
       }
-    } else if (data.type === 'single_slide') {
+    } else if (data.type === 'single_page') {
+      const pageObj = data.page;
       if (targetMode === 'append') {
-        const newSlide = {
-          orderNumber: slides.length + 1,
-          title: data.slide.title,
-          blocks: data.slide.blocks,
+        const newPage = {
+          orderNumber: pages.length + 1,
+          title: pageObj.title,
+          blocks: pageObj.blocks,
         };
-        setSlides((prev) => [...prev, newSlide]);
-        setActiveSlideIdx(slides.length);
-        toast.success(`New slide "${data.slide.title}" added!`);
+        setPages((prev) => [...prev, newPage]);
+        setActivePageIdx(pages.length);
+        toast.success(`New page "${pageObj.title}" added!`);
       } else {
-        setSlides((prev) => {
+        setPages((prev) => {
           const next = [...prev];
-          if (next[targetIdx]) {
-            next[targetIdx] = {
-              ...next[targetIdx],
-              title: data.slide.title || next[targetIdx].title,
-              blocks: data.slide.blocks,
+          if (next[resolvedIdx]) {
+            next[resolvedIdx] = {
+              ...next[resolvedIdx],
+              title: pageObj.title || next[resolvedIdx].title,
+              blocks: pageObj.blocks,
             };
           }
           return next;
         });
-        toast.success(`Slide ${targetIdx + 1} updated successfully!`);
+        toast.success(`Page ${resolvedIdx + 1} updated successfully!`);
       }
-    } else if (data.type === 'slides') {
+    } else if (data.type === 'pages') {
+      const incomingPages = data.pages;
       if (targetMode === 'replace_all') {
-        setSlides(data.slides);
-        setActiveSlideIdx(0);
-        toast.success(`Replaced all slides (${data.slides.length} slides loaded)!`);
+        setPages(incomingPages);
+        setActivePageIdx(0);
+        toast.success(`Replaced all pages (${incomingPages.length} pages loaded)!`);
       } else if (targetMode === 'append') {
-        setSlides((prev) => [
+        setPages((prev) => [
           ...prev,
-          ...data.slides.map((s, i) => ({ ...s, orderNumber: prev.length + i + 1 })),
+          ...incomingPages.map((p, i) => ({ ...p, orderNumber: prev.length + i + 1 })),
         ]);
-        setActiveSlideIdx(slides.length);
-        toast.success(`Appended ${data.slides.length} slides!`);
+        setActivePageIdx(pages.length);
+        toast.success(`Appended ${incomingPages.length} pages!`);
       } else {
-        const first = data.slides[0];
-        const remaining = data.slides.slice(1);
-        setSlides((prev) => {
+        const first = incomingPages[0];
+        const remaining = incomingPages.slice(1);
+        setPages((prev) => {
           const next = [...prev];
-          if (next[targetIdx]) {
-            next[targetIdx] = { ...next[targetIdx], title: first.title, blocks: first.blocks };
+          if (next[resolvedIdx]) {
+            next[resolvedIdx] = { ...next[resolvedIdx], title: first.title, blocks: first.blocks };
           }
           if (remaining.length > 0) {
-            remaining.forEach((s) => next.push(s));
+            remaining.forEach((p) => next.push(p));
           }
-          return next.map((s, i) => ({ ...s, orderNumber: i + 1 }));
+          return next.map((p, i) => ({ ...p, orderNumber: i + 1 }));
         });
-        toast.success(`Applied ${data.slides.length} slide(s)!`);
+        toast.success(`Applied ${incomingPages.length} page(s)!`);
       }
-    } else if (data.type === 'lesson') {
+    } else if (data.type === 'note') {
+      const noteObj = data.note;
+      const notePages = noteObj.pages;
       if (targetMode === 'replace_all') {
-        if (data.lesson.title) setTitle(data.lesson.title);
-        if (data.lesson.excerpt) setExcerpt(data.lesson.excerpt);
-        if (data.lesson.coverUrl) setCoverUrl(data.lesson.coverUrl);
-        if (data.lesson.slides?.length) {
-          setSlides(data.lesson.slides);
-          setActiveSlideIdx(0);
+        if (noteObj.title) setTitle(noteObj.title);
+        if (noteObj.excerpt) setExcerpt(noteObj.excerpt);
+        if (noteObj.coverUrl) setCoverUrl(noteObj.coverUrl);
+        if (notePages?.length) {
+          setPages(notePages);
+          setActivePageIdx(0);
         }
-        if (data.lesson.tagIds?.length) {
-          setSelectedTagIds(data.lesson.tagIds);
+        if (noteObj.tagIds?.length) {
+          setSelectedTagIds(noteObj.tagIds);
         }
-        toast.success(`Full note loaded (${data.lesson.slides?.length || 0} slides)!`);
+        toast.success(`Full note loaded (${notePages?.length || 0} pages)!`);
       } else if (targetMode === 'append') {
-        if (data.lesson.slides?.length) {
-          setSlides((prev) => [
+        if (notePages?.length) {
+          setPages((prev) => [
             ...prev,
-            ...data.lesson.slides.map((s, i) => ({ ...s, orderNumber: prev.length + i + 1 })),
+            ...notePages.map((p, i) => ({ ...p, orderNumber: prev.length + i + 1 })),
           ]);
-          setActiveSlideIdx(slides.length);
-          toast.success(`Appended ${data.lesson.slides.length} slides from note JSON!`);
+          setActivePageIdx(pages.length);
+          toast.success(`Appended ${notePages.length} pages from note JSON!`);
         }
       } else {
-        if (data.lesson.slides?.[0]) {
-          const first = data.lesson.slides[0];
-          setSlides((prev) => {
+        if (notePages?.[0]) {
+          const first = notePages[0];
+          setPages((prev) => {
             const next = [...prev];
-            if (next[targetIdx]) {
-              next[targetIdx] = { ...next[targetIdx], title: first.title, blocks: first.blocks };
+            if (next[resolvedIdx]) {
+              next[resolvedIdx] = { ...next[resolvedIdx], title: first.title, blocks: first.blocks };
             }
             return next;
           });
-          toast.success(`Slide ${targetIdx + 1} updated from note JSON!`);
+          toast.success(`Page ${resolvedIdx + 1} updated from note JSON!`);
         }
       }
     }
   };
 
-  const activeSlide = slides[activeSlideIdx] || slides[0];
+  const activePage = pages[activePageIdx] || pages[0];
 
   if (loading) {
     return (
@@ -382,7 +388,7 @@ export default function LessonEditorPage() {
   return (
     <div className="editor-page min-h-screen flex flex-col bg-[var(--bg)] text-[var(--ink)] selection:bg-[var(--accent)] selection:text-[var(--accent-on)] font-sans">
       <SEO
-        title={lessonId ? `Edit: ${title || 'Note'} — Notes Author Studio` : 'Create Note — Notes Author Studio'}
+        title={noteId ? `Edit: ${title || 'Note'} — Notes Author Studio` : 'Create Note — Notes Author Studio'}
       />
 
       {/* Editor Header Bar */}
@@ -396,7 +402,7 @@ export default function LessonEditorPage() {
             <ArrowLeft size={16} />
           </button>
           <span className="font-serif font-bold text-sm sm:text-base text-[var(--ink)] truncate max-w-xs">
-            {lessonId ? 'Edit Note' : 'Create New Note'}
+            {noteId ? 'Edit Note' : 'Create New Note'}
           </span>
         </div>
 
@@ -451,9 +457,9 @@ export default function LessonEditorPage() {
             {isDark ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} className="text-[var(--ink-2)]" />}
           </button>
 
-          {lessonId && (
+          {noteId && (
             <Link
-              to={`/read?id=${lessonId}`}
+              to={`/read?id=${noteId}`}
               target="_blank"
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] text-[var(--ink)] text-xs font-semibold hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
             >
@@ -513,7 +519,7 @@ export default function LessonEditorPage() {
                     type="text"
                     value={excerpt}
                     onChange={(e) => setExcerpt(e.target.value)}
-                    placeholder="Short summary for lesson catalog..."
+                    placeholder="Short summary for note catalog..."
                     className="w-full px-3 py-1.5 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] text-xs font-semibold outline-none focus:border-[var(--accent)] text-[var(--ink)]"
                   />
                 </div>
@@ -573,22 +579,22 @@ export default function LessonEditorPage() {
 
       {/* Main Workspace Layout */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Column: Slide Navigation List */}
+        {/* Left Column: Page Navigation List */}
         <aside className="w-60 border-r border-[var(--line)] bg-[var(--surface-2)] p-4 flex flex-col justify-between hidden md:flex shrink-0">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-[var(--accent)] flex items-center gap-1.5">
-                <Sliders size={14} /> Slide Index ({slides.length})
+                <Sliders size={14} /> Page Index ({pages.length})
               </span>
             </div>
 
-            <div className="space-y-1 overflow-y-auto max-h-[calc(100vh-14rem)] pr-1">
-              {slides.map((s, idx) => {
-                const active = idx === activeSlideIdx;
+            <div className="space-y-1 overflow-y-auto max-h-[calc(100vh-14rem)] pr-1 custom-scrollbar">
+              {pages.map((p, idx) => {
+                const active = idx === activePageIdx;
                 return (
                   <div
-                    key={s.id || idx}
-                    onClick={() => setActiveSlideIdx(idx)}
+                    key={p.id || idx}
+                    onClick={() => setActivePageIdx(idx)}
                     className={`p-2.5 rounded-[var(--radius-md)] border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer group ${
                       active
                         ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] font-bold'
@@ -597,32 +603,32 @@ export default function LessonEditorPage() {
                   >
                     <div className="flex items-center gap-2 truncate">
                       <span className="font-mono text-[10px] text-[var(--accent)]">{idx + 1}.</span>
-                      <span className="truncate">{s.title || `Slide ${idx + 1}`}</span>
+                      <span className="truncate">{p.title || `Page ${idx + 1}`}</span>
                     </div>
 
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         type="button"
-                        onClick={(e) => { e.stopPropagation(); moveSlide(idx, -1); }}
-                        className="p-1 hover:text-[var(--accent)]"
+                        onClick={(e) => { e.stopPropagation(); movePage(idx, -1); }}
+                        className="p-1 hover:text-[var(--accent)] cursor-pointer"
                         title="Move Up"
                       >
                         ↑
                       </button>
                       <button
                         type="button"
-                        onClick={(e) => { e.stopPropagation(); moveSlide(idx, 1); }}
-                        className="p-1 hover:text-[var(--accent)]"
+                        onClick={(e) => { e.stopPropagation(); movePage(idx, 1); }}
+                        className="p-1 hover:text-[var(--accent)] cursor-pointer"
                         title="Move Down"
                       >
                         ↓
                       </button>
-                      {slides.length > 1 && (
+                      {pages.length > 1 && (
                         <button
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); deleteSlide(idx); }}
-                          className="p-1 hover:text-[var(--err)]"
-                          title="Delete Slide"
+                          onClick={(e) => { e.stopPropagation(); deletePage(idx); }}
+                          className="p-1 hover:text-[var(--err)] cursor-pointer"
+                          title="Delete Page"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -637,16 +643,16 @@ export default function LessonEditorPage() {
           <div className="space-y-1.5 pt-2">
             <Button
               size="sm"
-              onClick={addSlide}
+              onClick={addPage}
               className="w-full rounded-[var(--radius-md)] font-semibold text-xs gap-1.5 bg-[var(--accent-soft)] border border-[var(--accent-soft)] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--accent-on)] transition-all cursor-pointer"
             >
-              <Plus size={14} /> Add New Slide
+              <Plus size={14} /> Add New Page
             </Button>
             <button
               type="button"
               onClick={() => setJsonModalOpen(true)}
               className="w-full py-1.5 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] text-[var(--ink-2)] hover:border-[var(--accent)] hover:text-[var(--accent)] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-              title="Import JSON or paste slide blocks"
+              title="Import JSON or paste page blocks"
             >
               <FileJson size={13} /> Import JSON
             </button>
@@ -654,55 +660,55 @@ export default function LessonEditorPage() {
         </aside>
 
         {/* Center / Right: Form Editor & Split-Screen Live Preview */}
-        <main className="flex-1 flex overflow-y-auto p-4 sm:p-6 gap-6">
-          {/* Slide Form Editor */}
+        <main className="flex-1 flex overflow-y-auto p-4 sm:p-6 gap-6 custom-scrollbar">
+          {/* Page Form Editor */}
           <div className={`${showLivePreview ? 'w-full lg:w-1/2' : 'w-full max-w-4xl mx-auto'} space-y-6`}>
             <div className="p-4 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--accent)]">
-                  Slide {activeSlideIdx + 1} Title
+                  Page {activePageIdx + 1} Title
                 </label>
                 <button
                   type="button"
                   onClick={() => setJsonModalOpen(true)}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--accent)] hover:underline cursor-pointer bg-[var(--accent-soft)]/50 px-2.5 py-1 rounded-[var(--radius-sm)] border border-[var(--accent)]/30 hover:bg-[var(--accent-soft)] transition-all"
-                  title="Paste raw JSON for this slide"
+                  title="Paste raw JSON for this page"
                 >
                   <FileJson size={13} />
-                  <span>Paste Slide JSON</span>
+                  <span>Paste Page JSON</span>
                 </button>
               </div>
               <input
                 type="text"
-                value={activeSlide.title || ''}
+                value={activePage.title || ''}
                 onChange={(e) => updateActiveTitle(e.target.value)}
-                placeholder="Enter slide title..."
+                placeholder="Enter page title..."
                 className="w-full px-3.5 py-2.5 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] font-serif font-bold text-base outline-none focus:border-[var(--accent)]"
               />
             </div>
 
-            {/* Slide Block Form List */}
+            {/* Page Block Form List */}
             <BlockListEditor
-              blocks={activeSlide.blocks || []}
+              blocks={activePage.blocks || []}
               onChange={updateActiveBlocks}
-              onOpenMediaLibrary={() => handleOpenMediaLibrary('slide')}
+              onOpenMediaLibrary={() => handleOpenMediaLibrary('page')}
             />
           </div>
 
           {/* Split Live Canvas Preview */}
           {showLivePreview && (
-            <div className="hidden lg:block w-1/2 sticky top-4 h-[calc(100vh-7rem)] overflow-y-auto p-4 rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-md)]">
+            <div className="hidden lg:block w-1/2 sticky top-4 h-[calc(100vh-7rem)] overflow-y-auto p-4 rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-md)] custom-scrollbar">
               <div className="flex items-center justify-between pb-3 mb-4 border-b border-[var(--line)] text-xs">
                 <span className="font-bold text-[var(--accent)] uppercase tracking-wider flex items-center gap-1.5">
-                  <Monitor size={14} /> Real-Time Slide Canvas Preview
+                  <Monitor size={14} /> Real-Time Page Canvas Preview
                 </span>
                 <span className="font-mono text-[10px] text-[var(--muted)]">Live Sync Active</span>
               </div>
 
-              <SlideCanvas
-                slide={activeSlide}
-                slideIndex={activeSlideIdx}
-                totalSlides={slides.length}
+              <PageCanvas
+                page={activePage}
+                pageIndex={activePageIdx}
+                totalPages={pages.length}
                 direction={1}
               />
             </div>
@@ -722,12 +728,12 @@ export default function LessonEditorPage() {
         onSelectTemplate={handleApplyTemplate}
       />
 
-      <SlideJsonImportModal
+      <PageJsonImportModal
         isOpen={jsonModalOpen}
         onClose={() => setJsonModalOpen(false)}
-        activeSlideIdx={activeSlideIdx}
-        totalSlides={slides.length}
-        currentSlideData={activeSlide}
+        activePageIdx={activePageIdx}
+        totalPages={pages.length}
+        currentPageData={activePage}
         onApply={handleApplyJsonImport}
       />
     </div>

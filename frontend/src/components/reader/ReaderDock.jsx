@@ -4,18 +4,19 @@ import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Home, Edit2, Printer, HelpCircle } from "lucide-react";
 
 export default function ReaderDock({
-  currentSlideIndex,
-  totalSlides,
+  currentPageIndex = 0,
+  totalPages = 1,
   onNext,
   onPrev,
-  onGoToSlide,
   onOpenHelp,
-  lessonId,
+  noteId,
   isAuthenticated = false,
 }) {
   const navigate = useNavigate();
   const [visible, setVisible] = useState(true);
   const lastScrollY = useRef(0);
+
+  const count = totalPages || 1;
 
   useEffect(() => {
     const onScroll = () => {
@@ -28,8 +29,8 @@ export default function ReaderDock({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const isFirst = currentSlideIndex === 0;
-  const isLast  = currentSlideIndex >= totalSlides - 1;
+  const isFirst = currentPageIndex === 0;
+  const isLast  = currentPageIndex >= count - 1;
 
   const btnBase = "p-2 sm:px-3.5 sm:py-2 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] text-[var(--ink)] text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-all hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:opacity-30 disabled:cursor-not-allowed shadow-[var(--shadow-sm)]";
 
@@ -46,19 +47,19 @@ export default function ReaderDock({
 
         <div className="w-[1px] h-5 bg-[var(--line)]" />
 
-        <button className={btnBase} disabled={isFirst} onClick={onPrev} title="Previous slide (←)">
+        <button className={btnBase} disabled={isFirst} onClick={onPrev} title="Previous page (←)">
           <ChevronLeft size={18} />
           <span className="hidden sm:inline">Prev</span>
         </button>
 
         {/* Counter */}
         <div className="px-3 text-xs font-mono font-bold text-[var(--ink)] flex items-center gap-1">
-          <span className="text-[var(--accent)] font-bold text-sm">{currentSlideIndex + 1}</span>
+          <span className="text-[var(--accent)] font-bold text-sm">{currentPageIndex + 1}</span>
           <span className="text-[var(--muted)]">/</span>
-          <span>{totalSlides}</span>
+          <span>{count}</span>
         </div>
 
-        <button className={btnBase} disabled={isLast} onClick={onNext} title="Next slide (→)">
+        <button className={btnBase} disabled={isLast} onClick={onNext} title="Next page (→)">
           <span className="hidden sm:inline">Next</span>
           <ChevronRight size={18} />
         </button>
@@ -69,8 +70,8 @@ export default function ReaderDock({
           <HelpCircle size={16} className="text-[var(--accent)]" />
         </button>
 
-        {isAuthenticated && lessonId && (
-          <button className={btnBase} onClick={() => navigate(`/editor?id=${lessonId}`)} title="Edit Lesson">
+        {isAuthenticated && noteId && (
+          <button className={btnBase} onClick={() => navigate(`/studio/notes/${noteId}`)} title="Edit Note">
             <Edit2 size={16} />
           </button>
         )}

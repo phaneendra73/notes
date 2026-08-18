@@ -69,13 +69,13 @@ authRoutes.get('/profile', requireAuth, async (c) => {
       return c.json({ error: 'User not found' }, 404);
     }
 
-    const [totalLessons, totalViews] = await Promise.all([
+    const [totalNotes, totalViews] = await Promise.all([
       c.env.DB.prepare(
-        'SELECT COUNT(*) as count FROM lessons WHERE authorId = ? AND isPublished = 1'
+        'SELECT COUNT(*) as count FROM notes WHERE authorId = ? AND isPublished = 1'
       )
         .bind(userId)
         .first(),
-      c.env.DB.prepare('SELECT COALESCE(SUM(viewsCount), 0) as count FROM lessons WHERE authorId = ?')
+      c.env.DB.prepare('SELECT COALESCE(SUM(viewsCount), 0) as count FROM notes WHERE authorId = ?')
         .bind(userId)
         .first(),
     ]);
@@ -86,7 +86,7 @@ authRoutes.get('/profile', requireAuth, async (c) => {
         avatarUrl: user.profileUrl || null,
       },
       stats: {
-        totalLessons: totalLessons?.count || 0,
+        totalNotes: totalNotes?.count || 0,
         totalViews: totalViews?.count || 0,
       },
     });

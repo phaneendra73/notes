@@ -1,4 +1,4 @@
--- Kadha Simplified Seed Data (v3.0)
+-- Notes Platform Seed Data (v3.0)
 
 INSERT OR REPLACE INTO userprofiles (id, email, password, name, profileUrl, bio, githubUrl, twitterUrl, role)
 VALUES (
@@ -20,8 +20,8 @@ INSERT OR IGNORE INTO tags (id, name) VALUES
   (4, 'SQL'),
   (5, 'System Design');
 
--- Lesson 1: C# Async/Await
-INSERT OR REPLACE INTO lessons (id, title, slug, excerpt, imageUrl, readingTime, slidesCount, isPublished, viewsCount) VALUES (
+-- Note 1: C# Async/Await
+INSERT OR REPLACE INTO notes (id, title, slug, excerpt, imageUrl, readingTime, pagesCount, isPublished, viewsCount) VALUES (
   1,
   'C# Async/Await & SynchronizationContext Deep Dive',
   'csharp-async-await-synchronization-context-deep-dive',
@@ -33,8 +33,8 @@ INSERT OR REPLACE INTO lessons (id, title, slug, excerpt, imageUrl, readingTime,
   280
 );
 
--- Slides for Lesson 1
-INSERT OR REPLACE INTO slides (lessonId, orderNumber, title, blocksJson) VALUES 
+-- Pages for Note 1
+INSERT OR REPLACE INTO pages (noteId, orderNumber, title, blocksJson) VALUES 
 (
   1,
   1,
@@ -48,8 +48,8 @@ INSERT OR REPLACE INTO slides (lessonId, orderNumber, title, blocksJson) VALUES
   '[{"type":"heading","content":"ConfigureAwait(false) & ThreadPool Resumption"},{"type":"paragraph","content":"In non-UI applications like ASP.NET Core API endpoints, using ConfigureAwait(false) prevents capturing the SynchronizationContext."},{"type":"code","language":"csharp","content":"var data = await ReadDatabaseAsync().ConfigureAwait(false);"},{"type":"quiz","question":"What does ConfigureAwait(false) do in C#?","options":["Bypasses capturing the current SynchronizationContext","Cancels the running Task immediately","Forces execution on UI thread"],"answer":0,"explanation":"ConfigureAwait(false) tells the runtime that resuming execution does not require returning to the captured SynchronizationContext."}]'
 );
 
--- Lesson 2: Binary Tree Traversals
-INSERT OR REPLACE INTO lessons (id, title, slug, excerpt, imageUrl, readingTime, slidesCount, isPublished, viewsCount) VALUES (
+-- Note 2: Binary Tree Traversals
+INSERT OR REPLACE INTO notes (id, title, slug, excerpt, imageUrl, readingTime, pagesCount, isPublished, viewsCount) VALUES (
   2,
   'Data Structures & Algorithms: Binary Tree Traversals & Complexity',
   'dsa-binary-tree-traversals-complexity',
@@ -61,8 +61,8 @@ INSERT OR REPLACE INTO lessons (id, title, slug, excerpt, imageUrl, readingTime,
   310
 );
 
--- Slides for Lesson 2
-INSERT OR REPLACE INTO slides (lessonId, orderNumber, title, blocksJson) VALUES 
+-- Pages for Note 2
+INSERT OR REPLACE INTO pages (noteId, orderNumber, title, blocksJson) VALUES 
 (
   2,
   1,
@@ -76,8 +76,8 @@ INSERT OR REPLACE INTO slides (lessonId, orderNumber, title, blocksJson) VALUES
   '[{"type":"heading","content":"Level-Order BFS Traversal (Queue Pattern)"},{"type":"paragraph","content":"Level-order traversal uses a FIFO Queue to visit nodes level-by-level from top to bottom."},{"type":"diagram","content":"graph TD\n    A((10)) --> B((5))\n    A --> C((15))\n    B --> D((2))\n    B --> E((7))\n    C --> F((12))"}]'
 );
 
--- Lesson 3: SQL B-Tree Indexing
-INSERT OR REPLACE INTO lessons (id, title, slug, excerpt, imageUrl, readingTime, slidesCount, isPublished, viewsCount) VALUES (
+-- Note 3: SQL B-Tree Indexing
+INSERT OR REPLACE INTO notes (id, title, slug, excerpt, imageUrl, readingTime, pagesCount, isPublished, viewsCount) VALUES (
   3,
   'SQL Query Optimization & B-Tree Index Mechanics',
   'sql-query-optimization-btree-index-mechanics',
@@ -89,8 +89,8 @@ INSERT OR REPLACE INTO lessons (id, title, slug, excerpt, imageUrl, readingTime,
   190
 );
 
--- Slides for Lesson 3
-INSERT OR REPLACE INTO slides (lessonId, orderNumber, title, blocksJson) VALUES 
+-- Pages for Note 3
+INSERT OR REPLACE INTO pages (noteId, orderNumber, title, blocksJson) VALUES 
 (
   3,
   1,
@@ -98,7 +98,7 @@ INSERT OR REPLACE INTO slides (lessonId, orderNumber, title, blocksJson) VALUES
   '[{"type":"heading","content":"Clustered vs Non-Clustered Indexes"},{"type":"paragraph","content":"Clustered Index defines the physical storage order on disk. Non-Clustered Index is a secondary B-Tree pointing to row IDs."},{"type":"code","language":"sql","content":"CREATE INDEX IX_Orders_CustomerId_Status \nON Orders(CustomerId, Status) \nINCLUDE (OrderDate, TotalAmount);"},{"type":"callout","content":"Indexing Golden Rule: Order columns in composite index from highest selectivity to lower selectivity."}]'
 );
 
-INSERT OR IGNORE INTO tagsonlessons (lessonId, tagId) VALUES
+INSERT OR IGNORE INTO tagsonnotes (noteId, tagId) VALUES
   (1, 1),
   (1, 2),
   (2, 3),

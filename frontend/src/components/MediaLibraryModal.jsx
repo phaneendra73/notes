@@ -55,7 +55,7 @@ function compressImageToWebP(file, maxWidth = 1200, quality = 0.75) {
   });
 }
 
-export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode = 'slide' }) {
+export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode = 'page' }) {
   const toast = useToast();
   const fileInputRef = useRef(null);
 
@@ -345,7 +345,7 @@ export default function MediaLibraryModal({ isOpen, onClose, onSelectImage, mode
                                 }}
                                 className="w-full font-bold rounded-[var(--radius-sm)] text-xs"
                               >
-                                {mode === 'cover' ? 'Set as Cover' : 'Insert into Slide'}
+                                {mode === 'cover' ? 'Set as Cover' : 'Insert into Page'}
                               </Button>
                             )}
 

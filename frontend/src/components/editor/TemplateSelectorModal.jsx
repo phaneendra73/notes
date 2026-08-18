@@ -45,7 +45,7 @@ export default function TemplateSelectorModal({ isOpen, onClose, onSelectTemplat
                 <span>Note Templates</span>
               </h3>
               <p className="text-xs text-[var(--muted)]">
-                Choose a pre-built template with structured slides, diagrams, and code snippets.
+                Choose a pre-built template with structured pages, diagrams, and code snippets.
               </p>
             </div>
             <button
@@ -86,7 +86,7 @@ export default function TemplateSelectorModal({ isOpen, onClose, onSelectTemplat
                           {tmpl.category}
                         </span>
                         <span className="text-[11px] font-mono text-[var(--muted)]">
-                          {tmpl.slides.length} slides
+                          {tmpl.pages.length} {tmpl.pages.length === 1 ? 'page' : 'pages'}
                         </span>
                       </div>
                       <p className="text-xs text-[var(--ink-2)] leading-relaxed font-normal">

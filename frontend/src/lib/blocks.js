@@ -1,7 +1,7 @@
 /**
- * Block type definitions and default factory functions for the Kadha content model.
+ * Block type definitions and default factory functions for the Notes content model.
  *
- * Every lesson slide is an ordered array of Block objects.
+ * Every note page is an ordered array of Block objects.
  * Blocks are the only content representation — there is no Markdown in the pipeline.
  *
  * Block schema:

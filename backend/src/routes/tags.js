@@ -72,7 +72,7 @@ tagRoutes.delete('/:id', requireAuth, async (c) => {
       return c.json({ error: 'Tag not found' }, 404);
     }
 
-    // ON DELETE CASCADE handles tagsonlessons rows automatically
+    // ON DELETE CASCADE handles tagsonnotes rows automatically
     await c.env.DB.prepare('DELETE FROM tags WHERE id = ?').bind(tagId).run();
 
     return c.json({ message: `Tag '${existing.name}' deleted` });

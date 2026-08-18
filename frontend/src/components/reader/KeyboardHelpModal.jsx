@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Command, X } from 'lucide-react';
 
 const SHORTCUTS = [
-  { key: '→ / Space', action: 'Next Slide' },
-  { key: '←', action: 'Previous Slide' },
+  { key: '→ / Space', action: 'Next Page' },
+  { key: '←', action: 'Previous Page' },
   { key: 'F', action: 'Toggle Fullscreen Mode' },
   { key: '?', action: 'Open Keyboard Shortcuts' },
   { key: 'Esc', action: 'Close Modals / Overlays' },

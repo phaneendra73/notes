@@ -3,7 +3,7 @@ import { useDebounce } from 'use-debounce';
 import client from '../api/client.js';
 
 // ── Levenshtein distance (for client-side fuzzy fallback) ─────────────────────
-function levenshtein(a, b) {
+export function levenshtein(a, b) {
   if (a.length === 0) return b.length;
   if (b.length === 0) return a.length;
   const dp = [];
@@ -20,12 +20,12 @@ function levenshtein(a, b) {
   return dp[a.length][b.length];
 }
 
-function fuzzyScore(lesson, query) {
-  if (!lesson || !query) return Infinity;
+export function fuzzyScore(note, query) {
+  if (!note || !query) return Infinity;
   const q = query.toLowerCase().trim();
-  const title = (lesson.title || '').toLowerCase();
-  const excerpt = (lesson.excerpt || '').toLowerCase();
-  const tags = (lesson.tags || []).map((t) =>
+  const title = (note.title || '').toLowerCase();
+  const excerpt = (note.excerpt || '').toLowerCase();
+  const tags = (note.tags || note.tagObjects || []).map((t) =>
     (typeof t === 'string' ? t : t.name || '').toLowerCase()
   );
 
@@ -63,7 +63,7 @@ let cachedPoolTimestamp = 0;
 const POOL_CACHE_TTL_MS = 60000; // 60s cache
 
 /**
- * useSearch — debounced lesson search with client-side fuzzy ranking fallback.
+ * useSearch — debounced note search with client-side fuzzy ranking fallback.
  *
  * @param {string} query - Raw search input
  * @returns {{ results, loading, error }}
@@ -95,27 +95,27 @@ export default function useSearch(query) {
           ...(isAuth && { includeUnpublished: 'true' }),
         };
 
-        const res = await client.get('/api/lessons', { params });
-        let candidates = res.data.lessons || [];
+        const res = await client.get('/api/notes', { params });
+        let candidates = res.data.notes || [];
 
         // If backend returns nothing, use cached/fetch fallback for client fuzzy matching
         if (candidates.length === 0) {
           const now = Date.now();
           if (!cachedFallbackPool || now - cachedPoolTimestamp > POOL_CACHE_TTL_MS) {
-            const fallback = await client.get('/api/lessons', {
+            const fallback = await client.get('/api/notes', {
               params: { limit: 50, ...(isAuth && { includeUnpublished: 'true' }) },
             });
-            cachedFallbackPool = fallback.data.lessons || [];
+            cachedFallbackPool = fallback.data.notes || [];
             cachedPoolTimestamp = now;
           }
           candidates = cachedFallbackPool;
         }
 
         const ranked = candidates
-          .map((l) => ({ lesson: l, score: fuzzyScore(l, debouncedQuery) }))
+          .map((n) => ({ note: n, score: fuzzyScore(n, debouncedQuery) }))
           .filter((x) => x.score < Infinity)
           .sort((a, b) => a.score - b.score)
-          .map((x) => x.lesson)
+          .map((x) => x.note)
           .slice(0, 10);
 
         if (!cancelled) setResults(ranked);

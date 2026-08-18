@@ -1,11 +1,12 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowUp, Terminal } from 'lucide-react';
 import useTags from '../../hooks/useTags.js';
 import phaneendraLogo from '../../../assets/phaneendramarri.svg';
 
 export default function Footer() {
   const navigate = useNavigate();
+  const location = useLocation();
   const year = new Date().getFullYear();
   const { tags: dbTags } = useTags();
 
@@ -14,7 +15,7 @@ export default function Footer() {
   };
 
   const handleExploreClick = () => {
-    if (window.location.pathname === '/') {
+    if (location.pathname === '/') {
       document.getElementById('notes-section')?.scrollIntoView({ behavior: 'smooth' });
     } else {
       navigate('/#notes-section');

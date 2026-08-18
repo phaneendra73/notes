@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import client from '../api/client.js';
 
 /**
- * useLessons — fetches a paginated list of lessons from the API.
+ * useNotes — fetches a paginated list of notes from the API.
  *
  * @param {number|number[]|null} tagId - Filter by tag ID(s) (null = all)
  * @param {string} searchQuery - Text search query
@@ -10,9 +10,9 @@ import client from '../api/client.js';
  * @param {number} limit - Items per page
  * @param {boolean} includeUnpublished - Whether to fetch draft/unpublished notes
  * @param {string} sort - Sort order ('latest', 'views', 'oldest')
- * @returns {{ lessons, loading, isFetching, error, pagination, refetch }}
+ * @returns {{ notes, loading, isFetching, error, pagination, refetch }}
  */
-export default function useLessons(
+export default function useNotes(
   tagId = null,
   searchQuery = '',
   page = 1,
@@ -20,13 +20,13 @@ export default function useLessons(
   includeUnpublished = false,
   sort = 'latest'
 ) {
-  const [lessons, setLessons] = useState([]);
+  const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState(null);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, totalCount: 0 });
 
-  const fetchLessons = useCallback(async (pageNum = page) => {
+  const fetchNotes = useCallback(async (pageNum = page) => {
     try {
       setLoading(true);
       setIsFetching(true);
@@ -42,16 +42,16 @@ export default function useLessons(
         ...(sort && { sort }),
       };
 
-      const res = await client.get('/api/lessons', { params });
+      const res = await client.get('/api/notes', { params });
       const data = res.data;
 
-      setLessons(data.lessons || []);
+      setNotes(data.notes || []);
       setPagination(
         data.pagination || { page: pageNum, totalPages: 1, totalCount: 0, limit }
       );
     } catch (err) {
-      console.error('useLessons error:', err);
-      setError(err?.response?.data?.error || 'Failed to load lessons');
+      console.error('useNotes error:', err);
+      setError(err?.response?.data?.error || 'Failed to load notes');
     } finally {
       setLoading(false);
       setIsFetching(false);
@@ -59,8 +59,8 @@ export default function useLessons(
   }, [tagId, searchQuery, page, limit, includeUnpublished, sort]);
 
   useEffect(() => {
-    fetchLessons(page);
-  }, [fetchLessons, page]);
+    fetchNotes(page);
+  }, [fetchNotes, page]);
 
-  return { lessons, loading, isFetching, error, pagination, refetch: fetchLessons };
+  return { notes, loading, isFetching, error, pagination, refetch: fetchNotes };
 }

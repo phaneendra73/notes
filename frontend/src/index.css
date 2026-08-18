@@ -543,10 +543,10 @@ textarea:focus-visible {
   margin: 0 auto;
   width: 100%;
 }
-.slide-canvas {
+.page-canvas {
   width: 100%;
 }
-.slide-content {
+.page-content {
   width: 100%;
   padding: var(--space-xl);
   border-radius: var(--radius-lg);
@@ -557,7 +557,7 @@ textarea:focus-visible {
   overflow: hidden;
 }
 
-.slide-title {
+.page-title {
   font-family: var(--font-display);
   font-weight: 700;
   font-size: clamp(1.6rem, 3.5vw, 2.35rem);
@@ -622,7 +622,7 @@ textarea:focus-visible {
   background: var(--bg);
 }
 
-.studio-lesson-row {
+.studio-note-row {
   padding: 1rem 1.25rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--line);
@@ -633,7 +633,7 @@ textarea:focus-visible {
   gap: 1rem;
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.studio-lesson-row:hover {
+.studio-note-row:hover {
   border-color: var(--line-strong);
   box-shadow: var(--shadow-md);
 }
@@ -735,11 +735,11 @@ textarea:focus-visible {
   .editor-body {
     flex-direction: column;
   }
-  .slide-content {
+  .page-content {
     padding: 1.35rem;
     border-radius: var(--radius-md);
   }
-  .slide-title {
+  .page-title {
     font-size: 1.4rem;
     margin-bottom: 1rem;
     padding-bottom: 0.75rem;

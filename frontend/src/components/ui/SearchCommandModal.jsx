@@ -29,9 +29,9 @@ export default function SearchCommandModal({ isOpen, onClose }) {
     const fetchSuggestions = async () => {
       try {
         setSuggestedLoading(true);
-        const res = await client.get('/api/lessons', { params: { page: 1, limit: 6 } });
+        const res = await client.get('/api/notes', { params: { page: 1, limit: 6 } });
         if (!cancelled) {
-          setSuggestedNotes(res.data.lessons || []);
+          setSuggestedNotes(res.data.notes || []);
         }
       } catch (err) {
         console.error('Failed to load search suggestions:', err);

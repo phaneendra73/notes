@@ -31,24 +31,29 @@ export default function NotFoundPage() {
               The note or page you are looking for does not exist.
             </p>
           </div>
-          <div className="flex gap-3 mt-1">
+          <div className="flex flex-wrap gap-2.5 justify-center mt-2">
             <button
               onClick={() => navigate('/')}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-[var(--radius-md)]
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[var(--radius-md)]
                 border border-[var(--accent-strong)] bg-[var(--accent)] text-[var(--accent-on)]
-                text-xs font-bold hover:bg-[var(--accent-strong)] transition-colors cursor-pointer
+                text-xs font-bold hover:bg-[var(--accent-strong)] transition-all cursor-pointer
                 shadow-[var(--shadow-sm)]"
             >
-              <Home size={14} /> Go Home
+              <Home size={14} /> Back to Home
             </button>
             <button
-              onClick={() => navigate('/')}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-[var(--radius-md)]
-                border border-[var(--line)] bg-[var(--surface)] text-[var(--ink)]
-                text-xs font-semibold hover:border-[var(--line-strong)] hover:bg-[var(--surface-2)]
-                transition-colors cursor-pointer shadow-[var(--shadow-sm)]"
+              onClick={() => {
+                navigate('/');
+                setTimeout(() => {
+                  document.getElementById('notes-section')?.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[var(--radius-md)]
+                border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink)]
+                text-xs font-semibold hover:border-[var(--accent)] hover:text-[var(--accent)]
+                transition-all cursor-pointer shadow-[var(--shadow-sm)]"
             >
-              <BookOpen size={14} className="text-[var(--accent)]" /> Browse Notes
+              <BookOpen size={14} className="text-[var(--accent)]" /> Explore Catalog
             </button>
           </div>
         </motion.div>

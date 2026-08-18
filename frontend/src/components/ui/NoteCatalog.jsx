@@ -1,19 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import useLessons from "../../hooks/useLessons.js";
+import useNotes from "../../hooks/useNotes.js";
 import useTags from "../../hooks/useTags.js";
-import LessonCard from "./LessonCard.jsx";
+import NoteCard from "./NoteCard.jsx";
 import { Pagination } from "./Pagination.jsx";
 import { Skeleton } from "./Skeleton.jsx";
-import LessonReaderModal from "./LessonReaderModal.jsx";
+import NoteReaderModal from "./NoteReaderModal.jsx";
 import HeroSection from "./HeroSection.jsx";
 import {
   BookOpen,
   AlertCircle,
   X,
-  LayoutGrid,
-  List,
   ChevronDown,
   Check,
   Clock,
@@ -28,7 +26,7 @@ const SORT_OPTIONS = [
   { value: "title", label: "Title (A–Z)", icon: Sparkles },
 ];
 
-export default function LessonCatalog() {
+export default function NoteCatalog() {
   const navigate = useNavigate();
   const location = useLocation();
   const catalogTopRef = useRef(null);
@@ -46,12 +44,11 @@ export default function LessonCatalog() {
 
   // Modal states
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedLesson, setSelectedLesson] = useState(null);
+  const [selectedNote, setSelectedNote] = useState(null);
 
   // Multi-select tags state (array of numbers)
   const [selectedTagIds, setSelectedTagIds] = useState(initialTagIds);
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewMode, setViewMode] = useState("list");
   const [sortBy, setSortBy] = useState("recent");
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
 
@@ -75,8 +72,8 @@ export default function LessonCatalog() {
 
   const { tags: backendTags, loading: tagsLoading } = useTags();
   const backendSort = sortBy === "recent" ? "latest" : sortBy;
-  const { lessons, loading, isFetching, error, pagination, refetch } =
-    useLessons(
+  const { notes, loading, isFetching, error, pagination, refetch } =
+    useNotes(
       selectedTagIds.length > 0 ? selectedTagIds : null,
       "",
       currentPage,
@@ -103,19 +100,19 @@ export default function LessonCatalog() {
     setCurrentPage(1);
   };
 
-  const handleCardClick = (lesson) => {
-    setSelectedLesson(lesson);
+  const handleCardClick = (note) => {
+    setSelectedNote(note);
     setModalOpen(true);
   };
 
-  const handleReadClick = (lesson, e) => {
+  const handleReadClick = (note, e) => {
     e.stopPropagation();
-    navigate(`/read?id=${lesson.id}`);
+    navigate(`/read?id=${note.id}`);
   };
 
   const handleModalClose = () => {
     setModalOpen(false);
-    setSelectedLesson(null);
+    setSelectedNote(null);
   };
 
   // Close sort dropdown when clicking outside
@@ -132,7 +129,7 @@ export default function LessonCatalog() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const filteredLessons = lessons;
+  const filteredNotes = notes;
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
@@ -154,14 +151,14 @@ export default function LessonCatalog() {
     <>
       <div
         ref={catalogTopRef}
-        className="w-full max-w-[var(--maxw)] mx-auto px-4 sm:px-6 py-5 sm:py-8 space-y-5 sm:space-y-6 font-sans"
+        className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-8 space-y-5 sm:space-y-6 font-sans"
       >
-        {/* 🟢 Redesigned Centered Editorial Hero Section 🟢 */}
+        {/* Centered Editorial Hero Section */}
         <HeroSection />
 
-        {/* 🟢 Controls Toolbar: Multi-Select Topic Filter Pills + Sort & View Modes 🟢 */}
+        {/* Controls Toolbar: Multi-Select Topic Filter Pills + Sort & View Modes */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-2 border-b border-[var(--line)]">
-          {/* Topic Pills — with smooth horizontal scroll & clean padding */}
+          {/* Topic Pills */}
           <div className="flex items-center gap-2 overflow-x-auto py-2 px-0.5 no-scrollbar flex-1 min-w-0 relative z-10">
             {/* All Topics Button */}
             <motion.button
@@ -308,35 +305,10 @@ export default function LessonCatalog() {
               </AnimatePresence>
             </div>
 
-            {/* View Mode Toggle: List vs Grid */}
-            <div className="flex items-center p-0.5 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
-              <button
-                onClick={() => setViewMode("list")}
-                className={`p-1.5 rounded-[var(--radius-sm)] transition-colors cursor-pointer ${
-                  viewMode === "list"
-                    ? "bg-[var(--accent)] text-[var(--accent-on)] shadow-xs"
-                    : "text-[var(--muted)] hover:text-[var(--ink)]"
-                }`}
-                title="List View"
-              >
-                <List size={14} />
-              </button>
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-1.5 rounded-[var(--radius-sm)] transition-colors cursor-pointer ${
-                  viewMode === "grid"
-                    ? "bg-[var(--accent)] text-[var(--accent-on)] shadow-xs"
-                    : "text-[var(--muted)] hover:text-[var(--ink)]"
-                }`}
-                title="Grid View"
-              >
-                <LayoutGrid size={14} />
-              </button>
-            </div>
           </div>
         </div>
 
-        {/* 🟢 Error State 🟢 */}
+        {/* Error State */}
         {error && (
           <div className="p-4 rounded-[var(--radius-md)] border border-[var(--err-line)] bg-[var(--err-soft)] text-[var(--err)] text-xs flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -347,59 +319,49 @@ export default function LessonCatalog() {
               onClick={refetch}
               className="font-bold underline hover:no-underline flex items-center gap-1 cursor-pointer"
             >
-              <RefreshCw size={12} /> Retry
+              Retry
             </button>
           </div>
         )}
 
-        {/* 🟢 Loading Skeletons 🟢 */}
+        {/* Loading Skeletons */}
         {isLoading ? (
-          <div
-            className={
-              viewMode === "grid"
-                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
-                : "space-y-3 sm:space-y-4"
-            }
-          >
+          <div className="space-y-3 sm:space-y-4 w-full min-w-0">
             {[1, 2, 3, 4, 5, 6].map((n) => (
               <div
                 key={n}
-                className="p-4 sm:p-5 rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] space-y-3"
+                className="p-4 sm:p-5 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-5"
               >
-                <div className="flex items-center gap-2">
-                  <Skeleton className="w-16 h-4 rounded" />
-                  <Skeleton className="w-12 h-4 rounded" />
+                <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
+                  <Skeleton className="w-20 h-20 sm:w-24 sm:h-24 rounded-[var(--radius-sm)] shrink-0" />
+                  <div className="space-y-2 flex-1 min-w-0">
+                    <Skeleton className="w-16 h-4 rounded" />
+                    <Skeleton className="w-3/4 h-5 rounded" />
+                    <Skeleton className="w-full h-4 rounded" />
+                  </div>
                 </div>
-                <Skeleton className="w-3/4 h-5 sm:h-6 rounded" />
-                <Skeleton className="w-full h-10 sm:h-12 rounded" />
-                <div className="pt-2 flex justify-between items-center">
-                  <Skeleton className="w-24 h-4 rounded" />
-                  <Skeleton className="w-16 h-4 rounded" />
+                <div className="flex items-center gap-3 shrink-0 justify-between sm:justify-end border-t sm:border-t-0 pt-3 sm:pt-0 border-[var(--line)]">
+                  <Skeleton className="w-20 h-4 rounded" />
+                  <Skeleton className="w-16 h-7 rounded-[var(--radius-sm)]" />
                 </div>
               </div>
             ))}
           </div>
-        ) : filteredLessons.length > 0 ? (
-          /* 🟢 Lessons List / Grid 🟢 */
-          <div
-            className={
-              viewMode === "grid"
-                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
-                : "space-y-3 sm:space-y-4"
-            }
-          >
-            {filteredLessons.map((lesson) => (
-              <LessonCard
-                key={lesson.id}
-                lesson={lesson}
-                viewMode={viewMode}
+        ) : filteredNotes.length > 0 ? (
+          /* Notes List */
+          <div className="space-y-3 sm:space-y-4 w-full min-w-0">
+            {filteredNotes.map((note, idx) => (
+              <NoteCard
+                key={note.id}
+                note={note}
+                index={idx}
                 onCardClick={handleCardClick}
                 onReadClick={handleReadClick}
               />
             ))}
           </div>
         ) : (
-          /* 🟢 Empty State 🟢 */
+          /* Empty State */
           <div className="text-center py-12 sm:py-16 space-y-4 bg-[var(--surface)] border border-[var(--line)] rounded-[var(--radius-lg)] px-4">
             <div className="w-12 h-12 rounded-full bg-[var(--surface-2)] border border-[var(--line)] flex items-center justify-center mx-auto text-[var(--muted)]">
               <BookOpen size={20} />
@@ -425,7 +387,7 @@ export default function LessonCatalog() {
           </div>
         )}
 
-        {/* 🟢 Pagination 🟢 */}
+        {/* Pagination */}
         {!isLoading && pagination && pagination.totalPages > 1 && (
           <div className="pt-4 sm:pt-6">
             <Pagination
@@ -437,12 +399,11 @@ export default function LessonCatalog() {
         )}
       </div>
 
-      {/* 🟢 Modal Quick Reader 🟢 */}
-      <LessonReaderModal
+      {/* Modal Quick Reader */}
+      <NoteReaderModal
         isOpen={modalOpen}
         onClose={handleModalClose}
-        lesson={selectedLesson}
-        onFullView={(lesson) => navigate(`/read?id=${lesson.id}`)}
+        note={selectedNote}
       />
     </>
   );

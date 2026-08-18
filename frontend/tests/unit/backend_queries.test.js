@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   calcReadingTime,
   generateSlug,
-  parseSlideRow,
+  parsePageRow,
 } from '../../../backend/src/db/queries.js';
 import {
   hashPassword,
@@ -16,28 +16,28 @@ test('generateSlug transforms title to URL-safe hyphenated slug with timestamp s
   assert.match(slug, /^[a-z0-9-]+$/);
 });
 
-test('calcReadingTime estimates reading duration based on word count across slides', () => {
-  const shortSlides = [
+test('calcReadingTime estimates reading duration based on word count across pages', () => {
+  const shortPages = [
     { blocks: [{ type: 'paragraph', content: 'Short intro text here.' }] },
   ];
-  assert.equal(calcReadingTime(shortSlides), 1);
+  assert.equal(calcReadingTime(shortPages), 1);
 
   // 450 words should yield ~3 minutes (200 wpm)
   const longText = Array(450).fill('word').join(' ');
-  const longSlides = [
+  const longPages = [
     { blocks: [{ type: 'paragraph', content: longText }] },
   ];
-  assert.equal(calcReadingTime(longSlides), 3);
+  assert.equal(calcReadingTime(longPages), 3);
 });
 
-test('parseSlideRow parses JSON blocks safely with fallback on corrupt data', () => {
+test('parsePageRow parses JSON blocks safely with fallback on corrupt data', () => {
   const validRow = {
     id: 10,
     orderNumber: 2,
     title: 'Variables',
     blocksJson: JSON.stringify([{ type: 'heading', level: 2, content: 'Title' }]),
   };
-  const parsed = parseSlideRow(validRow);
+  const parsed = parsePageRow(validRow);
   assert.equal(parsed.id, 10);
   assert.equal(parsed.orderNumber, 2);
   assert.equal(parsed.title, 'Variables');
@@ -50,7 +50,7 @@ test('parseSlideRow parses JSON blocks safely with fallback on corrupt data', ()
     title: 'Corrupt',
     blocksJson: '{invalid json',
   };
-  const parsedCorrupt = parseSlideRow(corruptRow);
+  const parsedCorrupt = parsePageRow(corruptRow);
   assert.equal(parsedCorrupt.blocks.length, 0);
 });
 
